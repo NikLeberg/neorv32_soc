@@ -1,0 +1,4 @@
+# ignore run output of vsim / vcom
+transcript
+stderr
+modelsim/work

@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        // syntax coloring
+        "puorc.awesome-vhdl",
+        // auto formatter
+        "vinrobot.vhdl-formatter",
+        // language server for linting
+        // comes also with coloring, overwritten by puorc.awesome-vhdl
+        "hbohlin.vhdl-ls",
+        //"svipas.control-snippets",
+        // easy access for tasks defined in tasks.json
+        "spmeesseman.vscode-taskexplorer"
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    // show snippets at the top of intellisense suggestions
+    "editor.snippetSuggestions": "top",
+    // don't auto accept suggestions with enter, tab is used instead
+    "editor.acceptSuggestionOnEnter": "off",
+    // show ruler after 80 characters
+    "editor.rulers": [
+        80
+    ],
+    // format code automatically
+    "editor.formatOnType": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    // settings for vhdl formatter
+    "vhdl.formatter.align.port": true,
+    "vhdl.formatter.align.generic": true,
+    "vhdl.formatter.align.procedure": true,
+    "vhdl.formatter.insertFinalNewline": true,
+    "spellright.language": [
+        "de"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex"
+    ],
+}

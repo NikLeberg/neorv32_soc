@@ -1,0 +1,586 @@
+Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 28 2020
+    The vcom command compiles VHDL source code into a specified working library
+    (or to the work library by default).
+    
+    You can invoke vcom either from within Questa SIM or from the command
+    prompt of your operating system. You can invoke this command during
+    simulation.
+    
+    Compiled libraries are dependent on the major version of Questa SIM. When
+    moving between major versions, you must refresh compiled libraries using
+    the -refresh argument to vcom. This is not required for minor versions
+    (letter releases).
+    
+    All arguments to the vcom command are case-sensitive. For example, -WORK
+    and -work are not equivalent.
+    
+    Try the following to get help on specific options or categories: 
+
+    vcom -help all            : List all categories and options
+    vcom -help category       : List all categories
+    vcom -help <option>       : Help on an option
+    vcom -help <command-line> : Help on all options in a command-line
+    vcom -help <category>     : List all options in a category
+
+------------------------------------General------------------------------------
+General Category for option
+
+--------------------------------------------------------------------------------
+-32                             Run in 32-bit mode
+                                
+-64                             Run in 64-bit mode
+                                
+-F <filename>                   Specify a file containing more command line
+                                arguments. Prefixes relative file names within
+                                the arguments file with the absolute path of
+                                arguments file, if lookup with relative path
+                                fails.
+                                
+-O0                             Disable optimizations
+                                
+-O1                             Enable some optimizations
+                                
+-O4                             Enable most optimizations (default)
+                                
+-O5                             Enable additional compiler optimizations
+                                
+-createlib[=compress]           Create libraries that do not exist. The
+                                =compress modifier creates compressed
+                                libraries.
+                                
+-f <filename>                   Specify a file containing more command line
+                                arguments
+                                
+-file <filename>                Specify a file containing more command line
+                                arguments
+                                
+-gen_xml <entity> <output>      Output (into a file) the interface definition
+                                of the specified design unit in XML format
+                                
+-gen_xmlstruct <entity> <output>
+                                Similar to -gen_xml, but also output the
+                                structural definition of the specified design
+                                unit in XML format.
+                                
+-just abcepx                    Compile only selected design unit kinds
+                                (e=entity, a=arch, p=package, b=body, c=config,
+                                x=context)
+                                
+-l <filename>                   Write compilation log to <filename>
+                                
+-line <lineNum>                 Specify a starting line number
+                                
+-logfile <filename>             Write compilation log to <filename>
+                                
+-lower                          Save all identifiers as lower case names
+                                
+-modelsimini <modelsim.ini>     Specify path to the modelsim.ini file
+                                
+-nologo                         Disable startup banner
+                                
+-novopt                         Do not run the "vopt" compiler before
+                                simulation.
+                                
+-optionset <optionset_name>     Calls an option set in modelsim.ini.
+                                
+-outf <filename>                Specify a file to save the final list of
+                                options after recursively expanding
+                                
+-proftick=<integer>             Set the time interval between the profile data
+                                collection. Default value is 10.
+                                
+-quiet                          Disable 'Loading' messages
+                                
+-skip abcepx                    Compile all but selected design unit kinds
+                                (e=entity, a=arch, p=package, b=body, c=config,
+                                x=context)
+                                
+-stats[=[+-]<args>]             Enables compiler statistics <args> are
+                                all,none,time,cmd,msg,perf,verbose,list,kb.
+                                
+-version                        Print the version of the compiler
+                                
+-vmake                          Collects complete list of command line args and
+                                files processed for use by vmake.
+                                
+-work <path>                    Specify library WORK
+                                
+-wprof=<filename>               Enables CPU (-prof) or WALL (-wprof) time based
+                                profiling and saves the profile data to the
+                                given filename.
+                                
+-------------------------------------Analog-------------------------------------
+Analog Category for option
+
+--------------------------------------------------------------------------------
+-ams07                          Enable support for VHDL 1076.1-2007
+                                
+-ams99                          Enable support for VHDL 1076.1-1999
+                                
+-amsstd                         Add VHDL-AMS declarations to package STANDARD
+                                
+-noamsstd                       Do not add VHDL-AMS declarations to package
+                                STANDARD
+                                
+-noexplim                       Disable the limitation of exponential functions
+                                
+-vhams                          Enable support for VHDL 1076.1-2007
+                                
+-vhamsfilesuffix=<extension>[,<extension>...]
+                                filename extensions for VHDL-AMS code
+                                
+------------------------------------Coverage------------------------------------
+Coverage Category
+
+--------------------------------------------------------------------------------
++cover[=<spec>]                 <spec> is used to enable code coverage metrics
+                                for certain kinds of constructs. <spec>
+                                consists of one or more of the following letter
+                                codes:
+                                   s (statement)
+                                   b (branch)
+                                   c (condition)
+                                   e (expression)
+                                   f (finite state machine)
+                                   t (toggle)
+                                   x (extended toggle)
+                                If no <spec> characters are given, sbceft is
+                                the default.
+                                
+-adaptive                       Enable adaptive exclusion feature
+                                
+-adaptive_debug                 Enable debugging for adaptive exclusion feature
+                                - Dumping adaptive exclusion database data.
+                                
+-coverExcludeDefault            Automatically exclude case default clauses.
+                                
+-covercebi                      Enable collapse of else-begin-if to an 'elsif'
+                                equivalent for coverage.
+                                
+-coverdeglitch <period>         Report only the last execution of non-clocked
+                                processes/continuous assignments. Within time
+                                greater than <period>, where <period> is 0 or a
+                                time string with units
+                                
+-coverenhanced                  Enables functionality which may change the
+                                appearance or content of coverage metrics. A
+                                detailed list of these changes can be found by
+                                searching in the release notes for
+                                'coverenhanced'. This option only takes
+                                meaningful effect in letter releases (e.g.
+                                10.2b). It has no effect in initial major
+                                releases (e.g. 10.2).
+                                
+-coverexcludedefault            Automatically exclude case default clauses.
+                                
+-coverexpandrdpfx               Bit-blast multi-bit operands of reduction
+                                prefix expressions for expression/condition
+                                coverage.
+                                
+-coverfec                       Enable Focused Expression Coverage analysis for
+                                conditions and expressions.
+                                
+-covermultibit                  Enable coverage of multibit expressions.
+                                
+-coveropt <i>                   Specify a digit for code coverage optimization
+                                level: 1 through 4.
+                                
+-coverrec                       Enable Rapid Expression Coverage mode of FEC
+                                for conditions and expressions.
+                                
+-coverreportcancelled           Report coverage items that have been optimized
+                                away.
+                                
+-coverrespecthandl              Inform code coverage optimizations to look for
+                                H and L signal values
+                                
+-coversub                       Include VHDL subprograms for code coverage
+                                
+-coverudp                       Enable UDP Coverage analysis for conditions and
+                                expressions.
+                                
+-extendedtogglemode [1|2|3]     Change the level of support for extended
+                                toggles. The levels of support are:
+                                1 - 0L->1H & 1H->0L & any one 'Z' transition
+                                (to/from 'Z')
+                                2 - 0L->1H & 1H->0L & one transition to 'Z' &
+                                one transition from 'Z'
+                                3 - 0L->1H & 1H->0L & all 'Z' transitions
+                                
+-fecudpeffort n                 Limit the size of expressions and conditions
+                                considered for expr/cond coverage. Levels
+                                supported are:
+                                1 - (low) Only small expressions and conditions
+                                considered for coverage.
+                                2 - (medium) Bigger expressions and conditions
+                                considered for coverage.
+                                3 - (high) Very large expressions and
+                                conditions considered for coverage.
+                                
+-fsmimplicittrans               Enable recognition of implicit transitions in
+                                FSMs
+                                
+-fsmmultitrans                  Enable recognition of Multi-state transitions
+                                in FSMs
+                                
+-fsmresettrans                  Enable recognition of implicit asynchronous
+                                reset transitions for FSMs
+                                
+-fsmsingle                      Enable recognition FSMs having single bit
+                                current state variable
+                                
+-fsmverbose [b|t|w]             Provides information about FSMs recognized,
+                                including state reachability analysis. There
+                                are three detail levels that can be set with
+                                this option.
+                                    b (displays only basic information)
+                                    t (displays a transition table in addition
+                                to the basic information)
+                                    w (displays any warning messages in
+                                addition to the basic information)
+                                If no character is specified, btw is the
+                                default.
+                                
+-maxfecrows n                   Max number of input patterns allowed in FEC
+                                table for code coverage.
+                                
+-maxudprows n                   Max number of rows allowed in UDP tables for
+                                code coverage.
+                                
+-nocover                        Disable code coverage even if vlog -cover was
+                                used on source files.
+                                
+-nocoverExcludeDefault          Don't automatically exclude case default
+                                clauses.
+                                
+-nocovercebi                    Disable collapse of else-begin-if to an 'elsif'
+                                equivalent for coverage.
+                                
+-nocoverexcludedefault          Don't automatically exclude case default
+                                clauses.
+                                
+-nocoverexpandrdpfx             Don't bit-blast multi-bit operands of reduction
+                                prefix expressions for expression/condition
+                                coverage.
+                                
+-nocoverfec                     Disable Focused Expression Coverage analysis
+                                for conditions and expressions.
+                                
+-nocoverrec                     Disable Rapid Expression Coverage mode of FEC
+                                for conditions and expressions.
+                                
+-nocoverrespecthandl            Inform code coverage optimizations to ignore H
+                                and L signal values
+                                
+-nocovershort                   Disable short circuiting of
+                                expressions/condition when coverage is enabled.
+                                
+-nocoversub                     Ignore VHDL subprograms for code coverage
+                                
+-nocoverudp                     Disable UDP Coverage analysis for conditions
+                                and expressions.
+                                
+-nofsmimplicittrans             Disable recognition of implicit transitions in
+                                FSMs
+                                
+-nofsmresettrans                Disable recognition of implicit asynchronous
+                                reset transitions for FSMs
+                                
+-nofsmsingle                    Disable recognition FSMs having single bit
+                                current state variable
+                                
+-togglecountlimit n             Quit collecting toggle info after count n is
+                                reached.
+                                
+-toggleportsonly                Enable toggle statistics collection only for
+                                ports.
+                                
+-togglewidthlimit n             Don't collect toggle data on reg's or arrays
+                                wider than n.
+                                
+-------------------------------------Debug-------------------------------------
+Debug Category contains debug, and assertion options
+
+--------------------------------------------------------------------------------
++acc[=<spec>]                   <spec> consists of one or more of the following
+                                letter codes:
+                                m (module, program, and interface instances)
+                                n (nets)
+                                p (ports)
+                                r (variables and parameters)
+                                t (task and function scopes)
+                                
++noacc[=<spec>]                 Enable/disable access to certain objects.
+                                <spec> consists of one or more of the following
+                                letter codes:
+                                   m (module, program, and interface instances)
+                                   n (nets)
+                                   p (ports)
+                                   r (Verilog variables and parameters)
+                                   t (task and function scopes)
+                                   v (VHDL variables, constants, and aliases
+                                
+-nodbgsym                       Do not generate symbols debugging database.
+                                
+-nodebug[=ports][=pli][=ports+pli]
+                                Do not put symbolic debugging information into
+                                the library.
+                                
+-noshowsubprograms              Don't show VHDL subprogram scopes in GUI
+                                windows (e.g. Structure) and CLI commands (e.g.
+                                show).(Default on)
+                                
+-showsubprograms                Show VHDL subprogram scopes in GUI windows
+                                (e.g. Structure) and CLI commands (e.g. show).
+                                
+-smartdbgsym                    Generate symbols debugging database for only
+                                some special cases.
+                                
+--------------------------------------GLS--------------------------------------
+Gate level simulation category
+
+--------------------------------------------------------------------------------
+-debugVA                        Print VITAL cell optimization information
+                                
+-novital                        Disable all VITAL optimizations
+                                
+-novitalcheck                   Disable VITAL Level 1 compliance checking and
+                                optimizations
+                                
+-vitalmemorycheck               Enable VITAL Level 1 Memory model compliance
+                                checking
+                                
+------------------------------------Language------------------------------------
+Options to control Language features
+
+--------------------------------------------------------------------------------
++protect[=<file>]               *DEPRECATED* Enable
+                                protection/encryption-related compiler
+                                directives.
+                                
+-2002                           Enable support for VHDL 1076-2002
+                                
+-2008                           Enable support for VHDL 1076-2008
+                                
+-87                             Enable support for VHDL 1076-1987
+                                
+-93                             Enable support for VHDL 1076-1993
+                                
+-addpragmaprefix <prefix>       Enable recognition of synthesis and coverage
+                                pragmas with a user specified prefix.
+                                
+-afs_check                      Dump XML information from compilation unit
+                                scope
+                                
+-allowProtectedBeforeBody       Allow a variable of protected type to be
+                                created prior to declaring the body
+                                
+-autoorder                      Source files can be specified in any order.
+                                When all source files can be specified on a
+                                single command line, compilation proceeds in a
+                                scan phase, followed by a refresh phase. To
+                                perform the scan phase over multiple
+                                compilations, inhibit the refresh phase with
+                                -noautoorderrefresh. Then perform the refresh
+                                phase with -refresh_marked (and omit
+                                -autoorder).
+                                
+-autoorderquiet                 Do not print compilation logging messages
+                                during the scan phase of -autoorder
+                                compilation.
+                                
+-autoorderrefreshquiet          Do not print compilation logging message during
+                                the refresh phase of -autoorder compilation.
+                                
+-bindAtCompile                  Perform default binding when compiling the
+                                design
+                                
+-bindAtLoad                     Perform default binding when the design is
+                                loaded (the default)
+                                
+-check_synthesis                Check for compliance to some synthesis rules
+                                
+-deferSubpgmCheck               Defer compile-time range checking on constant
+                                index and slice expressions in subprograms
+                                until run time
+                                
+-defercheck                     Defer all compile-time range checking on
+                                constant index and slice expressions until run
+                                time
+                                
+-explicit                       Resolve resolution conflicts in favor of
+                                explicit functions
+                                
+-ignoreStandardRealVector       Ignore the VHDL-2008 declaration of REAL_VECTOR
+                                in package STANDARD
+                                
+-ignoredefaultbinding           Do not generate a default binding during
+                                compilation
+                                
+-ignorepragmaprefix <prefix>    Ignore synthesis and coverage pragmas with
+                                specified prefix.
+                                
+-ignorevitalerrors              Ignore VITAL compliance errors
+                                
+-initoutcompositeparam          Initialize array and record mode OUT parameters
+                                of subprograms
+                                
+-lint[=full][=fast][=default]   Perform lint-style checks
+                                
+-lrmconfigvis                   Use LRM-compliant visibility for use clause in
+                                configurations
+                                
+-mixedsvvh [b | l | r ][i][pc]  Facilitates using a VHDL package at the SV-VHDL
+                                mixed-language boundary.
+                                b  - treat scalars/vectors in the package as
+                                bit
+                                l  - treat scalars/vectors in the package as
+                                logic
+                                r  - treat scalars/vectors in the package as
+                                reg
+                                i  - ignore range specified with VHDL integer
+                                types
+                                pc - preserve case of all identifiers
+                                
+-noDeferSubpgmCheck             Perform compile-time range checking on constant
+                                index and slice expressions in subprograms at
+                                compile-time
+                                
+-noautoorderrefresh             Perform just the scan phase of -autoorder
+                                compilation. The refresh phase can be
+                                initiated, once all source files have been
+                                scanned, with -refresh_marked (omit
+                                specification of -autoorder).
+                                
+-nocasestaticerror              Suppress case statement non-static choice
+                                warning
+                                
+-nocheck                        Disable run-time range and index checks
+                                
+-nofprangecheck                 Disables range check for floating point only
+                                
+-noindexcheck                   Disable run-time index checks
+                                
+-noinitoutcompositeparam        Do not initialize array and record mode OUT
+                                parameters of subprograms
+                                
+-nonstddriverinit               Match pre-5.7c behavior for driver
+                                initialization
+                                
+-noothersstaticerror            Suppress array aggregate non-static OTHERS
+                                choice warning
+                                
+-nopsl                          Disable embedded PSL language parsing.
+                                
+-norangecheck                   Disable run-time range checks
+                                
+-oldconfigvis                   Use pre-10.0 non LRM-compilant visibility for
+                                use clauses in configurations
+                                
+-pedantic                       Enforce strict language checks
+                                
+-pedanticerrors                 Enforce strict language checks
+                                
+-performdefaultbinding          Enable default binding when it has been
+                                disabled with the
+                                RequireConfigForAllDefaultBinding modelsim.ini
+                                variable
+                                
+-permissive                     Relax some language error checks to warnings.
+                                
+-preserve                       Keep case of identifiers, does not make VHDL
+                                case sensitive
+                                
+-pslext                         Enable PSL LTL/Universal operators.
+                                
+-pslfile <file>                 Compile and bind PSL vunits specified by <file>
+                                
+-qlint                          Enables collection of data to be used with
+                                qlint.
+                                
+-rangecheck                     Enable run-time range checks
+                                
+-reorderDeclElab                Enable declaration reordering during
+                                elaboration to resolve function calls that are
+                                used before defined
+                                
+-s                              Do not load the std package.
+                                
+-separateConfigLibrary          Allows VHDL configuration decls in different
+                                library from corresponding entity
+                                
+-skipsynthoffregion             Ignore all constructs within synthesis_off or
+                                translate_off pragma regions.
+                                
+------------------------------------Library------------------------------------
+Library Category for option
+
+--------------------------------------------------------------------------------
+-force_refresh                  Force a refresh of the library image from .dat
+                                file(s) even if there are dependency errors.
+                                
+-nocreatelib                    Do not create libraries that do not exist.
+                                
+-refresh                        Refresh the library image from .dat file(s)
+                                
+-refresh_marked                 Perform the refresh phase of -autoorder
+                                compilation on all design units scanned during
+                                the first compilation phase with
+                                -noautoorderrefresh.
+                                
+------------------------------------Messages------------------------------------
+Options to suppress or downgrade errors.
+
+--------------------------------------------------------------------------------
+-error <msgNumber>[,<msgNumber>...]
+                                Report the listed messages as errors.
+                                
+-fatal <msgNumber>[,<msgNumber>...]
+                                Report the listed messages as fatal
+                                
+-msglimit [all,|none,][-|+]<msgNumber>[,[-|+]<msgNumber>...]
+                                Limit the reporting of listed messages to
+                                default count
+                                
+-msglimit [error|warning]       Limit the total number of errors/warnings to
+                                default count
+                                
+-msglimitcount <limit_value> -msglimit [all,|none,][-|+]<msgNumber>[,[-|+]<msgNumber>...]
+                                Limit the reporting of listed messages to user
+                                defined count
+                                
+-msglimitcount <limit_value> -msglimit [error|warning]
+                                Limit the total number of errors/warnings to
+                                user defined count
+                                
+-msgsingleline                  Display the messages in a single line.
+                                
+-note <msgNumber>[,<msgNumber>...]
+                                Report the listed message as notes
+                                
+-nowarn <number>                Disable specified category of warning messages;
+                                verror 1907 to see them.
+                                
+                         Print the source line with error messages.
+                                
+-suppress <msgNumber/msgGroup>[,<msgNumber/msgGroup>...]
+                                Suppress the listed messages using number or
+                                group. Valid <msgGroup> are All, GroupNote,
+                                GroupWarning, GroupFLI, GroupPLI, GroupSDF,
+                                GroupVCD, GroupVital, GroupWLF, GroupTCHK,
+                                GroupPA, GroupLRM
+                                
+-warning error                  Report all warnings as errors
+                                
+-warning <msgNumber>[,<msgNumber>...]
+                                Report the listed messages as warnings
+                                
+------------------------------------Optimize------------------------------------
+Optimization Category
+
+--------------------------------------------------------------------------------
+-no1164                         Disable optimization for the std_logic_1164
+                                package (same as "-noaccel std_logic_1164")
+                                
+-noaccel <package_name>         Disable optimization for the specified package
+                                

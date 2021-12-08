@@ -1,0 +1,34 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "type": "shell",
+    "options": {
+        "cwd": "./modelsim"
+    },
+    "presentation": {
+        "clear": true,
+        "showReuseMessage": false
+    },
+    "problemMatcher": [
+        {
+            "pattern": [
+                {
+                    //"regexp": "^\\*\\* (Warning): .(.+)\\((\\d+)\\): (.+)$",
+                    "regexp": "\\*\\* (Error|Warning).*: .(.+)\\((\\d+)\\): (.+)$",
+                    "file": 2,
+                    "line": 3,
+                    "message": 4,
+                    "severity": 1
+                }
+            ],
+            "fileLocation": "relative"
+        }
+    ],
+    "tasks": [
+        {
+            "label": "test",
+            "command": "vsim -c -do \"do ../scripts/tests/run.do ; quit\""
+        }
+    ]
+}
