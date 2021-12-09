@@ -16,11 +16,8 @@
     "vhdl.formatter.align.generic": true,
     "vhdl.formatter.align.procedure": true,
     "vhdl.formatter.insertFinalNewline": true,
-    "spellright.language": [
-        "de"
-    ],
-    "spellright.documentTypes": [
-        "markdown",
-        "latex"
-    ],
+    // treat .do files like tcl scripts
+    "files.associations": {
+        "*.do": "tcl"
+    },
 }

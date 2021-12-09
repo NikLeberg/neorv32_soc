@@ -82,39 +82,36 @@
             "END PROCESS $1;"
         ]
     },
-    // below is unchecked
     "VHDL component": {
         "scope": "vhdl",
-        "prefix": "component",
+        "prefix": [
+            "component",
+            "comp"
+        ],
         "body": [
             "COMPONENT ${1:${TM_FILENAME_BASE:entity}}",
-            "PORT (",
-            "\t${2:a}: IN std_logic,",
-            "\t${3:b}: OUT std_logic,",
-            "\t${4:y}: OUT std_logic_vector(7 DOWNTO 0));",
+            "\tPORT (",
+            "\t\t${2:a} : IN STD_LOGIC;",
+            "\t\t${3:b} : OUT STD_LOGIC;",
+            "\t\t${4:y} : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)",
+            "\t);",
             "END COMPONENT $1;",
         ]
     },
     "VHDL map": {
         "scope": "vhdl",
-        "prefix": "map",
+        "prefix": [
+            "map",
+            "instance",
+            "inst"
+        ],
         "body": [
-            "${1:${TM_FILENAME_BASE:entity}}_1: $1",
-            "\tPORT MAP (",
-            "\t\t${2:a} => $2,",
-            "\t\t${3:b} => $3,",
-            "\t\t${4:y} => $4);"
+            "${1:${TM_FILENAME_BASE:entity}}_1 : $1",
+            "PORT MAP (",
+            "\t${2:a} => $2,",
+            "\t${3:b} => $3,",
+            "\t${4:y} => $4",
+            ");"
         ]
-    },
-    "VHDL if": {
-        "scope": "vhdl",
-        "prefix": "if",
-        "body": [
-            "IF (${1:rising_edge(clock)}) THEN",
-            "\t$0$2",
-            "ELSIF ($3) THEN",
-            "\t$4",
-            "END IF;"
-        ]
-    },
+    }
 }

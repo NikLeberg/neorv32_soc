@@ -10,5 +10,7 @@
         //"svipas.control-snippets",
         // easy access for tasks defined in tasks.json
         "spmeesseman.vscode-taskexplorer"
+        // TCL script coloring
+        "rashwell.tcl"
     ]
 }
