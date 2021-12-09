@@ -15,21 +15,21 @@ USE ieee.numeric_std.ALL;
 
 ENTITY example IS
     PORT (
-        a : IN STD_LOGIC;                    -- input description
-        b : OUT STD_LOGIC;                   -- output description
-        y : OUT STD_LOGIC_VECTOR(7 DOWNTO 0) -- output description
+        a : IN STD_LOGIC; -- input description
+        b : IN STD_LOGIC; -- input description
+        y : OUT STD_LOGIC -- output description
     );
 END ENTITY example;
 
 ARCHITECTURE no_target_specific OF example IS
-    SIGNAL s_sig : STD_LOGIC; -- signal description
+    SIGNAL s_and : STD_LOGIC; -- signal description
 BEGIN
     -- process description
-    pro_1 : PROCESS (a) IS
+    and_1 : PROCESS (a, b) IS
     BEGIN
-        b <= a;
-    END PROCESS pro_1;
+        s_and <= a AND b;
+    END PROCESS and_1;
 
-    y <= "00000000";
+    y <= s_and;
 
 END ARCHITECTURE no_target_specific;
