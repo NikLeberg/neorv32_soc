@@ -1,0 +1,12 @@
+default:
+  # https://github.com/goldenSniperOS/modelsim-docker
+  image: goldensniper/modelsim-docker
+
+stages:
+  - test
+
+test:
+  stage: test
+  script: |
+    cd ./modelsim
+    vsim -c -do ../scripts/tests/run.do
