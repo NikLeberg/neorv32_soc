@@ -8,5 +8,5 @@ stages:
 test:
   stage: test
   script: |
-    cd modelsim
+    cd ./modelsim
     vsim -c -do ../scripts/tests/run.do
