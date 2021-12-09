@@ -1,5 +1,8 @@
 # run: "vsim -c -do ../scripts/tests/run.do" from ../modelsim folder
 
+# Exit on error
+onerror {quit -f}
+
 # Create work library.
 if [file exists work] {
     vdel -all

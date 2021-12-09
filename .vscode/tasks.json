@@ -4,7 +4,15 @@
     "version": "2.0.0",
     "type": "shell",
     "options": {
-        "cwd": "./modelsim"
+        "cwd": "./modelsim",
+        // default shell for running .do scripts directly with vsim
+        "shell": {
+            "executable": "vsim",
+            "args": [
+                "-c",
+                "-do"
+            ]
+        }
     },
     "presentation": {
         "clear": true,
@@ -52,7 +60,7 @@
     "tasks": [
         {
             "label": "test",
-            "command": "vsim -c -do \"do ../scripts/tests/run.do ; quit\""
+            "command": "../scripts/tests/run.do"
         }
     ]
 }
