@@ -6,13 +6,19 @@ if [file exists work] {
 }
 vlib work
 
-# Compile the sources. Order matters!
-set files "example.vhdl"
+# Compile the entity files. Order matters!
+set files "example"
 foreach file $files {
-    vcom -pedanticerrors -check_synthesis -fsmverbose w -lint -source ../vhdl/$file
+    vcom -pedanticerrors -check_synthesis -fsmverbose w -lint -source ../vhdl/${file}.vhdl
 }
 
-# Simulate
-#vsim -c test
-#run -all
+# Compile and run the testbenches. (Testbench file and entity need same name.)
+set testbenches "example_tb"
+foreach testbench $testbenches {
+    vcom -2008 -pedanticerrors -check_synthesis -lint -source ../vhdl/${testbench}.vhdl
+    vsim -c $testbench
+}
+
+# Run simulation
+run -all
 quit -f

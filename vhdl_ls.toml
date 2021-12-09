@@ -1,5 +1,9 @@
 [libraries]
 
-work.files = [
+rpm.files = [
     "./vhdl/example.vhdl"
+]
+
+testbench.files = [
+    "./vhdl/example_tb.vhdl"
 ]

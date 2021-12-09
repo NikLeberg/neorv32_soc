@@ -12,16 +12,40 @@
     },
     "problemMatcher": [
         {
+            // catches compilation warnings and errors
+            // # ** Warning: ../vhdl/example.vhdl(30): (vcom-1400) Synthesis Warning: Signal "a" is read in the process but is not in the sensitivity list.
+            // # ** Error: ../vhdl/example.vhdl(31): near "END": (vcom-1576) expecting ';'.
             "pattern": [
                 {
-                    //"regexp": "^\\*\\* (Warning): .(.+)\\((\\d+)\\): (.+)$",
-                    "regexp": "\\*\\* (Error|Warning).*: .(.+)\\((\\d+)\\): (.+)$",
+                    "regexp": "\\*\\* (Error|Warning).*: \\.(.+)\\((\\d+)\\): (.+)$",
                     "file": 2,
                     "line": 3,
                     "message": 4,
                     "severity": 1
                 }
             ],
+            "fileLocation": "relative"
+        },
+        {
+            // catches test failures
+            // # ** Failure: 1 AND 0 should equal 0.
+            // #    Time: 20 ns  Iteration: 0  Process: /example_tb/test File: ../vhdl/example_tb.vhdl
+            // # Break in Process test at ../vhdl/example_tb.vhdl line 54
+            "pattern": [
+                {
+                    "regexp": "\\*\\* Failure: (.+)$",
+                    "message": 1
+                },
+                {
+                    "regexp": "^.+Time:.+Process:.+File: \\.(.+)",
+                    "file": 1
+                },
+                {
+                    "regexp": "^.+Break in Process .* at \\.(.+) line (\\d+)$",
+                    "line": 2,
+                }
+            ],
+            "severity": "error",
             "fileLocation": "relative"
         }
     ],
