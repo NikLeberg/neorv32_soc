@@ -1,6 +1,10 @@
 -- =============================================================================
+-- File:                    example_tb.vhdl
+--
 -- Authors:					Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
+--
+-- Version:                 0.1
 --
 -- Entity:					example_tb
 --
@@ -8,12 +12,14 @@
 --                          be described how and what will be tested. Note that
 --                          the testbench is free to use non synthesizable
 --                          features like wait and finish.
+--
+-- Changes:                 0.1, 2021-12-10, leuen4
+--                              initial version
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE std.env.finish;
 
 ENTITY example_tb IS
     -- testbench needs no ports
@@ -41,6 +47,7 @@ BEGIN
         y => s_y
     );
 
+    -- check the DUT with multiple test vectors and assert for correct outputs
     test : PROCESS IS
     BEGIN
         -- 1 AND 1 = 1
@@ -67,8 +74,8 @@ BEGIN
         WAIT FOR 10 ns;
         ASSERT s_y = '0' REPORT "0 AND 0 should equal 0." SEVERITY failure;
 
-        -- tests finished
+        -- report successful test
         REPORT "Test OK";
-        finish;
+        WAIT;
     END PROCESS test;
 END ARCHITECTURE simulation;

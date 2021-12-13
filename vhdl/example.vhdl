@@ -1,12 +1,19 @@
 -- =============================================================================
+-- File:                    example.vhdl
+--
 -- Authors:					Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
+--
+-- Version:                 0.1
 --
 -- Entity:					example
 --
 -- Description:             Template file for vhdl entities and their
 --                          architecture. Here should be described what the
 --                          entity is implementing and how.
+--
+-- Changes:                 0.1, 2021-12-10, leuen4
+--                              initial version
 -- =============================================================================
 
 LIBRARY ieee;
@@ -22,8 +29,12 @@ ENTITY example IS
 END ENTITY example;
 
 ARCHITECTURE no_target_specific OF example IS
-    SIGNAL s_and : STD_LOGIC; -- signal description
+
+    -- signal description
+    SIGNAL s_and : STD_LOGIC;
+
 BEGIN
+
     -- process description
     and_1 : PROCESS (a, b) IS
     BEGIN
