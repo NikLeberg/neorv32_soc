@@ -35,7 +35,12 @@ ARCHITECTURE no_target_specific OF example IS
 
 BEGIN
 
-    -- process description
+    -- =========================================================================
+    -- Purpose: Example process
+    -- Type:    combinational
+    -- Inputs:  a, b
+    -- Outputs: s_and
+    -- =========================================================================
     and_1 : PROCESS (a, b) IS
     BEGIN
         s_and <= a AND b;

@@ -47,7 +47,12 @@ BEGIN
         y => s_y
     );
 
-    -- check the DUT with multiple test vectors and assert for correct outputs
+    -- =========================================================================
+    -- Purpose: Run different test vectors agains the DUT and validate output.
+    -- Type:    combinational, non-synthesizable
+    -- Inputs:  s_y
+    -- Outputs: s_a, s_b
+    -- =========================================================================
     test : PROCESS IS
     BEGIN
         -- 1 AND 1 = 1
