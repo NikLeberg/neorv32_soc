@@ -1,12 +1,12 @@
 -- =============================================================================
 -- File:                    example_tb.vhdl
 --
--- Authors:					Niklaus Leuenberger <leuen4@bfh.ch>
+-- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
 --
 -- Version:                 0.1
 --
--- Entity:					example_tb
+-- Entity:                  example_tb
 --
 -- Description:             Template file for vhdl entity testbench. Here should
 --                          be described how and what will be tested. Note that

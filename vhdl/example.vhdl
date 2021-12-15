@@ -1,12 +1,12 @@
 -- =============================================================================
 -- File:                    example.vhdl
 --
--- Authors:					Niklaus Leuenberger <leuen4@bfh.ch>
+-- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
 --
 -- Version:                 0.1
 --
--- Entity:					example
+-- Entity:                  example
 --
 -- Description:             Template file for vhdl entities and their
 --                          architecture. Here should be described what the
