@@ -1,7 +1,13 @@
 [libraries]
 
-rpm.files = [
-    "./vhdl/example.vhdl"
+work.files = [
+    "./vhdl/example.vhdl",
+    "./vhdl/datatypes.vhdl",
+    "./vhdl/keypad_reader.vhdl",
+    "./vhdl/keypad_decoder.vhdl",
+    "./vhdl/number_input.vhdl",
+    "./vhdl/bcd_to_bin.vhdl",
+    "./vhdl/bin_to_bcd.vhdl",
 ]
 
 testbench.files = [
