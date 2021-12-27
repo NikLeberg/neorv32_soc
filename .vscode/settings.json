@@ -20,4 +20,16 @@
     "files.associations": {
         "*.do": "tcl"
     },
+    // setup a default terminal that launches modelsim in scripting mode
+    "terminal.integrated.profiles.windows": {
+        "ModelSim": {
+            "path": "vsim",
+            "args": [
+                "-c",
+                "-do"
+            ],
+            "icon": "terminal-cmd"
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "ModelSim"
 }
