@@ -7,7 +7,7 @@
 --
 -- Entity:                  keypad_reader
 --
--- Description:             Read in the Pmod Keyboard from Digilent over the 16
+-- Description:             Read in the Pmod Keyboard from Digilent over the 8
 --                          pin interface of row and column lines. For more,
 --                          see: https://digilent.com/reference/pmod/pmodkypd
 --
@@ -28,7 +28,8 @@ ENTITY keypad_reader IS
 
         columns : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
         -- hexadecimal value of pressed key, 0 = 0x0, 1 = 0x1, ..., F = 0xF
-        key : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+        key     : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+        pressed : OUT STD_LOGIC
     );
 END ENTITY keypad_reader;
 
@@ -100,29 +101,33 @@ BEGIN
     -- Purpose: Output logic for FSM
     -- Type:    combinational
     -- Inputs:  s_current_state, s_rows
-    -- Outputs: columns, key
+    -- Outputs: columns, key, pressed
     -- =========================================================================
     columns <= "1110" WHEN s_current_state = COLUMN_1 ELSE
         "1101" WHEN s_current_state = COLUMN_2 ELSE
         "1011" WHEN s_current_state = COLUMN_3 ELSE
         "0111" WHEN s_current_state = COLUMN_4 ELSE
         "1111";
-    -- ToDo: Maybe column needs to be one state shifted
-    key <= x"1" WHEN s_current_state = COLUMN_1 AND s_rows = "1110" ELSE
-        x"4" WHEN s_current_state = COLUMN_1 AND s_rows = "1101" ELSE
-        x"7" WHEN s_current_state = COLUMN_1 AND s_rows = "1011" ELSE
-        x"0" WHEN s_current_state = COLUMN_1 AND s_rows = "0111" ELSE
-        x"2" WHEN s_current_state = COLUMN_2 AND s_rows = "1110" ELSE
-        x"5" WHEN s_current_state = COLUMN_2 AND s_rows = "1101" ELSE
-        x"8" WHEN s_current_state = COLUMN_2 AND s_rows = "1011" ELSE
-        x"F" WHEN s_current_state = COLUMN_2 AND s_rows = "0111" ELSE
-        x"3" WHEN s_current_state = COLUMN_3 AND s_rows = "1110" ELSE
-        x"6" WHEN s_current_state = COLUMN_3 AND s_rows = "1101" ELSE
-        x"9" WHEN s_current_state = COLUMN_3 AND s_rows = "1011" ELSE
-        x"E" WHEN s_current_state = COLUMN_3 AND s_rows = "0111" ELSE
-        x"A" WHEN s_current_state = COLUMN_4 AND s_rows = "1110" ELSE
-        x"B" WHEN s_current_state = COLUMN_4 AND s_rows = "1101" ELSE
-        x"C" WHEN s_current_state = COLUMN_4 AND s_rows = "1011" ELSE
-        x"D" WHEN s_current_state = COLUMN_4 AND s_rows = "0111" ELSE
+    -- The column is one state shifted. This is because the row gets
+    -- synchronized to the clock and changes one clock later when the next
+    -- column is already active.
+    key <= x"1" WHEN s_current_state = COLUMN_2 AND s_rows = "1110" ELSE
+        x"4" WHEN s_current_state = COLUMN_2 AND s_rows = "1101" ELSE
+        x"7" WHEN s_current_state = COLUMN_2 AND s_rows = "1011" ELSE
+        x"0" WHEN s_current_state = COLUMN_2 AND s_rows = "0111" ELSE
+        x"2" WHEN s_current_state = COLUMN_3 AND s_rows = "1110" ELSE
+        x"5" WHEN s_current_state = COLUMN_3 AND s_rows = "1101" ELSE
+        x"8" WHEN s_current_state = COLUMN_3 AND s_rows = "1011" ELSE
+        x"F" WHEN s_current_state = COLUMN_3 AND s_rows = "0111" ELSE
+        x"3" WHEN s_current_state = COLUMN_4 AND s_rows = "1110" ELSE
+        x"6" WHEN s_current_state = COLUMN_4 AND s_rows = "1101" ELSE
+        x"9" WHEN s_current_state = COLUMN_4 AND s_rows = "1011" ELSE
+        x"E" WHEN s_current_state = COLUMN_4 AND s_rows = "0111" ELSE
+        x"A" WHEN s_current_state = COLUMN_1 AND s_rows = "1110" ELSE
+        x"B" WHEN s_current_state = COLUMN_1 AND s_rows = "1101" ELSE
+        x"C" WHEN s_current_state = COLUMN_1 AND s_rows = "1011" ELSE
+        x"D" WHEN s_current_state = COLUMN_1 AND s_rows = "0111" ELSE
         x"0";
+    pressed <= '1' WHEN s_rows /= "1111" ELSE
+        '0';
 END ARCHITECTURE no_target_specific;

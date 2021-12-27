@@ -7,12 +7,14 @@
 --
 -- Entity:                  keypad_reader_tb
 --
--- Description:             Read in the Pmod Keyboard from Digilent over the 16
---                          pin interface of row and column lines. For more,
---                          see: https://digilent.com/reference/pmod/pmodkypd
+-- Description:             Testbench for keypad_reader entity. Tests that the
+--                          fsm implementation generates valid signals and
+--                          detects the right key presses.
 --
 -- Changes:                 0.1, 2021-12-27, leuen4
 --                              initial version
+--                          0.2, 2021-12-27, leuen4
+--                              also test new "pressed" output
 -- =============================================================================
 
 LIBRARY ieee;
@@ -33,7 +35,8 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
 
             columns : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
             -- hexadecimal value of pressed key, 0 = 0x0, 1 = 0x1, ..., F = 0xF
-            key : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+            key     : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+            pressed : OUT STD_LOGIC
         );
     END COMPONENT keypad_reader;
     -- signals for connecting to the DUT
@@ -42,6 +45,7 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
     SIGNAL s_rows : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";
     SIGNAL s_columns : STD_LOGIC_VECTOR(3 DOWNTO 0);
     SIGNAL s_key : STD_LOGIC_VECTOR(3 DOWNTO 0);
+    SIGNAL s_pressed : STD_LOGIC;
 BEGIN
     -- instantiate the device under test
     dut : keypad_reader
@@ -50,7 +54,8 @@ BEGIN
         n_reset => s_n_reset,
         rows    => s_rows,
         columns => s_columns,
-        key     => s_key
+        key     => s_key,
+        pressed => s_pressed
     );
 
     -- clock with 100 MHz
@@ -78,16 +83,43 @@ BEGIN
         REPORT "Column 4 is not active." SEVERITY failure;
 
         -- test the decoding of "1" key
-        s_rows <= "1110";
+        ASSERT s_pressed = '0'
+        REPORT "Expected no key press." SEVERITY failure;
         WAIT UNTIL s_columns = "1110";
+        s_rows <= "1110";
+        WAIT UNTIL s_columns /= "1110";
+        s_rows <= "1111";
         ASSERT s_key = x"1"
         REPORT "Expected key 1 but got " & to_hstring(s_key) & "." SEVERITY failure;
+        ASSERT s_pressed = '1'
+        REPORT "Expected key press." SEVERITY failure;
+        WAIT UNTIL s_pressed /= '1';
 
         -- test the decoding of "5" key
-        s_rows <= "1101";
+        ASSERT s_pressed = '0'
+        REPORT "Expected no key press." SEVERITY failure;
         WAIT UNTIL s_columns = "1101";
+        s_rows <= "1101";
+        WAIT UNTIL s_columns /= "1101";
+        s_rows <= "1111";
         ASSERT s_key = x"5"
         REPORT "Expected key 5 but got " & to_hstring(s_key) & "." SEVERITY failure;
+        ASSERT s_pressed = '1'
+        REPORT "Expected key press." SEVERITY failure;
+        WAIT UNTIL s_pressed /= '1';
+
+        -- test the decoding of "9" key
+        ASSERT s_pressed = '0'
+        REPORT "Expected no key press." SEVERITY failure;
+        WAIT UNTIL s_columns = "1011";
+        s_rows <= "1011";
+        WAIT UNTIL s_columns /= "1011";
+        s_rows <= "1111";
+        ASSERT s_key = x"9"
+        REPORT "Expected key 9 but got " & to_hstring(s_key) & "." SEVERITY failure;
+        ASSERT s_pressed = '1'
+        REPORT "Expected key press." SEVERITY failure;
+        WAIT UNTIL s_pressed /= '1';
 
         -- report successful test
         REPORT "Test OK";
