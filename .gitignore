@@ -1,10 +1,10 @@
-# run output of vsim / vcom
+# ignore run output of vsim / vcom
 transcript
 stderr
-# generated files by ModelSim
-modelsim/work
-modelsim/*.mti
-# generated files by Quartus
-quartus/db
-quartus/output_files
-quartus/*.qws
+# ignore generated files by ModelSim
+modelsim
+!modlesim/*.mpf
+# ignore generated files by Quartus
+quartus
+!quartus/*.qpf
+!quartus/*.qsf
