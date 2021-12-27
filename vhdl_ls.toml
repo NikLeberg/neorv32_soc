@@ -11,5 +11,6 @@ work.files = [
 ]
 
 testbench.files = [
-    "./vhdl/example_tb.vhdl"
+    "./vhdl/example_tb.vhdl",
+    "./vhdl/keypad_reader_tb.vhdl",
 ]
