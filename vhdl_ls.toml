@@ -10,7 +10,7 @@ work.files = [
     "./vhdl/bin_to_bcd.vhdl",
 ]
 
-testbench.files = [
+    "./vhdl/rpn.vhdl",
     "./vhdl/example_tb.vhdl",
     "./vhdl/keypad_reader_tb.vhdl",
 ]

@@ -10,7 +10,7 @@ if [file exists work] {
 vlib work
 
 # Compile the entity files. Order matters!
-set files "example datatypes keypad_reader keypad_decoder number_input bcd_to_bin bin_to_bcd"
+set files "example datatypes keypad_reader keypad_decoder number_input bcd_to_bin bin_to_bcd rpn"
 foreach file $files {
     echo --------------------------------
     vcom -pedanticerrors -check_synthesis -fsmverbose w -lint -source ../vhdl/${file}.vhdl
