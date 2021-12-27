@@ -24,7 +24,7 @@ USE work.datatypes.ALL;
 ENTITY number_input IS
     PORT (
         clock   : IN STD_LOGIC;
-        reset   : IN STD_LOGIC;
+        n_reset : IN STD_LOGIC;
         number  : IN UNSIGNED(3 DOWNTO 0);
         pressed : IN STD_LOGIC; -- 1 if a new number was pressed
 

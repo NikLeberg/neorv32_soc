@@ -27,9 +27,9 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
     -- component definition for device under test
     COMPONENT keypad_reader
         PORT (
-            clock : IN STD_LOGIC;
-            reset : IN STD_LOGIC;
-            rows  : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+            clock   : IN STD_LOGIC;
+            n_reset : IN STD_LOGIC;
+            rows    : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
 
             columns : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
             -- hexadecimal value of pressed key, 0 = 0x0, 1 = 0x1, ..., F = 0xF
@@ -38,7 +38,7 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
     END COMPONENT keypad_reader;
     -- signals for connecting to the DUT
     SIGNAL s_clock : STD_LOGIC := '0';
-    SIGNAL s_reset : STD_LOGIC := '1';
+    SIGNAL s_n_reset : STD_LOGIC := '0';
     SIGNAL s_rows : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";
     SIGNAL s_columns : STD_LOGIC_VECTOR(3 DOWNTO 0);
     SIGNAL s_key : STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -47,7 +47,7 @@ BEGIN
     dut : keypad_reader
     PORT MAP(
         clock   => s_clock,
-        reset   => s_reset,
+        n_reset => s_n_reset,
         rows    => s_rows,
         columns => s_columns,
         key     => s_key
@@ -57,12 +57,12 @@ BEGIN
     s_clock <= NOT s_clock AFTER 5 ns;
 
     -- power on reset the DUT
-    s_reset <= '1', '0' AFTER 20 ns;
+    s_n_reset <= '0', '1' AFTER 20 ns;
 
     test : PROCESS IS
     BEGIN
         -- wait for power on reset to finish
-        WAIT UNTIL falling_edge(s_reset);
+        WAIT UNTIL rising_edge(s_n_reset);
 
         -- test the cyclic activation of columns
         ASSERT s_columns = "1110"

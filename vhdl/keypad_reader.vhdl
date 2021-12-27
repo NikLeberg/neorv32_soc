@@ -22,9 +22,9 @@ USE ieee.std_logic_1164.ALL;
 
 ENTITY keypad_reader IS
     PORT (
-        clock : IN STD_LOGIC;
-        reset : IN STD_LOGIC;
-        rows  : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+        clock   : IN STD_LOGIC;
+        n_reset : IN STD_LOGIC;
+        rows    : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
 
         columns : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
         -- hexadecimal value of pressed key, 0 = 0x0, 1 = 0x1, ..., F = 0xF
@@ -59,13 +59,13 @@ BEGIN
     -- =========================================================================
     -- Purpose: State memory with synchronous reset
     -- Type:    sequential
-    -- Inputs:  clock, reset, s_next_state
+    -- Inputs:  clock, n_reset, s_next_state
     -- Outputs: s_current_state
     -- =========================================================================
     state_memory : PROCESS (clock) IS
     BEGIN
         IF (rising_edge(clock)) THEN
-            IF (reset = '1') THEN
+            IF (n_reset = '0') THEN
                 s_current_state <= COLUMN_1;
             ELSE
                 s_current_state <= s_next_state;
