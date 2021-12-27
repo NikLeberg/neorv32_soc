@@ -4,22 +4,25 @@
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  example_tb
 --
 -- Description:             Template file for vhdl entity testbench. Here should
 --                          be described how and what will be tested. Note that
 --                          the testbench is free to use non synthesizable
---                          features like wait and finish.
+--                          features like wait and stop.
 --
 -- Changes:                 0.1, 2021-12-10, leuen4
 --                              initial version
+--                          0.2, 2021-12-27, leuen4
+--                              stop simulation with "stop" command
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
+USE std.env.stop;
 
 ENTITY example_tb IS
     -- testbench needs no ports
@@ -81,6 +84,6 @@ BEGIN
 
         -- report successful test
         REPORT "Test OK";
-        WAIT;
+        stop;
     END PROCESS test;
 END ARCHITECTURE simulation;
