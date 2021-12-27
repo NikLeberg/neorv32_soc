@@ -8,9 +8,10 @@ work.files = [
     "./vhdl/number_input.vhdl",
     "./vhdl/bcd_to_bin.vhdl",
     "./vhdl/bin_to_bcd.vhdl",
-]
-
+    
     "./vhdl/rpn.vhdl",
+
     "./vhdl/example_tb.vhdl",
     "./vhdl/keypad_reader_tb.vhdl",
+    "./vhdl/keypad_decoder_tb.vhdl",
 ]

@@ -17,7 +17,7 @@ foreach file $files {
 }
 
 # Compile and run the testbenches. (Testbench file and entity need same name.)
-set testbenches "example_tb keypad_reader_tb"
+set testbenches "example_tb keypad_reader_tb keypad_decoder_tb"
 foreach testbench $testbenches {
     echo --------------------------------
     vcom -2008 -pedanticerrors -check_synthesis -lint -source ../vhdl/${testbench}.vhdl
