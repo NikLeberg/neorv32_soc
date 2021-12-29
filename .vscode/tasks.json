@@ -61,6 +61,20 @@
         {
             "label": "test",
             "command": "../scripts/tests/run.do"
+        },
+        {
+            "label": "gui",
+            "command": "../scripts/tests/gui.do ${fileBasenameNoExtension}",
+            // Overwrite "-c" argument of default vsim shell so instead of the
+            // command line the gui is started.
+            "options": {
+                "shell": {
+                    "args": [
+                        "-do"
+                    ]
+                }
+            },
+            "dependsOn": "test"
         }
     ]
 }
