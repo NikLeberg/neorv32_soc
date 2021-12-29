@@ -77,7 +77,7 @@ BEGIN
     -- =========================================================================
     -- Purpose: Next state logic for FSM
     -- Type:    combinational
-    -- Inputs:  s_current_state, row
+    -- Inputs:  s_current_state
     -- Outputs: s_next_state
     -- =========================================================================
     nsl : PROCESS (s_current_state) IS

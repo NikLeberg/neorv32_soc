@@ -40,7 +40,7 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
         );
     END COMPONENT keypad_reader;
     -- signals for connecting to the DUT
-    SIGNAL s_clock : STD_LOGIC := '0';
+    SIGNAL s_clock : STD_LOGIC := '1';
     SIGNAL s_n_reset : STD_LOGIC := '0';
     SIGNAL s_rows : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";
     SIGNAL s_columns : STD_LOGIC_VECTOR(3 DOWNTO 0);
