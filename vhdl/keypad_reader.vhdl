@@ -35,28 +35,14 @@ END ENTITY keypad_reader;
 
 ARCHITECTURE no_target_specific OF keypad_reader IS
     TYPE state_type IS (
-        COLUMN_1,
-        COLUMN_2,
-        COLUMN_3,
-        COLUMN_4
+        COLUMN_1_SET, COLUMN_1_READ,
+        COLUMN_2_SET, COLUMN_2_READ,
+        COLUMN_3_SET, COLUMN_3_READ,
+        COLUMN_4_SET, COLUMN_4_READ
     );
-    SIGNAL s_current_state : state_type := COLUMN_1;
-    SIGNAL s_next_state : state_type := COLUMN_1;
-    SIGNAL s_rows : STD_LOGIC_VECTOR(3 DOWNTO 0); -- synchronized copy of rows input
+    SIGNAL s_current_state : state_type := COLUMN_1_SET;
+    SIGNAL s_next_state : state_type := COLUMN_1_SET;
 BEGIN
-    -- =========================================================================
-    -- Purpose: Synchronize inputs to clock cycle, e.g. save in register
-    -- Type:    sequential
-    -- Inputs:  clock, rows
-    -- Outputs: s_rows
-    -- =========================================================================
-    sync_inputs : PROCESS (clock) IS
-    BEGIN
-        IF (rising_edge(clock)) THEN
-            s_rows <= rows;
-        END IF;
-    END PROCESS sync_inputs;
-
     -- =========================================================================
     -- Purpose: State memory with synchronous reset
     -- Type:    sequential
@@ -67,7 +53,7 @@ BEGIN
     BEGIN
         IF (rising_edge(clock)) THEN
             IF (n_reset = '0') THEN
-                s_current_state <= COLUMN_1;
+                s_current_state <= COLUMN_1_SET;
             ELSE
                 s_current_state <= s_next_state;
             END IF;
@@ -82,52 +68,60 @@ BEGIN
     -- =========================================================================
     nsl : PROCESS (s_current_state) IS
     BEGIN
-        -- cyclic activation of each column
+        -- cyclic activation of each column, first in set and then in read state
         CASE (s_current_state) IS
-            WHEN COLUMN_1 =>
-                s_next_state <= COLUMN_2;
-            WHEN COLUMN_2 =>
-                s_next_state <= COLUMN_3;
-            WHEN COLUMN_3 =>
-                s_next_state <= COLUMN_4;
-            WHEN COLUMN_4 =>
-                s_next_state <= COLUMN_1;
+            WHEN COLUMN_1_SET =>
+                s_next_state <= COLUMN_1_READ;
+            WHEN COLUMN_1_READ =>
+                s_next_state <= COLUMN_2_SET;
+            WHEN COLUMN_2_SET =>
+                s_next_state <= COLUMN_2_READ;
+            WHEN COLUMN_2_READ =>
+                s_next_state <= COLUMN_3_SET;
+            WHEN COLUMN_3_SET =>
+                s_next_state <= COLUMN_3_READ;
+            WHEN COLUMN_3_READ =>
+                s_next_state <= COLUMN_4_SET;
+            WHEN COLUMN_4_SET =>
+                s_next_state <= COLUMN_4_READ;
+            WHEN COLUMN_4_READ =>
+                s_next_state <= COLUMN_1_SET;
             WHEN OTHERS =>
-                s_next_state <= COLUMN_1;
+                s_next_state <= COLUMN_1_SET;
         END CASE;
     END PROCESS nsl;
 
     -- =========================================================================
     -- Purpose: Output logic for FSM
     -- Type:    combinational
-    -- Inputs:  s_current_state, s_rows
+    -- Inputs:  s_current_state, rows
     -- Outputs: columns, key, pressed
     -- =========================================================================
-    columns <= "1110" WHEN s_current_state = COLUMN_1 ELSE
-        "1101" WHEN s_current_state = COLUMN_2 ELSE
-        "1011" WHEN s_current_state = COLUMN_3 ELSE
-        "0111" WHEN s_current_state = COLUMN_4 ELSE
+    columns <= "1110" WHEN s_current_state = COLUMN_1_SET OR s_current_state = COLUMN_1_READ ELSE
+        "1101" WHEN s_current_state = COLUMN_2_SET OR s_current_state = COLUMN_2_READ ELSE
+        "1011" WHEN s_current_state = COLUMN_3_SET OR s_current_state = COLUMN_3_READ ELSE
+        "0111" WHEN s_current_state = COLUMN_4_SET OR s_current_state = COLUMN_4_READ ELSE
         "1111";
-    -- The column is one state shifted. This is because the row gets
-    -- synchronized to the clock and changes one clock later when the next
-    -- column is already active.
-    key <= x"1" WHEN s_current_state = COLUMN_2 AND s_rows = "1110" ELSE
-        x"4" WHEN s_current_state = COLUMN_2 AND s_rows = "1101" ELSE
-        x"7" WHEN s_current_state = COLUMN_2 AND s_rows = "1011" ELSE
-        x"0" WHEN s_current_state = COLUMN_2 AND s_rows = "0111" ELSE
-        x"2" WHEN s_current_state = COLUMN_3 AND s_rows = "1110" ELSE
-        x"5" WHEN s_current_state = COLUMN_3 AND s_rows = "1101" ELSE
-        x"8" WHEN s_current_state = COLUMN_3 AND s_rows = "1011" ELSE
-        x"F" WHEN s_current_state = COLUMN_3 AND s_rows = "0111" ELSE
-        x"3" WHEN s_current_state = COLUMN_4 AND s_rows = "1110" ELSE
-        x"6" WHEN s_current_state = COLUMN_4 AND s_rows = "1101" ELSE
-        x"9" WHEN s_current_state = COLUMN_4 AND s_rows = "1011" ELSE
-        x"E" WHEN s_current_state = COLUMN_4 AND s_rows = "0111" ELSE
-        x"A" WHEN s_current_state = COLUMN_1 AND s_rows = "1110" ELSE
-        x"B" WHEN s_current_state = COLUMN_1 AND s_rows = "1101" ELSE
-        x"C" WHEN s_current_state = COLUMN_1 AND s_rows = "1011" ELSE
-        x"D" WHEN s_current_state = COLUMN_1 AND s_rows = "0111" ELSE
+    key <= x"1" WHEN s_current_state = COLUMN_1_READ AND rows = "1110" ELSE
+        x"4" WHEN s_current_state = COLUMN_1_READ AND rows = "1101" ELSE
+        x"7" WHEN s_current_state = COLUMN_1_READ AND rows = "1011" ELSE
+        x"0" WHEN s_current_state = COLUMN_1_READ AND rows = "0111" ELSE
+        x"2" WHEN s_current_state = COLUMN_2_READ AND rows = "1110" ELSE
+        x"5" WHEN s_current_state = COLUMN_2_READ AND rows = "1101" ELSE
+        x"8" WHEN s_current_state = COLUMN_2_READ AND rows = "1011" ELSE
+        x"F" WHEN s_current_state = COLUMN_2_READ AND rows = "0111" ELSE
+        x"3" WHEN s_current_state = COLUMN_3_READ AND rows = "1110" ELSE
+        x"6" WHEN s_current_state = COLUMN_3_READ AND rows = "1101" ELSE
+        x"9" WHEN s_current_state = COLUMN_3_READ AND rows = "1011" ELSE
+        x"E" WHEN s_current_state = COLUMN_3_READ AND rows = "0111" ELSE
+        x"A" WHEN s_current_state = COLUMN_4_READ AND rows = "1110" ELSE
+        x"B" WHEN s_current_state = COLUMN_4_READ AND rows = "1101" ELSE
+        x"C" WHEN s_current_state = COLUMN_4_READ AND rows = "1011" ELSE
+        x"D" WHEN s_current_state = COLUMN_4_READ AND rows = "0111" ELSE
         x"0";
-    pressed <= '1' WHEN s_rows /= "1111" ELSE
+    pressed <= '1' WHEN
+        rows /= "1111" AND (
+        s_current_state = COLUMN_1_READ OR s_current_state = COLUMN_2_READ OR
+        s_current_state = COLUMN_3_READ OR s_current_state = COLUMN_4_READ) ELSE
         '0';
 END ARCHITECTURE no_target_specific;

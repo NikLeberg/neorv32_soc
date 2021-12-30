@@ -87,7 +87,7 @@ BEGIN
         REPORT "Expected no key press." SEVERITY failure;
         WAIT UNTIL s_columns = "1110";
         s_rows <= "1110";
-        WAIT UNTIL s_columns /= "1110";
+        WAIT ON s_key;
         s_rows <= "1111";
         ASSERT s_key = x"1"
         REPORT "Expected key 1 but got " & to_hstring(s_key) & "." SEVERITY failure;
@@ -100,7 +100,7 @@ BEGIN
         REPORT "Expected no key press." SEVERITY failure;
         WAIT UNTIL s_columns = "1101";
         s_rows <= "1101";
-        WAIT UNTIL s_columns /= "1101";
+        WAIT ON s_key;
         s_rows <= "1111";
         ASSERT s_key = x"5"
         REPORT "Expected key 5 but got " & to_hstring(s_key) & "." SEVERITY failure;
@@ -113,7 +113,7 @@ BEGIN
         REPORT "Expected no key press." SEVERITY failure;
         WAIT UNTIL s_columns = "1011";
         s_rows <= "1011";
-        WAIT UNTIL s_columns /= "1011";
+        WAIT ON s_key;
         s_rows <= "1111";
         ASSERT s_key = x"9"
         REPORT "Expected key 9 but got " & to_hstring(s_key) & "." SEVERITY failure;
