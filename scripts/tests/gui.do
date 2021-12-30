@@ -4,7 +4,7 @@
 set tb [lindex $argv 0]
 
 # load simulation of given testbench_entity
-vsim $tb
+vsim -t ns $tb
 
 # add all available signals from testbench and dut
 add wave -divider testbench
