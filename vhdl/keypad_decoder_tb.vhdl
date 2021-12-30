@@ -18,7 +18,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE std.env.stop;
 
 LIBRARY work;
 USE work.datatypes.ALL;
@@ -130,6 +129,6 @@ BEGIN
 
         -- report successful test
         REPORT "Test OK";
-        stop;
+        WAIT;
     END PROCESS test;
 END ARCHITECTURE simulation;

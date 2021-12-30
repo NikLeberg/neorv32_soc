@@ -4,7 +4,7 @@
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --                          Reusser Adrian <reusa1@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  example_tb
 --
@@ -17,12 +17,15 @@
 --                              initial version
 --                          0.2, 2021-12-27, leuen4
 --                              stop simulation with "stop" command
+--                          0.3, 2021-12-27, leuen4
+--                              Stop simulation with "WAIT" command, this waits
+--                              until no signals changes anymore. This lets us
+--                              differentiate an assertion failure (triggers a
+--                              break) and a normal simulation exit.
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-USE ieee.numeric_std.ALL;
-USE std.env.stop;
 
 ENTITY example_tb IS
     -- testbench needs no ports
@@ -84,6 +87,6 @@ BEGIN
 
         -- report successful test
         REPORT "Test OK";
-        stop;
+        WAIT;
     END PROCESS test;
 END ARCHITECTURE simulation;

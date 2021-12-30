@@ -19,7 +19,6 @@
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-USE std.env.stop;
 
 ENTITY keypad_reader_tb IS
     -- testbench needs no ports
@@ -39,9 +38,11 @@ ARCHITECTURE simulation OF keypad_reader_tb IS
             pressed : OUT STD_LOGIC
         );
     END COMPONENT keypad_reader;
-    -- signals for connecting to the DUT
+    -- signals for sequential DUTs
     SIGNAL s_clock : STD_LOGIC := '1';
     SIGNAL s_n_reset : STD_LOGIC := '0';
+    SIGNAL s_done : STD_LOGIC := '0';
+    -- signals for connecting to the DUT
     SIGNAL s_rows : STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";
     SIGNAL s_columns : STD_LOGIC_VECTOR(3 DOWNTO 0);
     SIGNAL s_key : STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -59,7 +60,8 @@ BEGIN
     );
 
     -- clock with 100 MHz
-    s_clock <= NOT s_clock AFTER 5 ns;
+    s_clock <= '0' WHEN s_done = '1' ELSE
+        NOT s_clock AFTER 5 ns;
 
     -- power on reset the DUT
     s_n_reset <= '0', '1' AFTER 20 ns;
@@ -123,6 +125,7 @@ BEGIN
 
         -- report successful test
         REPORT "Test OK";
-        stop;
+        s_done <= '1';
+        WAIT;
     END PROCESS test;
 END ARCHITECTURE simulation;
