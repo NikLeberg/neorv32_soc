@@ -13,14 +13,14 @@ if [file exists work] {
 vlib work
 
 # Compile the entity files. Order matters!
-quietly set files "example datatypes keypad_reader keypad_decoder number_input bcd_to_bin bin_to_bcd rpn"
+quietly set files "example datatypes keypad_reader keypad_input keypad_decoder number_input bcd_to_bin bin_to_bcd rpn"
 foreach file $files {
     echo "Compiling file ${file}.vhdl"
     vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint -source ../vhdl/${file}.vhdl
 }
 
 # Compile and run the testbenches. (Testbench file and entity need same name.)
-quietly set testbenches "example_tb keypad_reader_tb keypad_decoder_tb"
+quietly set testbenches "example_tb keypad_reader_tb keypad_input_tb keypad_decoder_tb"
 foreach testbench $testbenches {
     echo "--------------------------------"
     echo "Compiling testbench file ${testbench}.vhdl"
