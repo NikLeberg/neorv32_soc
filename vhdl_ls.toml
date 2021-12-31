@@ -4,7 +4,7 @@ work.files = [
     "./vhdl/example.vhdl",
     "./vhdl/datatypes.vhdl",
     "./vhdl/keypad_reader.vhdl",
-    "./vhdl/keypad_input.vhdl",
+    "./vhdl/keypad_debounce.vhdl",
     "./vhdl/keypad_decoder.vhdl",
     "./vhdl/number_input.vhdl",
     "./vhdl/bcd_to_bin.vhdl",
@@ -14,6 +14,6 @@ work.files = [
 
     "./vhdl/example_tb.vhdl",
     "./vhdl/keypad_reader_tb.vhdl",
-    "./vhdl/keypad_input_tb.vhdl",
+    "./vhdl/keypad_debounce_tb.vhdl",
     "./vhdl/keypad_decoder_tb.vhdl",
 ]

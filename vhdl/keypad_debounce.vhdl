@@ -1,17 +1,17 @@
 -- =============================================================================
--- File:                    keypad_input.vhdl
+-- File:                    keypad_debounce.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
 -- Version:                 0.1
 --
--- Entity:                  keypad_input
+-- Entity:                  keypad_debounce
 --
--- Description:             Gets the current key press from the keypad_input
---                          entity and compares it to a previously entered key.
---                          If a new keypress is detected, generate a signal.
+-- Description:             Debounces keypresses that keypad_reader detects by
+--                          requiring an certain time of no pressed key before a
+--                          keypress is detected as such.
 --
--- Changes:                 0.1, 2021-12-27, leuen4
+-- Changes:                 0.1, 2021-12-30, leuen4
 --                              initial version
 -- =============================================================================
 
@@ -19,7 +19,13 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
-ENTITY keypad_input IS
+ENTITY keypad_debounce IS
+    GENERIC (
+        -- Width of the cooldown value. Internally a counter counts from
+        -- (2^num_bits) - 1 down to 0. Only after the counter reached 0 new key
+        -- presses will be detected. Earlier will be suppressed.
+        num_bits : IN POSITIVE := 24
+    );
     PORT (
         clock   : IN STD_LOGIC;
         n_reset : IN STD_LOGIC;
@@ -27,16 +33,18 @@ ENTITY keypad_input IS
         key     : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
         pressed : IN STD_LOGIC;
 
+        -- Register that saves the last pressed key. Is only valid after output
+        -- "new_pressed" was high once after reset.
         new_key     : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
         new_pressed : OUT STD_LOGIC
     );
-END ENTITY keypad_input;
+END ENTITY keypad_debounce;
 
-ARCHITECTURE no_target_specific OF keypad_input IS
-    CONSTANT c_nbits : POSITIVE := 24;
-    CONSTANT c_timeout : UNSIGNED(c_nbits - 1 DOWNTO 0) := to_unsigned((2 ** c_nbits) - 1, c_nbits);
-    SIGNAL s_current_state : UNSIGNED(c_nbits - 1 DOWNTO 0) := to_unsigned(0, c_nbits);
-    SIGNAL s_next_state : UNSIGNED(c_nbits - 1 DOWNTO 0) := to_unsigned(0, c_nbits);
+ARCHITECTURE no_target_specific OF keypad_debounce IS
+    CONSTANT c_cooldown : UNSIGNED(num_bits - 1 DOWNTO 0) := to_unsigned((2 ** num_bits) - 1, num_bits);
+    CONSTANT c_zero : UNSIGNED(num_bits - 1 DOWNTO 0) := to_unsigned(0, num_bits);
+    SIGNAL s_current_state : UNSIGNED(num_bits - 1 DOWNTO 0) := c_zero;
+    SIGNAL s_next_state : UNSIGNED(num_bits - 1 DOWNTO 0) := c_zero;
     SIGNAL s_last_key : STD_LOGIC_VECTOR(3 DOWNTO 0) := x"0";
 BEGIN
     -- =========================================================================
@@ -49,7 +57,7 @@ BEGIN
     BEGIN
         IF (rising_edge(clock)) THEN
             IF (n_reset = '0') THEN
-                s_current_state <= to_unsigned(0, c_nbits);
+                s_current_state <= c_cooldown;
             ELSE
                 s_current_state <= s_next_state;
             END IF;
@@ -59,48 +67,42 @@ BEGIN
     -- =========================================================================
     -- Purpose: Next state logic for FSM
     -- Type:    combinational
-    -- Inputs:  s_current_state, pressed, key, s_last_key
+    -- Inputs:  s_current_state, pressed
     -- Outputs: s_next_state
     -- =========================================================================
-    nsl : PROCESS (s_current_state, pressed, key, s_last_key) IS
+    nsl : PROCESS (s_current_state, pressed) IS
     BEGIN
         s_next_state <= s_current_state;
-        IF (s_current_state = to_unsigned(0, c_nbits)) THEN
-            -- We are idle and wait for any key press to start.
+        IF (s_current_state = c_zero) THEN
+            -- Counter reached a value of 0. We wait for any key press and then
+            -- restart the counter.
             IF (pressed = '1') THEN
-                s_next_state <= to_unsigned(1, c_nbits);
+                s_next_state <= c_cooldown;
             END IF;
-        ELSIF (s_current_state = c_timeout) THEN
-            -- We have reached the timeout, wrap counter around to 0.
-            s_next_state <= to_unsigned(0, c_nbits);
         ELSE
-            -- Neither idle nor in timeout. We increment the counter if we have
-            -- no key press or if the key pressed is the same as the last key.
-            -- Otherwise we set the counter to 1.
-            IF (pressed = '1' AND key /= s_last_key) THEN
-                s_next_state <= to_unsigned(1, c_nbits);
-            ELSE
-                s_next_state <= s_current_state + 1;
-            END IF;
+            -- Cooldown is still in progress. Count down.
+            s_next_state <= s_current_state - 1;
         END IF;
     END PROCESS nsl;
 
     -- =========================================================================
     -- Purpose: Memory for last pressed key
     -- Type:    sequential
-    -- Inputs:  clock, n_reset, s_next_state
-    -- Outputs: s_current_state
+    -- Inputs:  clock, n_reset, s_current_state, pressed
+    -- Outputs: s_last_key
     -- =========================================================================
     key_memory : PROCESS (clock) IS
     BEGIN
         IF (rising_edge(clock)) THEN
-            -- Every time the next state logic determined a next state / counter
-            -- value of 1 (which means a new key was detected), we save the
-            -- currently pressed key. Reset to 0 on reset signal or timeout.
-            IF (n_reset = '0' OR s_current_state = c_timeout) THEN
-                s_last_key <= x"0";
-            ELSIF (s_next_state = to_unsigned(1, c_nbits)) THEN
+            -- With the same condition the upper next state logic restarts the
+            -- cooldown counter here the value of the currently pressed key is
+            -- saved. The generated signal from the keypad_reader entity is only
+            -- active for one clock cycle, so we can't depend on the counter
+            -- value being c_cooldown as this would be a clock too late.
+            IF (s_current_state = c_zero AND pressed = '1') THEN
                 s_last_key <= key;
+            ELSIF (n_reset = '0') THEN
+                s_last_key <= x"0";
             END IF;
         END IF;
     END PROCESS key_memory;
@@ -111,7 +113,7 @@ BEGIN
     -- Inputs:  s_current_state, s_last_key
     -- Outputs: new_pressed, new_key
     -- =========================================================================
-    new_pressed <= '1' WHEN s_current_state = to_unsigned(1, c_nbits) ELSE
+    new_pressed <= '1' WHEN s_current_state = c_cooldown ELSE
         '0';
     new_key <= s_last_key;
 END ARCHITECTURE no_target_specific;

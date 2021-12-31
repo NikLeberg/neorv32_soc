@@ -44,14 +44,6 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "13:06:58  DECEMBER 27, 2021"
 set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
 set_global_assignment -name LAST_QUARTUS_VERSION "20.1.0 Lite Edition"
-set_global_assignment -name VHDL_FILE ../vhdl/keypad_reader.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/keypad_input.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/datatypes.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/keypad_decoder.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/number_input.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/bin_to_bcd.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/bcd_to_bin.vhdl
-set_global_assignment -name VHDL_FILE ../vhdl/rpn.vhdl
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -63,8 +55,6 @@ set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name TCL_SCRIPT_FILE ../scripts/io_assignment/io_assignment.tcl
-set_global_assignment -name SDC_FILE ../scripts/io_assignment/clocks_sdc.tcl
 set_global_assignment -name RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_location_assignment PIN_E6 -to key[0]
@@ -82,4 +72,18 @@ set_location_assignment PIN_C1 -to rows[1]
 set_location_assignment PIN_B1 -to rows[0]
 set_location_assignment PIN_AA11 -to n_reset
 set_location_assignment PIN_T1 -to clock
+set_location_assignment PIN_D6 -to press_count[0]
+set_location_assignment PIN_H9 -to press_count[1]
+set_location_assignment PIN_F10 -to press_count[2]
+set_location_assignment PIN_G12 -to press_count[3]
+set_global_assignment -name VHDL_FILE ../vhdl/keypad_debounce.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/keypad_reader.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/datatypes.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/keypad_decoder.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/number_input.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/bin_to_bcd.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/bcd_to_bin.vhdl
+set_global_assignment -name VHDL_FILE ../vhdl/rpn.vhdl
+set_global_assignment -name TCL_SCRIPT_FILE ../scripts/io_assignment/io_assignment.tcl
+set_global_assignment -name SDC_FILE ../scripts/io_assignment/clocks_sdc.tcl
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

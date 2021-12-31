@@ -18,10 +18,10 @@ set_location_assignment PIN_J17 -to key[3]
 # set_location_assignment PIN_L16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_11>
 # set_location_assignment PIN_L15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_12>
 
-# set_location_assignment PIN_D6 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_1>
-# set_location_assignment PIN_H9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_2>
-# set_location_assignment PIN_F10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_3>
-# set_location_assignment PIN_G12 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_4>
+set_location_assignment PIN_D6 -to press_count[0]
+set_location_assignment PIN_H9 -to press_count[1]
+set_location_assignment PIN_F10 -to press_count[2]
+set_location_assignment PIN_G12 -to press_count[3]
 # set_location_assignment PIN_E10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_5>
 # set_location_assignment PIN_G14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_6>
 # set_location_assignment PIN_G15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_7>

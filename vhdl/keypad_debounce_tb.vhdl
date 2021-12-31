@@ -1,31 +1,34 @@
 -- =============================================================================
--- File:                    keypad_input_tb.vhdl
+-- File:                    keypad_debounce_tb.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
 -- Version:                 0.1
 --
--- Entity:                  keypad_input_tb
+-- Entity:                  keypad_debounce_tb
 --
--- Description:             Testbench for keypad_input entity. Tests that the
---                          fsm implementation detects continuous key presses as
---                          one key press.
+-- Description:             Testbench for keypad_debounce entity. Tests that the
+--                          fsm implementation detects rapid key presses as one
+--                          key press. Anly after a timeout it is detected as
+--                          new press. This is used to debounce the presses.
 --
--- Changes:                 0.1, 2021-12-27, leuen4
+-- Changes:                 0.1, 2021-12-30, leuen4
 --                              initial version
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-USE std.env.finish;
 
-ENTITY keypad_input_tb IS
+ENTITY keypad_debounce_tb IS
     -- testbench needs no ports
-END ENTITY keypad_input_tb;
+END ENTITY keypad_debounce_tb;
 
-ARCHITECTURE simulation OF keypad_input_tb IS
+ARCHITECTURE simulation OF keypad_debounce_tb IS
     -- component definition for device under test
-    COMPONENT keypad_input
+    COMPONENT keypad_debounce
+        GENERIC (
+            num_bits : IN POSITIVE
+        );
         PORT (
             clock   : IN STD_LOGIC;
             n_reset : IN STD_LOGIC;
@@ -36,7 +39,7 @@ ARCHITECTURE simulation OF keypad_input_tb IS
             new_key     : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
             new_pressed : OUT STD_LOGIC
         );
-    END COMPONENT keypad_input;
+    END COMPONENT keypad_debounce;
     -- signals for sequential DUTs
     SIGNAL s_clock : STD_LOGIC := '1';
     SIGNAL s_n_reset : STD_LOGIC := '0';
@@ -48,7 +51,10 @@ ARCHITECTURE simulation OF keypad_input_tb IS
     SIGNAL s_new_pressed : STD_LOGIC;
 BEGIN
     -- instantiate the device under test
-    dut : keypad_input
+    dut : keypad_debounce
+    GENERIC MAP(
+        num_bits => 2 -- set timeout to a low value
+    )
     PORT MAP(
         clock       => s_clock,
         n_reset     => s_n_reset,
@@ -70,7 +76,20 @@ BEGIN
         -- wait for power on reset to finish
         WAIT UNTIL rising_edge(s_n_reset);
 
-        -- test the detection of new presses
+        -- A key press should not be decected at this time because we are still
+        -- decrementing the timeout counter.
+        s_pressed <= '1';
+        s_key <= x"1";
+        WAIT FOR 10 ns;
+        s_pressed <= '0';
+        s_key <= x"0";
+        WAIT FOR 10 ns;
+        ASSERT s_new_key = x"0" AND s_new_pressed = '0'
+        REPORT "Expected no key press." SEVERITY failure;
+
+        -- Counter counts down from 4 to 0 and eventually should allow for keys
+        -- to be pressed.
+        WAIT FOR 4 * 10 ns;
         s_pressed <= '1';
         s_key <= x"1";
         WAIT FOR 10 ns;
@@ -80,7 +99,7 @@ BEGIN
         ASSERT s_new_key = x"1" AND s_new_pressed = '1'
         REPORT "Did not detect key 1 press." SEVERITY failure;
 
-        -- test the memory of last pressed key
+        -- The value of the last pressed key should be held in memory.
         WAIT FOR 20 ns;
         ASSERT s_new_key = x"1"
         REPORT "Did not remember key 1." SEVERITY failure;
@@ -88,17 +107,8 @@ BEGIN
         ASSERT s_new_key = x"1"
         REPORT "Did not remember key 1." SEVERITY failure;
 
-        -- test that repeated key press of same key is not detected
-        s_pressed <= '1';
-        s_key <= x"1";
-        WAIT FOR 10 ns;
-        s_pressed <= '0';
-        s_key <= x"0";
-        WAIT FOR 10 ns;
-        ASSERT s_new_key = x"1" AND s_new_pressed = '0'
-        REPORT "Should not have detected repeated key 1 press." SEVERITY failure;
-
-        -- test the detection of a second new press
+        -- Cooldown should be reached again. Press a key and follow it up with
+        -- another key press. Only the first should be detected.
         s_pressed <= '1';
         s_key <= x"2";
         WAIT FOR 10 ns;
@@ -107,6 +117,14 @@ BEGIN
         WAIT FOR 10 ns;
         ASSERT s_new_key = x"2" AND s_new_pressed = '1'
         REPORT "Did not detect key 2 press." SEVERITY failure;
+        s_pressed <= '1';
+        s_key <= x"3";
+        WAIT FOR 10 ns;
+        s_pressed <= '0';
+        s_key <= x"0";
+        WAIT FOR 10 ns;
+        ASSERT s_new_key = x"2" AND s_new_pressed = '0'
+        REPORT "Expected no new key press." SEVERITY failure;
 
         -- report successful test
         REPORT "Test OK";
