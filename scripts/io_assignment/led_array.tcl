@@ -9,7 +9,7 @@ set_location_assignment PIN_E6 -to key[0]
 set_location_assignment PIN_J16 -to key[1]
 set_location_assignment PIN_K16 -to key[2]
 set_location_assignment PIN_J17 -to key[3]
-# set_location_assignment PIN_K17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_5>
+set_location_assignment PIN_K17 -to pressed
 # set_location_assignment PIN_J18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_6>
 # set_location_assignment PIN_K18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_7>
 # set_location_assignment PIN_F19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_8>
