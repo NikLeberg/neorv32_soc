@@ -20,8 +20,8 @@
     "files.associations": {
         "*.do": "tcl"
     },
-    // setup a default terminal that launches modelsim in scripting mode
     "terminal.integrated.profiles.windows": {
+        // setup a terminal profile that launches modelsim in scripting mode
         "ModelSim": {
             "path": "vsim",
             "args": [
@@ -29,7 +29,14 @@
                 "-do"
             ],
             "icon": "terminal-cmd"
+        },
+        // setup a terminal profile that launches quartus in scripting mode
+        "Quartus": {
+            "path": "quartus_sh",
+            "args": [
+                "-s"
+            ],
+            "icon": "terminal-cmd"
         }
-    },
-    "terminal.integrated.defaultProfile.windows": "ModelSim"
+    }
 }
