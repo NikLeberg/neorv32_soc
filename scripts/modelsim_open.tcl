@@ -1,16 +1,14 @@
-# run: "vsim -do ../scripts/tests/gui.do <testbench_entity>" from ../modelsim folder
-
 # as first argument the testbench_entity should be given
-set tb [lindex $argv 0]
+set ent [lindex $argv 0]
 
-# load simulation of given testbench_entity
-vsim -t ns $tb
+# load simulation of given entity
+vsim -t ns $ent
 
 # add all available signals from testbench and dut
 add wave -divider testbench
 add wave *
 add wave -divider dut
-add wave dut/*
+catch add wave dut/*
 
 # run simulation until stop, break or wait
 run -all
