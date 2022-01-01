@@ -3,8 +3,5 @@ transcript
 stderr
 # ignore generated files by ModelSim
 modelsim
-!modlesim/*.mpf
 # ignore generated files by Quartus
 quartus
-!quartus/*.qpf
-!quartus/*.qsf
