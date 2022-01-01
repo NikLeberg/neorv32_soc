@@ -3,17 +3,6 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "type": "shell",
-    "options": {
-        "cwd": "./modelsim",
-        // default shell for running .do scripts directly with vsim
-        "shell": {
-            "executable": "vsim",
-            "args": [
-                "-c",
-                "-do"
-            ]
-        }
-    },
     "presentation": {
         "clear": true,
         "showReuseMessage": false
@@ -59,22 +48,110 @@
     ],
     "tasks": [
         {
-            "label": "test",
-            "command": "../scripts/tests/run.do"
+            "label": "modelsim-compile",
+            "command": "../scripts/modelsim_compile.tcl",
+            "options": {
+                "cwd": "./modelsim",
+                // shell for running .tcl scripts with modelsim
+                "shell": {
+                    "executable": "vsim",
+                    "args": [
+                        "-c",
+                        "-do"
+                    ]
+                }
+            }
         },
         {
-            "label": "gui",
-            "command": "../scripts/tests/gui.do ${fileBasenameNoExtension}",
-            // Overwrite "-c" argument of default vsim shell so instead of the
-            // command line the gui is started.
+            "label": "modelsim-test",
+            "command": "../scripts/modelsim_test.tcl",
             "options": {
+                "cwd": "./modelsim",
+                // shell for running .tcl scripts with modelsim
                 "shell": {
+                    "executable": "vsim",
+                    "args": [
+                        "-c",
+                        "-do"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "modelsim-compile"
+            ]
+        },
+        {
+            "label": "modelsim-open",
+            "command": "../scripts/modelsim_open.tcl ${fileBasenameNoExtension}",
+            "options": {
+                "cwd": "./modelsim",
+                // shell for running .tcl scripts with modelsim (gui mode)
+                "shell": {
+                    "executable": "vsim",
                     "args": [
                         "-do"
                     ]
                 }
             },
-            "dependsOn": "test"
+            "dependsOn": "modelsim-test"
+        },
+        {
+            "label": "quartus-project",
+            "command": "../scripts/quartus_project.tcl",
+            "options": {
+                "cwd": "./quartus",
+                // shell for running .tcl scripts with quartus
+                "shell": {
+                    "executable": "quartus_sh",
+                    "args": [
+                        "-t",
+                    ]
+                }
+            }
+        },
+        {
+            "label": "quartus-compile",
+            "command": "../scripts/quartus_compile.tcl",
+            "options": {
+                "cwd": "./quartus",
+                // shell for running .tcl scripts with quartus
+                "shell": {
+                    "executable": "quartus_sh",
+                    "args": [
+                        "-t",
+                    ]
+                }
+            },
+            "dependsOn": [
+                "quartus-project"
+            ]
+        },
+        {
+            "label": "quartus-open",
+            "command": "../scripts/quartus_open.tcl",
+            "options": {
+                "cwd": "./quartus",
+                // shell for running .tcl scripts with quartus
+                "shell": {
+                    "executable": "quartus_sh",
+                    "args": [
+                        "-t",
+                    ]
+                }
+            },
+            "dependsOn": [
+                "quartus-project"
+            ]
+        },
+        {
+            "label": "quartus-flash",
+            "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;rpn.sof'",
+            "options": {
+                "cwd": "./quartus/output_files"
+            },
+            "dependsOn": [
+                "quartus-compile"
+            ]
         }
     ]
 }
