@@ -44,7 +44,7 @@ ARCHITECTURE no_target_specific OF rpn IS
             pressed : OUT STD_LOGIC
         );
     END COMPONENT keypad_reader;
-    -- define component
+    -- define component keypad_debounce
     COMPONENT keypad_debounce IS
         PORT (
             clock   : IN STD_LOGIC;

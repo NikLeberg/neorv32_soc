@@ -17,14 +17,11 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-
-LIBRARY work;
 USE work.datatypes.ALL;
 
 ENTITY keypad_decoder IS
     PORT (
-        key     : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
-        pressed : IN STD_LOGIC;
+        key : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
 
         number   : OUT UNSIGNED(3 DOWNTO 0);
         operator : OUT operator_type
@@ -36,11 +33,10 @@ BEGIN
     -- =========================================================================
     -- Purpose: Converts key to numerical representation
     -- Type:    combinational
-    -- Inputs:  pressed, key
+    -- Inputs:  key
     -- Outputs: number
     -- =========================================================================
-    number <= to_unsigned(0, 4) WHEN pressed = '0' ELSE
-        to_unsigned(0, 4) WHEN key = x"0" ELSE
+    number <= to_unsigned(0, 4) WHEN key = x"0" ELSE
         to_unsigned(1, 4) WHEN key = x"1" ELSE
         to_unsigned(2, 4) WHEN key = x"2" ELSE
         to_unsigned(3, 4) WHEN key = x"3" ELSE
@@ -55,11 +51,10 @@ BEGIN
     -- =========================================================================
     -- Purpose: Converts key to operator representation
     -- Type:    combinational
-    -- Inputs:  pressed, key
+    -- Inputs:  key
     -- Outputs: operator
     -- =========================================================================
-    operator <= NOTHING WHEN pressed = '0' ELSE
-        ADD WHEN key = x"A" ELSE
+    operator <= ADD WHEN key = x"A" ELSE
         SUBTRACT WHEN key = x"B" ELSE
         MULTIPLY WHEN key = x"C" ELSE
         DIVIDE WHEN key = x"D" ELSE

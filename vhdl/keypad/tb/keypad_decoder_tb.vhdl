@@ -18,8 +18,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-
-LIBRARY work;
 USE work.datatypes.ALL;
 
 ENTITY keypad_decoder_tb IS
@@ -30,8 +28,7 @@ ARCHITECTURE simulation OF keypad_decoder_tb IS
     -- component definition for device under test
     COMPONENT keypad_decoder
         PORT (
-            key     : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
-            pressed : IN STD_LOGIC;
+            key : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
 
             number   : OUT UNSIGNED(3 DOWNTO 0);
             operator : OUT operator_type
@@ -39,7 +36,6 @@ ARCHITECTURE simulation OF keypad_decoder_tb IS
     END COMPONENT keypad_decoder;
     -- signals for connecting to the DUT
     SIGNAL s_key : STD_LOGIC_VECTOR(3 DOWNTO 0) := x"0";
-    SIGNAL s_pressed : STD_LOGIC := '0';
     SIGNAL s_number : UNSIGNED(3 DOWNTO 0);
     SIGNAL s_operator : operator_type;
 BEGIN
@@ -47,15 +43,12 @@ BEGIN
     dut : keypad_decoder
     PORT MAP(
         key      => s_key,
-        pressed  => s_pressed,
         number   => s_number,
         operator => s_operator
     );
 
     test : PROCESS IS
     BEGIN
-        s_pressed <= '1';
-
         -- test the decoding of a few numerical keys
         s_key <= x"0";
         WAIT FOR 10 ns;
@@ -107,25 +100,6 @@ BEGIN
         WAIT FOR 10 ns;
         ASSERT s_number = to_unsigned(0, 4) AND s_operator = CHANGE_SIGN
         REPORT "Expected operator CHANGE_SIGN." SEVERITY failure;
-
-        -- test that no conversation is done when nothing is pressed
-        s_pressed <= '0';
-        s_key <= x"2";
-        WAIT FOR 10 ns;
-        ASSERT s_number = to_unsigned(0, 4) AND s_operator = NOTHING
-        REPORT "Expected no number and no operator." SEVERITY failure;
-        s_key <= x"7";
-        WAIT FOR 10 ns;
-        ASSERT s_number = to_unsigned(0, 4) AND s_operator = NOTHING
-        REPORT "Expected no number and no operator." SEVERITY failure;
-        s_key <= x"B";
-        WAIT FOR 10 ns;
-        ASSERT s_number = to_unsigned(0, 4) AND s_operator = NOTHING
-        REPORT "Expected no number and no operator." SEVERITY failure;
-        s_key <= x"F";
-        WAIT FOR 10 ns;
-        ASSERT s_number = to_unsigned(0, 4) AND s_operator = NOTHING
-        REPORT "Expected no number and no operator." SEVERITY failure;
 
         -- report successful test
         REPORT "Test OK";

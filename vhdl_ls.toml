@@ -1,19 +1,22 @@
 [libraries]
 
 work.files = [
-    "./vhdl/example.vhdl",
     "./vhdl/datatypes.vhdl",
-    "./vhdl/keypad_reader.vhdl",
-    "./vhdl/keypad_debounce.vhdl",
-    "./vhdl/keypad_decoder.vhdl",
+
+    "./vhdl/example/example.vhdl",
+
+    "./vhdl/keypad/keypad_reader.vhdl",
+    "./vhdl/keypad/keypad_debounce.vhdl",
+    "./vhdl/keypad/keypad_decoder.vhdl",
+
     "./vhdl/number_input.vhdl",
     "./vhdl/bcd_to_bin.vhdl",
     "./vhdl/bin_to_bcd.vhdl",
     
     "./vhdl/rpn.vhdl",
 
-    "./vhdl/example_tb.vhdl",
-    "./vhdl/keypad_reader_tb.vhdl",
-    "./vhdl/keypad_debounce_tb.vhdl",
-    "./vhdl/keypad_decoder_tb.vhdl",
+    "./vhdl/example/tb/example_tb.vhdl",
+    "./vhdl/keypad/tb/keypad_reader_tb.vhdl",
+    "./vhdl/keypad/tb/keypad_debounce_tb.vhdl",
+    "./vhdl/keypad/tb/keypad_decoder_tb.vhdl",
 ]
