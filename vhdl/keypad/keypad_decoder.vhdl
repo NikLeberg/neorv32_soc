@@ -36,16 +36,7 @@ BEGIN
     -- Inputs:  key
     -- Outputs: number
     -- =========================================================================
-    number <= to_unsigned(0, 4) WHEN key = x"0" ELSE
-        to_unsigned(1, 4) WHEN key = x"1" ELSE
-        to_unsigned(2, 4) WHEN key = x"2" ELSE
-        to_unsigned(3, 4) WHEN key = x"3" ELSE
-        to_unsigned(4, 4) WHEN key = x"4" ELSE
-        to_unsigned(5, 4) WHEN key = x"5" ELSE
-        to_unsigned(6, 4) WHEN key = x"6" ELSE
-        to_unsigned(7, 4) WHEN key = x"7" ELSE
-        to_unsigned(8, 4) WHEN key = x"8" ELSE
-        to_unsigned(9, 4) WHEN key = x"9" ELSE
+    number <= unsigned(key) WHEN unsigned(key) < 10 ELSE
         to_unsigned(0, 4);
 
     -- =========================================================================
