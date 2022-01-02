@@ -15,5 +15,5 @@ quartus:
   image: $CI_REGISTRY/leuen4/container_builder/vhdl_rpn-ci
   script: |
     cd ./quartus
-    vsim -c -do ../scripts/quartus_project.tcl
-    vsim -c -do ../scripts/quartus_compile.tcl
+    quartus_sh -t ../scripts/quartus_project.tcl
+    quartus_sh -t ../scripts/quartus_compile.tcl
