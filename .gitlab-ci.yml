@@ -9,4 +9,5 @@ test:
   stage: test
   script: |
     cd ./modelsim
-    vsim -c -do ../scripts/tests/run.do
+    vsim -c -do ../scripts/modelsim_compile.tcl
+    vsim -c -do ../scripts/modelsim_test.tcl
