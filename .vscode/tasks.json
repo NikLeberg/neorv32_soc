@@ -152,6 +152,10 @@
             "dependsOn": [
                 "quartus-compile"
             ]
+        },
+        {
+            "label": "clean",
+            "command": "Remove-Item -Path quartus/*, modelsim/* -Exclude *gitkeep -Recurse"
         }
     ]
 }
