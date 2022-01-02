@@ -12,7 +12,7 @@ modelsim:
 
 quartus:
   stage: test
-  image: $CI_REGISTRY/leuen4/container_builder/vhdl_rpn
+  image: $CI_REGISTRY/leuen4/container_builder/vhdl_rpn-ci
   script: |
     cd ./quartus
     vsim -c -do ../scripts/quartus_project.tcl
