@@ -12,6 +12,7 @@
             // catches compilation warnings and errors
             // # ** Warning: ../vhdl/example.vhdl(30): (vcom-1400) Synthesis Warning: Signal "a" is read in the process but is not in the sensitivity list.
             // # ** Error: ../vhdl/example.vhdl(31): near "END": (vcom-1576) expecting ';'.
+            "source": "ModelSim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (Error|Warning).*: \\.(.+)\\((\\d+)\\): (.+)$",
@@ -28,6 +29,7 @@
             // # ** Failure: 1 AND 0 should equal 0.
             // #    Time: 20 ns  Iteration: 0  Process: /example_tb/test File: ../vhdl/example_tb.vhdl
             // # Break in Process test at ../vhdl/example_tb.vhdl line 54
+            "source": "ModelSim",
             "pattern": [
                 {
                     "regexp": "\\*\\* Failure: (.+)$",
@@ -44,6 +46,21 @@
             ],
             "severity": "error",
             "fileLocation": "relative"
+        },
+        {
+            // catches compilation warnings and errors
+            // Error (10500): VHDL syntax error at datatypes.vhdl(34) near text "END";  expecting ";" File: datatypes.vhdl Line: 34
+            "source": "Quartus",
+            "pattern": [
+                {
+                    "regexp": "^(Warning|Error) \\([0-9]+\\): (.+) File: (.+) Line: (.+)$",
+                    "severity": 1,
+                    "message": 2,
+                    "file": 3,
+                    "line": 4
+                }
+            ],
+            "fileLocation": "absolute"
         }
     ],
     "tasks": [
