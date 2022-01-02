@@ -17,3 +17,6 @@ quartus:
     cd ./quartus
     quartus_sh -t ../scripts/quartus_project.tcl
     quartus_sh -t ../scripts/quartus_compile.tcl
+  artifacts:
+    paths:
+      - ./quartus/output_files/*.sof
