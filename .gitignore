@@ -2,6 +2,8 @@
 transcript
 stderr
 # ignore generated files by ModelSim
-modelsim
+modelsim/*.*
+!modelsim/*.gitkeep
 # ignore generated files by Quartus
-quartus
+quartus/*.*
+!quartus/*.gitkeep
