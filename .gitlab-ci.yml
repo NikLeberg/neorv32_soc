@@ -1,13 +1,19 @@
-default:
-  # https://github.com/goldenSniperOS/modelsim-docker
-  image: goldensniper/modelsim-docker
-
 stages:
   - test
 
-test:
+modelsim:
   stage: test
+  # https://github.com/goldenSniperOS/modelsim-docker
+  image: goldensniper/modelsim-docker
   script: |
     cd ./modelsim
     vsim -c -do ../scripts/modelsim_compile.tcl
     vsim -c -do ../scripts/modelsim_test.tcl
+
+quartus:
+  stage: test
+  image: $CI_REGISTRY/leuen4/container_builder/vhdl_rpn
+  script: |
+    cd ./quartus
+    vsim -c -do ../scripts/quartus_project.tcl
+    vsim -c -do ../scripts/quartus_compile.tcl
