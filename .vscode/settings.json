@@ -38,5 +38,10 @@
             ],
             "icon": "terminal-cmd"
         }
+    },
+    // auto wrap long text in markdown files
+    "[markdown]": {
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.quickSuggestions": false
     }
 }

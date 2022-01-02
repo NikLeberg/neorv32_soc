@@ -155,7 +155,10 @@
         },
         {
             "label": "clean",
-            "command": "Remove-Item -Path quartus/*, modelsim/* -Exclude *gitkeep -Recurse"
+            "command": "Remove-Item -Path quartus/*, modelsim/* -Exclude *gitkeep -Recurse",
+            "presentation": {
+                "reveal": "silent"
+            }
         }
     ]
 }
