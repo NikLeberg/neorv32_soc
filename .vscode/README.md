@@ -20,7 +20,8 @@ Automatisiert das Arbeiten mit ModelSim und Quartus in dem einige ausführbare T
 - **quartus**
     - **project**: Erzeugt die `.qsf` Projektdatei mit den vorgegebenen VHDL-Dateien und I/O Zuweisungen. (Siehe in [../scripts](../scripts/README.md))
     - **compile**: Kompiliert das Projekt und erzeugt das FPGA Bitfile.
-    - **flash**: Programmiert den angeschlossenen FPGA Chip (volatil) mit dem Bitfile.
+    - **program**: Programmiert den angeschlossenen FPGA Chip (volatil) mit dem Bitfile.
+    - **flash**: Lädt das Bitfile remanent in den Konfigurationsspeicher des FPGA Chips.
     - **open**: Öffnet das Projekt in Quartus um normal in der GUI Umgebung arbeiten zu können. Achtung: Änderungen an Einstellungen gehen verloren wenn der `project` Task erneut ausgeführt wird! Um bleibende Änderungen vorzunehmen sind diese im [Tcl Script](../scripts/quartus_project.tcl) anzupassen.
 - **clean**: Bereinigt die Vielzahl an Dateien die ModelSim und Quartus erzeugen.
 

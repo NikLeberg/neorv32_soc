@@ -58,6 +58,13 @@
                     "message": 2,
                     "file": 3,
                     "line": 4
+                },
+                {
+                    "regexp": "^ +(Warning|Error) \\([0-9]+\\): (.+)$",
+                    "severity": 1,
+                    "message": 2,
+                    // Multiline Message capture is a pending feature of VSCode, see: https://github.com/microsoft/vscode/issues/112686
+                    // "loop": true, 
                 }
             ],
             "fileLocation": "absolute"
@@ -161,10 +168,20 @@
             ]
         },
         {
-            "label": "quartus-flash",
+            "label": "quartus-program",
             "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;rpn.sof'",
             "options": {
                 "cwd": "./quartus/output_files"
+            },
+            "dependsOn": [
+                "quartus-compile"
+            ]
+        },
+        {
+            "label": "quartus-flash",
+            "command": "quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartus_flash.cdf",
+            "options": {
+                "cwd": "./quartus/output_files",
             },
             "dependsOn": [
                 "quartus-compile"
