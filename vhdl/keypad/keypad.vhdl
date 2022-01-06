@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  keypad
 --
@@ -13,6 +13,8 @@
 --
 -- Changes:                 0.1, 2022-01-01, leuen4
 --                              initial version
+--                          0.2, 2022-01-06, leuen4
+--                              Explain setting of num_bits for debounce.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -84,6 +86,10 @@ BEGIN
     );
     -- instantiate keypad_debounce
     debounce : keypad_debounce
+    GENERIC MAP(
+        -- set width of cooldown delay: 24 bits = 16777215 clocks = 0.2 s
+        num_bits => 24
+    )
     PORT MAP(
         clock       => clock,
         n_reset     => n_reset,

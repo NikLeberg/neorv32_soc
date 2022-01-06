@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  keypad_debounce_tb
 --
@@ -14,6 +14,9 @@
 --
 -- Changes:                 0.1, 2021-12-30, leuen4
 --                              initial version
+--                          0.2, 2022-01-06, leuen4
+--                              Counter is no longer set to c_timeout on reset.
+--                              First keypress after reset needs no cooldown.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -76,20 +79,8 @@ BEGIN
         -- wait for power on reset to finish
         WAIT UNTIL rising_edge(s_n_reset);
 
-        -- A key press should not be decected at this time because we are still
-        -- decrementing the timeout counter.
-        s_pressed <= '1';
-        s_key <= x"1";
-        WAIT FOR 10 ns;
-        s_pressed <= '0';
-        s_key <= x"0";
-        WAIT FOR 10 ns;
-        ASSERT s_new_key = x"0" AND s_new_pressed = '0'
-        REPORT "Expected no key press." SEVERITY failure;
-
-        -- Counter counts down from 4 to 0 and eventually should allow for keys
-        -- to be pressed.
-        WAIT FOR 4 * 10 ns;
+        -- Counter start with a value of 0 so the cooldown is already reached
+        -- and allows for keys to be pressed.
         s_pressed <= '1';
         s_key <= x"1";
         WAIT FOR 10 ns;
@@ -107,7 +98,7 @@ BEGIN
         ASSERT s_new_key = x"1"
         REPORT "Did not remember key 1." SEVERITY failure;
 
-        -- Cooldown should be reached again. Press a key and follow it up with
+        -- Cooldown should be reached already. Press a key and follow it up with
         -- another key press. Only the first should be detected.
         s_pressed <= '1';
         s_key <= x"2";

@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  keypad_debounce
 --
@@ -13,6 +13,11 @@
 --
 -- Changes:                 0.1, 2021-12-30, leuen4
 --                              initial version
+--                          0.2, 2022-01-06, leuen4
+--                              Set generic num_bits default value to a low
+--                              number to allow for easier simulation. Also set
+--                              counter value to 0 on reset instead of c_timeout
+--                              to allow for immediate detection of first key.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -24,7 +29,7 @@ ENTITY keypad_debounce IS
         -- Width of the cooldown value. Internally a counter counts from
         -- (2^num_bits) - 1 down to 0. Only after the counter reached 0 new key
         -- presses will be detected. Earlier will be suppressed.
-        num_bits : IN POSITIVE := 24
+        num_bits : POSITIVE := 2
     );
     PORT (
         clock   : IN STD_LOGIC;
@@ -57,7 +62,7 @@ BEGIN
     BEGIN
         IF (rising_edge(clock)) THEN
             IF (n_reset = '0') THEN
-                s_current_state <= c_cooldown;
+                s_current_state <= c_zero;
             ELSE
                 s_current_state <= s_next_state;
             END IF;
