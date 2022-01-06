@@ -29,4 +29,5 @@ set testbenches {
     "keypad_reader_tb"
     "keypad_debounce_tb"
     "keypad_decoder_tb"
+    "keypad_tb"
 }
