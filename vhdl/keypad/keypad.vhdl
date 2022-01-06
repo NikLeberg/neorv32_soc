@@ -53,6 +53,9 @@ ARCHITECTURE no_target_specific OF keypad IS
     END COMPONENT keypad_reader;
     -- define component keypad_debounce
     COMPONENT keypad_debounce IS
+        GENERIC (
+            num_bits : IN POSITIVE
+        );
         PORT (
             clock       : IN STD_LOGIC;
             n_reset     : IN STD_LOGIC;
