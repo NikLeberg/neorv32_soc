@@ -14,8 +14,8 @@ Automatisiert das Arbeiten mit ModelSim und Quartus in dem einige ausführbare T
 
 ### Tasks
 - **modelsim**
-    - **compile**: Kompiliert alle Entitäten (ausser Testbenches) mit ModelSim.
-    - **test**: Kompiliert die Testbenches und führt diese aus.
+    - **compile**: Kompiliert alle Entitäten und Testbenches mit ModelSim.
+    - **test**: Führt die Testbenches aus.
     - **open**: Öffnet die aktuell ausgewählte VHDL-Datei in der ModelSim GUI Simulation.
 - **quartus**
     - **project**: Erzeugt die `.qsf` Projektdatei mit den vorgegebenen VHDL-Dateien und I/O Zuweisungen. (Siehe in [../scripts](../scripts/README.md))

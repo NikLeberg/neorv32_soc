@@ -20,4 +20,11 @@ foreach ent $entities {
     vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint $file
 }
 
+# Compile the testbench files.
+foreach testbench $testbenches {
+    quietly set file [lsearch -inline -glob $files "*/tb/$testbench.vhdl"]
+    echo "Compiling testbench $testbench from file $file"
+    vcom -quiet -2008 -pedanticerrors -check_synthesis -lint $file
+}
+
 quit -f

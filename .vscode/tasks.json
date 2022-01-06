@@ -117,7 +117,7 @@
                     ]
                 }
             },
-            "dependsOn": "modelsim-test"
+            "dependsOn": "modelsim-compile"
         },
         {
             "label": "quartus-project",
