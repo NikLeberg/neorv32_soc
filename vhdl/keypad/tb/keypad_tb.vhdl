@@ -105,26 +105,14 @@ BEGIN
         ASSERT s_number = to_unsigned(1, 4)
         REPORT "Expected number 1 but got " & to_hstring(s_number) & "." SEVERITY failure;
 
-        -- run same test steps again but this time for the "E" key
-        -- (column = 1011, row = 0111)
-        WAIT UNTIL s_columns = "1011" FOR c_timeout;
-        ASSERT s_columns = "1011"
-        REPORT "Columns output was not asserted." SEVERITY failure;
-        s_rows <= "0111";
-        WAIT ON s_columns FOR c_timeout;
-        ASSERT s_columns /= "1011"
-        REPORT "Column output was not de-asserted." SEVERITY failure;
-        s_rows <= "1111";
-        IF s_pressed /= '1' THEN
-            WAIT UNTIL s_pressed = '1' FOR c_timeout;
-        END IF;
-        ASSERT s_pressed = '1'
-        REPORT "Expected key press." SEVERITY failure;
-        WAIT FOR 10 ns;
-        ASSERT s_operator = ENTER
-        REPORT "Expected operator ENTER." SEVERITY failure;
-        ASSERT s_number = to_unsigned(0, 4)
-        REPORT "Expected number 0 but got " & to_hstring(s_number) & "." SEVERITY failure;
+        -- check if decoded key is still saved after a few clocks
+        FOR i IN 10 DOWNTO 0 LOOP
+            WAIT UNTIL rising_edge(s_clock);
+        END LOOP;
+        ASSERT s_operator = NOTHING
+        REPORT "Expected operator NOTHING." SEVERITY failure;
+        ASSERT s_number = to_unsigned(1, 4)
+        REPORT "Expected number 1 but got " & to_hstring(s_number) & "." SEVERITY failure;
 
         -- report successful test
         REPORT "Test OK";
