@@ -65,7 +65,7 @@ BEGIN
 
     -- clock with 100 MHz
     s_clock <= '0' WHEN s_done = '1' ELSE
-        NOT s_clock AFTER 5 ns;
+    NOT s_clock AFTER 5 ns;
 
     -- power on reset the DUT
     s_n_reset <= '0', '1' AFTER 20 ns;
@@ -103,7 +103,7 @@ BEGIN
         ASSERT s_operator = NOTHING
         REPORT "Expected operator NOTHING." SEVERITY failure;
         ASSERT s_number = to_unsigned(1, 4)
-        REPORT "Expected number 1 but got " & to_hstring(s_number) & "." SEVERITY failure;
+        REPORT "Expected number 1 but got " & to_string(s_number) & "." SEVERITY failure;
 
         -- check if decoded key is still saved after a few clocks
         FOR i IN 10 DOWNTO 0 LOOP
@@ -112,7 +112,7 @@ BEGIN
         ASSERT s_operator = NOTHING
         REPORT "Expected operator NOTHING." SEVERITY failure;
         ASSERT s_number = to_unsigned(1, 4)
-        REPORT "Expected number 1 but got " & to_hstring(s_number) & "." SEVERITY failure;
+        REPORT "Expected number 1 but got " & to_string(s_number) & "." SEVERITY failure;
 
         -- report successful test
         REPORT "Test OK";

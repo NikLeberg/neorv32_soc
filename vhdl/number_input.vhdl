@@ -17,8 +17,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-
-LIBRARY work;
 USE work.datatypes.ALL;
 
 ENTITY number_input IS
