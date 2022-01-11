@@ -14,6 +14,10 @@ set entities {
     "keypad_decoder"
     "keypad"
 
+    "math_add"
+    "math_add_carry"
+    "math_sub"
+    "math_mul"
     "number_input"
     "bcd_to_bin"
     "bin_to_bcd"
@@ -30,4 +34,9 @@ set testbenches {
     "keypad_debounce_tb"
     "keypad_decoder_tb"
     "keypad_tb"
+
+    "math_add_tb"
+    "math_add_carry_tb"
+    "math_sub_tb"
+    "math_mul_tb"
 }
