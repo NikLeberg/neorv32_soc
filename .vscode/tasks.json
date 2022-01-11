@@ -29,10 +29,14 @@
             // # ** Failure: 1 AND 0 should equal 0.
             // #    Time: 20 ns  Iteration: 0  Process: /example_tb/test File: ../vhdl/example_tb.vhdl
             // # Break in Process test at ../vhdl/example_tb.vhdl line 54
+            // catches fatal errors
+            // # ** Fatal: (vsim-3734) Index value 2 is out of range 1 downto 0.
+            // #    Time: 0 ns  Iteration: 0  Process: /math_add_tb/test File: ../vhdl/math/tb/math_add_tb.vhdl
+            // # Fatal error in ForLoop loop at ../vhdl/math/tb/math_add_tb.vhdl line 69
             "source": "ModelSim",
             "pattern": [
                 {
-                    "regexp": "\\*\\* Failure: (.+)$",
+                    "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
                     "message": 1
                 },
                 {
@@ -40,7 +44,7 @@
                     "file": 1
                 },
                 {
-                    "regexp": "^.+Break in Process .* at \\.(.+) line (\\d+)$",
+                    "regexp": "^.+(?:Break|Fatal error) in .* at \\.(.+) line (\\d+)$",
                     "line": 2,
                 }
             ],
