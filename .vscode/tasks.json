@@ -40,7 +40,7 @@
                     "message": 1
                 },
                 {
-                    "regexp": "^.+Time:.+Process:.+File: \\.(.+)",
+                    "regexp": "^.+Time:.+File: \\.(.+)",
                     "file": 1
                 },
                 {
