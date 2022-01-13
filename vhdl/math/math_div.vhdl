@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  math_div
 --
@@ -21,6 +21,10 @@
 --
 -- Changes:                 0.1, 2022-01-12, leuen4
 --                              initial version
+--                          0.2, 2022-01-13, leuen4
+--                              Simplify sign conversion by only looking at the
+--                              first bit of the twos complement numbers. Fixes
+--                              also the issue that 0 was converted into -0.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -66,9 +70,9 @@ BEGIN
     -- Inputs:  a, b
     -- Outputs: s_a, s_b
     -- =========================================================================
-    s_a <= unsigned(a) WHEN a > 0 ELSE
+    s_a <= unsigned(a) WHEN a(num_bits - 1) = '0' ELSE
         unsigned(-a);
-    s_b <= unsigned(b) WHEN b > 0 ELSE
+    s_b <= unsigned(b) WHEN b(num_bits - 1) = '0' ELSE
         unsigned(-b);
 
     -- =========================================================================
@@ -118,7 +122,7 @@ BEGIN
     -- =========================================================================
     -- The borrow bits of each step hold the negated magnitude of the division.
     -- The sign of the result is the XOR of the signs of the inputs. 
-    y <= - signed(NOT s_borrow) WHEN (a > 0) XOR (b > 0) ELSE
+    y <= - signed(NOT s_borrow) WHEN (a(num_bits - 1) = '1') XOR (b(num_bits - 1) = '1') ELSE
         signed(NOT s_borrow);
 
     -- =========================================================================

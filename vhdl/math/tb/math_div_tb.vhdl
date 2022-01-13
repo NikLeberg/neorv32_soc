@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  math_div_tb
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2022-01-12, leuen4
 --                              initial version
+--                          0.2, 2022-01-13, leuen4
+--                              fix expected result with division by zero error
 -- =============================================================================
 
 LIBRARY ieee;
@@ -68,9 +70,9 @@ ARCHITECTURE simulation OF math_div_tb IS
         test_vector'(c_min, 1, c_min, '0'), -- INT8_MIN / 1 = INT8_MIN
         -- division by zero
         test_vector'(0, 0, -1, '1'), -- 0 / 0 -> error
-        test_vector'(1, 0, 1, '1'), -- 1 / 0 -> error
-        test_vector'(c_max, 0, 1, '1'), -- INT8_MAX / 0 -> error
-        test_vector'(c_min, 0, -1, '1') -- INT8_MIN / 0 -> error
+        test_vector'(1, 0, -1, '1'), -- 1 / 0 -> error
+        test_vector'(c_max, 0, -1, '1'), -- INT8_MAX / 0 -> error
+        test_vector'(c_min, 0, 1, '1') -- INT8_MIN / 0 -> error
     );
 BEGIN
     -- instantiate the device under test
