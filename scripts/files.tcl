@@ -17,7 +17,9 @@ set entities {
     "math_add"
     "math_add_carry"
     "math_sub"
+    "math_sub_borrow"
     "math_mul"
+    "math_div"
     "number_input"
     "bcd_to_bin"
     "bin_to_bcd"
@@ -38,5 +40,7 @@ set testbenches {
     "math_add_tb"
     "math_add_carry_tb"
     "math_sub_tb"
+    "math_sub_borrow_tb"
     "math_mul_tb"
+    "math_div_tb"
 }
