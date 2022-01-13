@@ -8,13 +8,14 @@
 -- Entity:                  math_mul
 --
 -- Description:             Multiply two numbers together with the combinational
---                          add and shift algorythm. Requires no clock witch
+--                          add and shift algorithm. Requires no clock witch
 --                          makes it very fast but also expensive in silicon
 --                          space. Works also on twos complement representation.
 --                          For an throught explanation of the algorythm and the
 --                          source of this implementation see:
 --                          https://www.cs.utah.edu/~rajeev/cs3810/slides/3810-08.pdf
 --                          https://stackoverflow.com/q/53329810/16034014
+--                          http://wakerly.org/DDPP/DDPP3_mkt/c05samp3.pdf
 --
 -- Note:                    The following VHDL description contains parts for a
 --                          "wide_output" functionality. But it is commented out
