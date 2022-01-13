@@ -20,6 +20,8 @@ set entities {
     "math_sub_borrow"
     "math_mul"
     "math_div"
+    "math_neg"
+
     "number_input"
     "bcd_to_bin"
     "bin_to_bcd"
@@ -43,4 +45,5 @@ set testbenches {
     "math_sub_borrow_tb"
     "math_mul_tb"
     "math_div_tb"
+    "math_neg_tb"
 }
