@@ -25,31 +25,18 @@ ENTITY math_add IS
     PORT (
         -- a + b = y.
         a, b : IN SIGNED(num_bits - 1 DOWNTO 0);
-        y    : OUT SIGNED(num_bits - 1 DOWNTO 0);
-        -- carry
-        c : OUT STD_LOGIC
+        y    : OUT SIGNED(num_bits - 1 DOWNTO 0)
     );
 END ENTITY math_add;
 
 ARCHITECTURE no_target_specific OF math_add IS
-    SIGNAL s_y : signed(num_bits DOWNTO 0);
 BEGIN
     -- =========================================================================
-    -- Purpose: Simple addition with extended variants of the input numbers.
+    -- Purpose: Simple addition with the help of numeric_std library
     -- Type:    combinational
     -- Inputs:  a, b
     -- Outputs: s_y
-    -- =========================================================================
-    -- The given inputs are extended with one additional bit to get a carry
-    -- output.
-    s_y <= resize(a, num_bits + 1) + resize(b, num_bits + 1);
+    -- ========================================================================
+    y <= a + b;
 
-    -- =========================================================================
-    -- Purpose: Set value and carry output
-    -- Type:    combinational
-    -- Inputs:  s_y
-    -- Outputs: y, c
-    -- =========================================================================
-    y <= s_y(num_bits - 1 DOWNTO 0);
-    c <= s_y(num_bits);
 END ARCHITECTURE no_target_specific;
