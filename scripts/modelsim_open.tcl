@@ -8,7 +8,7 @@ vsim -t ns $ent
 add wave -divider testbench
 add wave *
 add wave -divider dut
-catch add wave dut/*
+catch {add wave dut/*}
 
 # run simulation until stop, break or wait
 run -all
