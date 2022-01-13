@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  math_add
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2022-01-06, leuen4
 --                              initial version
+--                          0.2, 2022-01-13, leuen4
+--                              remove carry generation
 -- =============================================================================
 
 LIBRARY ieee;
@@ -35,8 +37,7 @@ BEGIN
     -- Purpose: Simple addition with the help of numeric_std library
     -- Type:    combinational
     -- Inputs:  a, b
-    -- Outputs: s_y
+    -- Outputs: y
     -- ========================================================================
     y <= a + b;
-
 END ARCHITECTURE no_target_specific;
