@@ -21,6 +21,7 @@ set entities {
     "math_mul"
     "math_div"
     "math_neg"
+    "math"
 
     "number_input"
     "bcd_to_bin"
@@ -46,4 +47,5 @@ set testbenches {
     "math_mul_tb"
     "math_div_tb"
     "math_neg_tb"
+    "math_tb"
 }
