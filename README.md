@@ -8,14 +8,23 @@ Ein (ungewöhnlicher) Taschenrechner. Erstellt als Projekt für das Modul BTE502
     - [x] GitLab
     - [x] ModelSim
     - [x] Quartus
-3. [x] Konzept erarbeiten
+3. [x] Grobkonzept erarbeiten
     - [ ] Blockschaltbild
     - [ ] Zeitplan
     - [ ] Modulschnittstellen
 4. [ ] Module implementieren
-    - [ ] Implementation
-    - [ ] Tests in Simulation
-    - [ ] Tests auf Hardware
+    - [x] Keypad - (leuen4)
+    - [ ] 7-Seg Ansteuerung
+    - [ ] BIN -> BCD, BCD -> BIN Wandler
+    - [ ] Zahleneingabe
+    - [x] LIFO Stack (leuen4)
+    - [ ] Stack Anzeige LED
+    - [x] Addierer (leuen4)
+    - [x] Subtrahierer (leuen4)
+    - [x] Multiplizierer (leuen4)
+    - [x] Dividierer (leuen4)
+    - [ ] Ablaufsteuerung rpn FSM
+
 
 ## Projektstruktur
 ```bash
