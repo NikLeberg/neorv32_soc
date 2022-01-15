@@ -27,6 +27,6 @@ Es ist wichtig, dass die Spalten für jeweils mehr als ein Takt (hier zwei Takte
 ```mermaid
 flowchart LR;
     r[\" "\] -.->|reset = 0| 0;
-    0 -->|pressed = 1| 1 --> 2 -->|...| c[counter_max - 1] --> counter_max --> 0
-    -->|pressed = 0| 0
+    0 -->|pressed = 1| counter_max --> c[counter_max - 1] --> d[...] --> 2 --> 1 --> 0;
+    0 -->|pressed = 0| 0
 ```
