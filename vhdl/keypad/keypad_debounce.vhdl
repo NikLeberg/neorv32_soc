@@ -11,6 +11,11 @@
 --                          requiring an certain time of no pressed key before a
 --                          keypress is detected as such.
 --
+-- Note:                    Multiple simultaneous key presses won't be handled
+--                          correctly! Key presses come in serially from the
+--                          reader entity and the key from a lower column always
+--                          wins the race.
+--
 -- Changes:                 0.1, 2021-12-30, leuen4
 --                              initial version
 --                          0.2, 2022-01-06, leuen4

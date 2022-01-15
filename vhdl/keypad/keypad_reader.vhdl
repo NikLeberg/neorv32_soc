@@ -9,7 +9,7 @@
 --
 -- Description:             Read in the Pmod Keyboard from Digilent over the 8
 --                          pin interface of row and column lines. For more,
---                          see: https://digilent.com/reference/pmod/pmodkypd
+--                          see: https://digilent.com/reference/pmod/pmodkypd/
 --
 -- Changes:                 0.1, 2021-12-10, leuen4
 --                              initial version
