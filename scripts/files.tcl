@@ -23,6 +23,9 @@ set entities {
     "math_neg"
     "math"
 
+    "stack_pkg"
+    "stack"
+
     "number_input"
     "bcd_to_bin"
     "bin_to_bcd"
@@ -48,4 +51,6 @@ set testbenches {
     "math_div_tb"
     "math_neg_tb"
     "math_tb"
+
+    "stack_tb"
 }
