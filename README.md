@@ -1,6 +1,7 @@
 # RPN-Rechner in VHDL
 
-Ein (ungewöhnlicher) Taschenrechner. Erstellt als Projekt für das Modul BTE5023 – Elektronische Systeme. Ziel des Projektes ist auf einem [GECKO4-Education](https://gecko-wiki.ti.bfh.ch/gecko4education:start) einen einfachen [reverse Polish notation](https://de.wikipedia.org/wiki/Umgekehrte_polnische_Notation) Rechner zu implementieren. (Siehe [Aufgabenstellung](project-rpn-calculator-de.pdf).)
+Ein (ungewöhnlicher) Taschenrechner. Erstellt als Projekt für das Modul BTE5023 – Elektronische Systeme. Ziel des Projektes ist auf einem [GECKO4-Education](https://gecko-wiki.ti.bfh.ch/gecko4education:start) einen einfachen [reverse Polish notation](https://de.wikipedia.org/wiki/Umgekehrte_polnische_Notation) Rechner zu implementieren.
+Weiteres kann aus der [Aufgabenstellung](project-rpn-calculator-de.pdf) entnommen werden.
 
 ## Projektablauf
 1. [x] Aufgabenstellung analysieren
@@ -68,12 +69,17 @@ quartus_sh -t ../scripts/quartus_project.tcl
 quartus_sh -t ../scripts/quartus_compile.tcl
 ```
 
-3. Programmierung des GECKO-Boards (volatil, nach Entfernung der Stromzufuhr ist das Programm wieder gelöscht):
+3. Volatiles Laden auf das GECKO-Board:
 ```bash
 quartus_pgm -c USB-Blaster --mode jtag --operation='p;rpn.sof'
 ```
 
-- (optional) Öffnen von Quartus GUI:
+- (optional) Permanentes Laden auf das GECKO-Board:
+```bash
+quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartus_flash.cdf
+```
+
+- (optional) Öffnen der Quartus GUI:
 ```bash
 quartus rpn.qpf
 ```
@@ -88,7 +94,10 @@ Wurde das GECKO-Board mit dem Bitfile programmiert und das PmodKYPD ist angeschl
 - **Taste E**: "Enter" oder verschieben einer Zahl in den Stack
 - **Taste F**: Vorzeichenwechsel
 
-Bis zu zehn Zahlen sind im Stack (die LED-Matrix) in binärer Repräsentation sichtbar.
+Bis zu zehn Zahlen sind im Stack (die LED-Matrix) in binärer Repräsentation sichtbar. Jede Zeile an LEDs steht für eine Zahl:
+| LED11 | LED10 | LED9:LED0 |
+|-------|-------|-----------|
+| an wenn belegt | an wenn negativ | Zahl in binärer Repräsentation |
 
 Zum Zurücksetzen des Rechners (Power on Reset) kann die **Taste SW6** des GECKOS gedrückt werden.
 
