@@ -87,7 +87,7 @@ ARCHITECTURE no_target_specific OF math IS
     SIGNAL s_div_zero : STD_LOGIC;
 BEGIN
     -- instantiate all the mathematical sub entities
-    add_ent : math_add
+    add_instance : math_add
     GENERIC MAP(
         num_bits => num_bits
     )
@@ -96,7 +96,7 @@ BEGIN
         b => b,
         y => s_add
     );
-    sub : math_sub
+    sub_instance : math_sub
     GENERIC MAP(
         num_bits => num_bits
     )
@@ -105,7 +105,7 @@ BEGIN
         b => b,
         y => s_sub
     );
-    mul : math_mul
+    mul_instance : math_mul
     GENERIC MAP(
         num_bits => num_bits
     )
@@ -114,7 +114,7 @@ BEGIN
         b => b,
         y => s_mul
     );
-    div : math_div
+    div_instance : math_div
     GENERIC MAP(
         num_bits => num_bits
     )
@@ -124,7 +124,7 @@ BEGIN
         y        => s_div,
         div_zero => s_div_zero
     );
-    neg : math_neg
+    neg_instance : math_neg
     GENERIC MAP(
         num_bits => num_bits
     )
