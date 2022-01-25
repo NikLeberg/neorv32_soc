@@ -18,17 +18,20 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 USE work.datatypes.ALL;
+USE work.stack_pkg.ALL;
 
 ENTITY rpn IS
     PORT (
+        -- clock and reset signals
         clock   : IN STD_LOGIC;
         n_reset : IN STD_LOGIC;
-        rows    : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
 
-        columns     : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
-        key         : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
-        pressed     : OUT STD_LOGIC;
-        press_count : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+        -- hardware interface to the Pmod keyboard
+        rows    : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+        columns : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+
+        -- LED matrix (10 rows x 12 columns, index is row * 12 + column)
+        led_matrix : OUT STD_LOGIC_VECTOR((10 * 12) - 1 DOWNTO 0)
     );
 END ENTITY rpn;
 
@@ -45,10 +48,25 @@ ARCHITECTURE no_target_specific OF rpn IS
             pressed  : OUT STD_LOGIC
         );
     END COMPONENT keypad;
+    -- define component stack
+    COMPONENT stack IS
+        GENERIC (
+            num_bits : POSITIVE;
+            depth    : POSITIVE
+        );
+        PORT (
+            clock     : IN STD_LOGIC;
+            n_reset   : IN STD_LOGIC;
+            push, pop : IN STD_LOGIC;
+            in_value  : IN STD_LOGIC_VECTOR(num_bits - 1 DOWNTO 0);
+            stack     : OUT stack_port_type(depth - 1 DOWNTO 0, num_bits - 1 DOWNTO 0)
+        );
+    END COMPONENT stack;
 
-    SIGNAL s_presses : UNSIGNED(3 DOWNTO 0) := to_unsigned(0, 4);
-    SIGNAL s_new_pressed : STD_LOGIC;
-    SIGNAL s_number : UNSIGNED(3 DOWNTO 0) := to_unsigned(0, 4);
+    SIGNAL s_number : UNSIGNED(3 DOWNTO 0);
+    SIGNAL s_pressed : STD_LOGIC;
+    SIGNAL s_stack : stack_port_type(10 - 1 DOWNTO 0, 12 - 1 DOWNTO 0);
+    SIGNAL s_in : STD_LOGIC_VECTOR(12 - 1 DOWNTO 0);
 BEGIN
     -- instantiate keypad
     keypad_instance : keypad
@@ -59,22 +77,28 @@ BEGIN
         columns  => columns,
         number   => s_number,
         operator => OPEN,
-        pressed  => s_new_pressed
+        pressed  => s_pressed
     );
+    -- instantiate stack
+    stack_instance : stack
+    GENERIC MAP(
+        num_bits => 12,
+        depth    => 10
+    )
+    PORT MAP(
+        clock    => clock,
+        n_reset  => n_reset,
+        push     => s_pressed,
+        pop      => '0',
+        in_value => s_in,
+        stack    => s_stack
+    );
+    s_in <= STD_LOGIC_VECTOR(resize(s_number, 12));
 
-    pro_1 : PROCESS (clock) IS
-    BEGIN
-        IF (rising_edge(clock)) THEN
-            IF (n_reset = '0') THEN
-                s_presses <= to_unsigned(0, 4);
-            ELSIF (s_new_pressed = '1') THEN
-                s_presses <= s_presses + 1;
-            END IF;
-        END IF;
-    END PROCESS pro_1;
-
-    press_count <= STD_LOGIC_VECTOR(s_presses);
-    pressed <= s_new_pressed;
-    key <= STD_LOGIC_VECTOR(s_number);
-
+    -- output stack on leds
+    stack_out_depth : FOR i IN 10 - 1 DOWNTO 0 GENERATE
+        stack_out_width : FOR j IN 12 - 1 DOWNTO 0 GENERATE
+            led_matrix(i * 12 + j) <= s_stack(i, j);
+        END GENERATE;
+    END GENERATE;
 END ARCHITECTURE no_target_specific;

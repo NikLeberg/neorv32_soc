@@ -5,132 +5,132 @@ set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS R
 # You have to replace <ENTITY_PORT_NAME_xxx> with the name of the Output port
 # of your top entity
 
-set_location_assignment PIN_E6 -to key[0]
-set_location_assignment PIN_J16 -to key[1]
-set_location_assignment PIN_K16 -to key[2]
-set_location_assignment PIN_J17 -to key[3]
-set_location_assignment PIN_K17 -to pressed
-# set_location_assignment PIN_J18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_6>
-# set_location_assignment PIN_K18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_7>
-# set_location_assignment PIN_F19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_8>
-# set_location_assignment PIN_J15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_9>
-# set_location_assignment PIN_K15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_10>
-# set_location_assignment PIN_L16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_11>
-# set_location_assignment PIN_L15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED1_12>
+set_location_assignment PIN_E6 -to led_matrix[0]
+set_location_assignment PIN_J16 -to led_matrix[1]
+set_location_assignment PIN_K16 -to led_matrix[2]
+set_location_assignment PIN_J17 -to led_matrix[3]
+set_location_assignment PIN_K17 -to led_matrix[4]
+set_location_assignment PIN_J18 -to led_matrix[5]
+set_location_assignment PIN_K18 -to led_matrix[6]
+set_location_assignment PIN_F19 -to led_matrix[7]
+set_location_assignment PIN_J15 -to led_matrix[8]
+set_location_assignment PIN_K15 -to led_matrix[9]
+set_location_assignment PIN_L16 -to led_matrix[10]
+set_location_assignment PIN_L15 -to led_matrix[11]
 
-set_location_assignment PIN_D6 -to press_count[0]
-set_location_assignment PIN_H9 -to press_count[1]
-set_location_assignment PIN_F10 -to press_count[2]
-set_location_assignment PIN_G12 -to press_count[3]
-# set_location_assignment PIN_E10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_5>
-# set_location_assignment PIN_G14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_6>
-# set_location_assignment PIN_G15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_7>
-# set_location_assignment PIN_G16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_8>
-# set_location_assignment PIN_F14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_9>
-# set_location_assignment PIN_J22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_10>
-# set_location_assignment PIN_K21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_11>
-# set_location_assignment PIN_D19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED2_12>
+set_location_assignment PIN_D6 -to led_matrix[12]
+set_location_assignment PIN_H9 -to led_matrix[13]
+set_location_assignment PIN_F10 -to led_matrix[14]
+set_location_assignment PIN_G12 -to led_matrix[15]
+set_location_assignment PIN_E10 -to led_matrix[16]
+set_location_assignment PIN_G14 -to led_matrix[17]
+set_location_assignment PIN_G15 -to led_matrix[18]
+set_location_assignment PIN_G16 -to led_matrix[19]
+set_location_assignment PIN_F14 -to led_matrix[20]
+set_location_assignment PIN_J22 -to led_matrix[21]
+set_location_assignment PIN_K21 -to led_matrix[22]
+set_location_assignment PIN_D19 -to led_matrix[23]
 
-# set_location_assignment PIN_E5 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_1>
-# set_location_assignment PIN_F8 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_2>
-# set_location_assignment PIN_G10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_3>
-# set_location_assignment PIN_F11 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_4>
-# set_location_assignment PIN_E9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_5>
-# set_location_assignment PIN_H13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_6>
-# set_location_assignment PIN_H14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_7>
-# set_location_assignment PIN_H15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_8>
-# set_location_assignment PIN_G17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_9>
-# set_location_assignment PIN_J21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_10>
-# set_location_assignment PIN_F15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_11>
-# set_location_assignment PIN_F17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED3_12>
+set_location_assignment PIN_E5 -to led_matrix[24]
+set_location_assignment PIN_F8 -to led_matrix[25]
+set_location_assignment PIN_G10 -to led_matrix[26]
+set_location_assignment PIN_F11 -to led_matrix[27]
+set_location_assignment PIN_E9 -to led_matrix[28]
+set_location_assignment PIN_H13 -to led_matrix[29]
+set_location_assignment PIN_H14 -to led_matrix[30]
+set_location_assignment PIN_H15 -to led_matrix[31]
+set_location_assignment PIN_G17 -to led_matrix[32]
+set_location_assignment PIN_J21 -to led_matrix[33]
+set_location_assignment PIN_F15 -to led_matrix[34]
+set_location_assignment PIN_F17 -to led_matrix[35]
 
-# set_location_assignment PIN_B5 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_1>
-# set_location_assignment PIN_G8 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_2>
-# set_location_assignment PIN_H10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_3>
-# set_location_assignment PIN_E11 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_4>
-# set_location_assignment PIN_G7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_5>
-# set_location_assignment PIN_G13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_6>
-# set_location_assignment PIN_D10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_7>
-# set_location_assignment PIN_F12 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_8>
-# set_location_assignment PIN_H16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_9>
-# set_location_assignment PIN_H19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_10>
-# set_location_assignment PIN_E15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_11>
-# set_location_assignment PIN_D17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED4_12>
+set_location_assignment PIN_B5 -to led_matrix[36]
+set_location_assignment PIN_G8 -to led_matrix[37]
+set_location_assignment PIN_H10 -to led_matrix[38]
+set_location_assignment PIN_E11 -to led_matrix[39]
+set_location_assignment PIN_G7 -to led_matrix[40]
+set_location_assignment PIN_G13 -to led_matrix[41]
+set_location_assignment PIN_D10 -to led_matrix[42]
+set_location_assignment PIN_F12 -to led_matrix[43]
+set_location_assignment PIN_H16 -to led_matrix[44]
+set_location_assignment PIN_H19 -to led_matrix[45]
+set_location_assignment PIN_E15 -to led_matrix[46]
+set_location_assignment PIN_D17 -to led_matrix[47]
 
-# set_location_assignment PIN_C4 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_1>
-# set_location_assignment PIN_E7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_2>
-# set_location_assignment PIN_G9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_3>
-# set_location_assignment PIN_H11 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_4>
-# set_location_assignment PIN_F7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_5>
-# set_location_assignment PIN_H12 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_6>
-# set_location_assignment PIN_F9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_7>
-# set_location_assignment PIN_E12 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_8>
-# set_location_assignment PIN_E13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_9>
-# set_location_assignment PIN_H17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_10>
-# set_location_assignment PIN_D15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_11>
-# set_location_assignment PIN_K22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED5_12>
+set_location_assignment PIN_C4 -to led_matrix[48]
+set_location_assignment PIN_E7 -to led_matrix[49]
+set_location_assignment PIN_G9 -to led_matrix[50]
+set_location_assignment PIN_H11 -to led_matrix[51]
+set_location_assignment PIN_F7 -to led_matrix[52]
+set_location_assignment PIN_H12 -to led_matrix[53]
+set_location_assignment PIN_F9 -to led_matrix[54]
+set_location_assignment PIN_E12 -to led_matrix[55]
+set_location_assignment PIN_E13 -to led_matrix[56]
+set_location_assignment PIN_H17 -to led_matrix[57]
+set_location_assignment PIN_D15 -to led_matrix[58]
+set_location_assignment PIN_K22 -to led_matrix[59]
 
-# set_location_assignment PIN_A4 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_1>
-# set_location_assignment PIN_C7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_2>
-# set_location_assignment PIN_A8 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_3>
-# set_location_assignment PIN_A10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_4>
-# set_location_assignment PIN_A14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_5>
-# set_location_assignment PIN_A16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_6>
-# set_location_assignment PIN_A18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_7>
-# set_location_assignment PIN_B20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_8>
-# set_location_assignment PIN_B22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_9>
-# set_location_assignment PIN_E22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_10>
-# set_location_assignment PIN_H21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_11>
-# set_location_assignment PIN_L21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED6_12>
+set_location_assignment PIN_A4 -to led_matrix[60]
+set_location_assignment PIN_C7 -to led_matrix[61]
+set_location_assignment PIN_A8 -to led_matrix[62]
+set_location_assignment PIN_A10 -to led_matrix[63]
+set_location_assignment PIN_A14 -to led_matrix[64]
+set_location_assignment PIN_A16 -to led_matrix[65]
+set_location_assignment PIN_A18 -to led_matrix[66]
+set_location_assignment PIN_B20 -to led_matrix[67]
+set_location_assignment PIN_B22 -to led_matrix[68]
+set_location_assignment PIN_E22 -to led_matrix[69]
+set_location_assignment PIN_H21 -to led_matrix[70]
+set_location_assignment PIN_L21 -to led_matrix[71]
 
-# set_location_assignment PIN_C3 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_1>
-# set_location_assignment PIN_A5 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_2>
-# set_location_assignment PIN_B7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_3>
-# set_location_assignment PIN_B9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_4>
-# set_location_assignment PIN_C13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_5>
-# set_location_assignment PIN_C15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_6>
-# set_location_assignment PIN_C17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_7>
-# set_location_assignment PIN_C19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_8>
-# set_location_assignment PIN_A20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_9>
-# set_location_assignment PIN_D20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_10>
-# set_location_assignment PIN_F20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_11>
-# set_location_assignment PIN_F16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED7_12>
+set_location_assignment PIN_C3 -to led_matrix[72]
+set_location_assignment PIN_A5 -to led_matrix[73]
+set_location_assignment PIN_B7 -to led_matrix[74]
+set_location_assignment PIN_B9 -to led_matrix[75]
+set_location_assignment PIN_C13 -to led_matrix[76]
+set_location_assignment PIN_C15 -to led_matrix[77]
+set_location_assignment PIN_C17 -to led_matrix[78]
+set_location_assignment PIN_C19 -to led_matrix[79]
+set_location_assignment PIN_A20 -to led_matrix[80]
+set_location_assignment PIN_D20 -to led_matrix[81]
+set_location_assignment PIN_F20 -to led_matrix[82]
+set_location_assignment PIN_F16 -to led_matrix[83]
 
-# set_location_assignment PIN_B3 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_1>
-# set_location_assignment PIN_C6 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_2>
-# set_location_assignment PIN_A7 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_3>
-# set_location_assignment PIN_A9 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_4>
-# set_location_assignment PIN_B13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_5>
-# set_location_assignment PIN_B15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_6>
-# set_location_assignment PIN_B17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_7>
-# set_location_assignment PIN_B19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_8>
-# set_location_assignment PIN_C21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_9>
-# set_location_assignment PIN_D21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_10>
-# set_location_assignment PIN_F22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_11>
-# set_location_assignment PIN_E16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED8_12>
+set_location_assignment PIN_B3 -to led_matrix[84]
+set_location_assignment PIN_C6 -to led_matrix[85]
+set_location_assignment PIN_A7 -to led_matrix[86]
+set_location_assignment PIN_A9 -to led_matrix[87]
+set_location_assignment PIN_B13 -to led_matrix[88]
+set_location_assignment PIN_B15 -to led_matrix[89]
+set_location_assignment PIN_B17 -to led_matrix[90]
+set_location_assignment PIN_B19 -to led_matrix[91]
+set_location_assignment PIN_C21 -to led_matrix[92]
+set_location_assignment PIN_D21 -to led_matrix[93]
+set_location_assignment PIN_F22 -to led_matrix[94]
+set_location_assignment PIN_E16 -to led_matrix[95]
 
-# set_location_assignment PIN_A3 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_1>
-# set_location_assignment PIN_B6 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_2>
-# set_location_assignment PIN_C8 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_3>
-# set_location_assignment PIN_C10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_4>
-# set_location_assignment PIN_A13 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_5>
-# set_location_assignment PIN_A15 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_6>
-# set_location_assignment PIN_A17 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_7>
-# set_location_assignment PIN_A19 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_8>
-# set_location_assignment PIN_B21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_9>
-# set_location_assignment PIN_D22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_10>
-# set_location_assignment PIN_F21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_11>
-# set_location_assignment PIN_L22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED9_12>
+set_location_assignment PIN_A3 -to led_matrix[96]
+set_location_assignment PIN_B6 -to led_matrix[97]
+set_location_assignment PIN_C8 -to led_matrix[98]
+set_location_assignment PIN_C10 -to led_matrix[99]
+set_location_assignment PIN_A13 -to led_matrix[100]
+set_location_assignment PIN_A15 -to led_matrix[101]
+set_location_assignment PIN_A17 -to led_matrix[102]
+set_location_assignment PIN_A19 -to led_matrix[103]
+set_location_assignment PIN_B21 -to led_matrix[104]
+set_location_assignment PIN_D22 -to led_matrix[105]
+set_location_assignment PIN_F21 -to led_matrix[106]
+set_location_assignment PIN_L22 -to led_matrix[107]
 
-# set_location_assignment PIN_B4 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_1>
-# set_location_assignment PIN_A6 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_2>
-# set_location_assignment PIN_B8 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_3>
-# set_location_assignment PIN_B10 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_4>
-# set_location_assignment PIN_B14 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_5>
-# set_location_assignment PIN_B16 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_6>
-# set_location_assignment PIN_B18 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_7>
-# set_location_assignment PIN_C20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_8>
-# set_location_assignment PIN_C22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_9>
-# set_location_assignment PIN_E21 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_10>
-# set_location_assignment PIN_H22 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_11>
-# set_location_assignment PIN_H20 -to <ENTITY_PORT_NAME_CONNECTED_TO_LED10_12>
+set_location_assignment PIN_B4 -to led_matrix[108]
+set_location_assignment PIN_A6 -to led_matrix[109]
+set_location_assignment PIN_B8 -to led_matrix[110]
+set_location_assignment PIN_B10 -to led_matrix[111]
+set_location_assignment PIN_B14 -to led_matrix[112]
+set_location_assignment PIN_B16 -to led_matrix[113]
+set_location_assignment PIN_B18 -to led_matrix[114]
+set_location_assignment PIN_C20 -to led_matrix[115]
+set_location_assignment PIN_C22 -to led_matrix[116]
+set_location_assignment PIN_E21 -to led_matrix[117]
+set_location_assignment PIN_H22 -to led_matrix[118]
+set_location_assignment PIN_H20 -to led_matrix[119]
