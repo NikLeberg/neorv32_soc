@@ -63,13 +63,15 @@
                     "file": 3,
                     "line": 4
                 },
-                // {
-                //     "regexp": "^ +(Warning|Error) \\([0-9]+\\): (.+)$",
-                //     "severity": 1,
-                //     "message": 2,
-                //     // Multiline Message capture is a pending feature of VSCode, see: https://github.com/microsoft/vscode/issues/112686
-                //     // "loop": true, 
-                // }
+                {
+                    "regexp": "^ +(Warning|Error) \\([0-9]+\\): (.+) File: (.+) Line: (.+)$",
+                    "severity": 1,
+                    "message": 2,
+                    "file": 3,
+                    "line": 4
+                    // Multiline Message capture is a pending feature of VSCode, see: https://github.com/microsoft/vscode/issues/112686
+                    // "loop": true, 
+                }
             ],
             "fileLocation": "absolute"
         }
