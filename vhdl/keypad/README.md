@@ -9,7 +9,7 @@ Näheres zur Implementation wie z.B. die Ausgangslogik findet sich in der jeweil
 
 ### keypad_reader
 ```mermaid
-flowchart LR;
+flowchart TD;
     S1[COLUMN_1_SET];
     R1[COLUMN_1_READ];
     S2[COLUMN_2_SET];
@@ -25,7 +25,7 @@ Es ist wichtig, dass die Spalten für jeweils mehr als ein Takt (hier zwei Takte
 
 ### keypad_debounce
 ```mermaid
-flowchart LR;
+flowchart TD;
     r[\" "\] -.->|reset = 0| 0;
     0 -->|pressed = 1| counter_max --> c[counter_max - 1] --> d[...] --> 2 --> 1 --> 0;
     0 -->|pressed = 0| 0

@@ -9,22 +9,18 @@ Weiteres kann aus der [Aufgabenstellung](project-rpn-calculator-de.pdf) entnomme
     - [x] GitLab
     - [x] ModelSim
     - [x] Quartus
-3. [x] Grobkonzept erarbeiten
-    - [ ] Blockschaltbild
-    - [ ] Zeitplan
-    - [ ] Modulschnittstellen
-4. [ ] Module implementieren
+3. [ ] Module implementieren
     - [x] Keypad - (leuen4)
-    - [ ] 7-Seg Ansteuerung
-    - [ ] BIN -> BCD, BCD -> BIN Wandler
-    - [ ] Zahleneingabe
+    - [ ] 7-Seg Ansteuerung (reusa1)
+    - [ ] BIN -> BCD, BCD -> BIN Wandler (reusa1)
+    - [ ] Zahleneingabe (reusa1)
     - [x] LIFO Stack (leuen4)
-    - [ ] Stack Anzeige LED
+    - [ ] Stack Anzeige LED (reusa1)
     - [x] Addierer (leuen4)
     - [x] Subtrahierer (leuen4)
     - [x] Multiplizierer (leuen4)
     - [x] Dividierer (leuen4)
-    - [ ] Ablaufsteuerung rpn FSM
+    - [ ] Ablaufsteuerung rpn FSM (reusa1, leuen4)
 
 
 ## Projektstruktur

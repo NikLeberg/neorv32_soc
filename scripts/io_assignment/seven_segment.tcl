@@ -1,38 +1,38 @@
 # You have to replace <ENTITY_PORT_NAME_xxx> with the name of the Output port
 # of your top entity
 
-# set_location_assignment PIN_T3 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_A>
-# set_location_assignment PIN_R6 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_B>
-# set_location_assignment PIN_R5 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_C>
-# set_location_assignment PIN_P7 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_D>
-# set_location_assignment PIN_N8 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_E>
-# set_location_assignment PIN_N7 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_F>
-# set_location_assignment PIN_P8 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_G>
-# set_location_assignment PIN_P6 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG1_DP>
+set_location_assignment PIN_T3 -to seven_seg[0]
+set_location_assignment PIN_R6 -to seven_seg[1]
+set_location_assignment PIN_R5 -to seven_seg[2]
+set_location_assignment PIN_P7 -to seven_seg[3]
+set_location_assignment PIN_N8 -to seven_seg[4]
+set_location_assignment PIN_N7 -to seven_seg[5]
+set_location_assignment PIN_P8 -to seven_seg[6]
+set_location_assignment PIN_P6 -to seven_seg[7]
 
-# set_location_assignment PIN_R10 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_A>
-# set_location_assignment PIN_T9  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_B>
-# set_location_assignment PIN_R9  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_C>
-# set_location_assignment PIN_R8  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_D>
-# set_location_assignment PIN_T7  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_E>
-# set_location_assignment PIN_R7  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_F>
-# set_location_assignment PIN_T4  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_G>
-# set_location_assignment PIN_T8  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG2_DP>
+set_location_assignment PIN_R10 -to seven_seg[8]
+set_location_assignment PIN_T9  -to seven_seg[9]
+set_location_assignment PIN_R9  -to seven_seg[10]
+set_location_assignment PIN_R8  -to seven_seg[11]
+set_location_assignment PIN_T7  -to seven_seg[12]
+set_location_assignment PIN_R7  -to seven_seg[13]
+set_location_assignment PIN_T4  -to seven_seg[14]
+set_location_assignment PIN_T8  -to seven_seg[15]
 
-# set_location_assignment PIN_U9  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_A>
-# set_location_assignment PIN_W8  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_B>
-# set_location_assignment PIN_V8  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_C>
-# set_location_assignment PIN_Y4  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_D>
-# set_location_assignment PIN_T11 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_E>
-# set_location_assignment PIN_R11 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_F>
-# set_location_assignment PIN_T10 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_G>
-# set_location_assignment PIN_W7  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG3_DP>
+set_location_assignment PIN_U9  -to seven_seg[16]
+set_location_assignment PIN_W8  -to seven_seg[17]
+set_location_assignment PIN_V8  -to seven_seg[18]
+set_location_assignment PIN_Y4  -to seven_seg[19]
+set_location_assignment PIN_T11 -to seven_seg[20]
+set_location_assignment PIN_R11 -to seven_seg[21]
+set_location_assignment PIN_T10 -to seven_seg[22]
+set_location_assignment PIN_W7  -to seven_seg[23]
 
-# set_location_assignment PIN_U11 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_A>
-# set_location_assignment PIN_G18 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_B>
-# set_location_assignment PIN_M8  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_C>
-# set_location_assignment PIN_L6  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_D>
-# set_location_assignment PIN_W10 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_E>
-# set_location_assignment PIN_U10 -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_F>
-# set_location_assignment PIN_V9  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_G>
-# set_location_assignment PIN_L7  -to <ENTITY_PORT_NAME_CONNECTED_TO_SEG4_DP>
+set_location_assignment PIN_U11 -to seven_seg[24]
+set_location_assignment PIN_G18 -to seven_seg[25]
+set_location_assignment PIN_M8  -to seven_seg[26]
+set_location_assignment PIN_L6  -to seven_seg[27]
+set_location_assignment PIN_W10 -to seven_seg[28]
+set_location_assignment PIN_U10 -to seven_seg[29]
+set_location_assignment PIN_V9  -to seven_seg[30]
+set_location_assignment PIN_L7  -to seven_seg[31]

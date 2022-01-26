@@ -20,3 +20,32 @@ Folgend ist ein kurzer Überblick gegeben wie diese Unterordner strukturiert sin
 ```
 
 Wichtig ist, dass jede Entität welche verwendet wird, in der Skriptdatei [files.tcl](../scripts/files.tcl) angegeben wird. Ansonsten wird diese nicht in das ModelSim oder Quartus Projekt eingebunden.
+
+## rpn FSM
+
+```mermaid
+flowchart TB;
+    %% initial state
+    r[\" "\] -.->|reset = 0| INPUT_NUMBER;
+
+    %% number input reading
+    INPUT_NUMBER -->|operator = NOTHING| INPUT_NUMBER;
+
+    %% do the math
+    INPUT_NUMBER -->|operator /= NOTHING| PUSH_NEW_TO_STACK;
+    PUSH_NEW_TO_STACK -->|operator /= ENTER| MATH
+    PUSH_NEW_TO_STACK -->|operator = ENTER| INPUT_NUMBER
+
+    %% only one operand was needed
+    MATH -->|operator = CHANGE_SIGN| POP_A_FROM_STACK;
+
+    %% two operands were needed
+    MATH -->|operator /= CHANGE_SIGN| POP_B_FROM_STACK;
+    POP_B_FROM_STACK --> POP_A_FROM_STACK;
+    POP_A_FROM_STACK --> PUSH_TO_STACK;
+    PUSH_TO_STACK --> INPUT_NUMBER;
+
+    %% no operands needed
+    %%INPUT_NUMBER -->|operator = ENTER| PUSH_RESULT_TO_STACK
+
+```

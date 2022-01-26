@@ -29,6 +29,8 @@ set entities {
     "bin_to_bcd"
     "bcd_to_bin"
     "bcd_to_7seg"
+
+    "number_input"
     
     "rpn"
 }
@@ -54,6 +56,8 @@ set testbenches {
 
     "bin_to_bcd_tb"
     "bcd_to_bin_tb"
+
+    "number_input_tb"
 
     "stack_tb"
 }
