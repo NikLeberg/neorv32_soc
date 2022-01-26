@@ -46,38 +46,38 @@ BEGIN
     -- Outputs: bcd
     -- =========================================================================
     double_dabble : PROCESS (bin) IS
-        VARIABLE s_bin : UNSIGNED(num_bits - 1 DOWNTO 0);
-        VARIABLE s_bcd : STD_LOGIC_VECTOR(num_bcd * 4 DOWNTO 0);
+        VARIABLE v_bin : UNSIGNED(num_bits - 1 DOWNTO 0);
+        VARIABLE v_bcd : STD_LOGIC_VECTOR(num_bcd * 4 DOWNTO 0);
         VARIABLE v_digit : UNSIGNED(3 DOWNTO 0);
     BEGIN
         -- Convert given signed binary number to unsigned.
         IF (bin(num_bits - 1) = '0') THEN
-            s_bin := unsigned(bin);
+            v_bin := unsigned(bin);
         ELSE
-            s_bin := unsigned(-bin);
+            v_bin := unsigned(-bin);
         END IF;
-        s_bcd := (OTHERS => '0');
+        v_bcd := (OTHERS => '0');
 
         -- Run the algorithm. Shift [bcd:bin] bits to the left and add 3 if a
         -- bcd digit position is greather than 4.
         FOR i IN 0 TO num_bits - 1 LOOP
             -- Shift [bcd:bin] one to the left.
-            s_bcd(num_bcd * 4 - 1 DOWNTO 0) := s_bcd(num_bcd * 4 - 2 DOWNTO 0) & s_bin(num_bits - 1);
-            s_bin(num_bits - 1 DOWNTO 0) := s_bin(num_bits - 2 DOWNTO 0) & '0';
+            v_bcd(num_bcd * 4 - 1 DOWNTO 0) := v_bcd(num_bcd * 4 - 2 DOWNTO 0) & v_bin(num_bits - 1);
+            v_bin(num_bits - 1 DOWNTO 0) := v_bin(num_bits - 2 DOWNTO 0) & '0';
 
             -- Add 3 to the bcd digit if it is bigger than 4.
             FOR j IN 0 TO num_bcd - 1 LOOP
-                v_digit := UNSIGNED(s_bcd((j * 4) + 3 DOWNTO (j * 4)));
+                v_digit := UNSIGNED(v_bcd((j * 4) + 3 DOWNTO (j * 4)));
                 IF (i < num_bits - 1 AND v_digit > 4) THEN
                     v_digit := v_digit + 3;
                 END IF;
-                s_bcd((j * 4) + 3 DOWNTO (j * 4)) := STD_LOGIC_VECTOR(v_digit);
+                v_bcd((j * 4) + 3 DOWNTO (j * 4)) := STD_LOGIC_VECTOR(v_digit);
             END LOOP;
         END LOOP;
 
         -- Restore sign of input number into highest bit of output.
-        s_bcd(num_bcd * 4) := bin(num_bits - 1);
-        bcd <= s_bcd;
+        v_bcd(num_bcd * 4) := bin(num_bits - 1);
+        bcd <= v_bcd;
     END PROCESS double_dabble;
 
 END ARCHITECTURE no_target_specific;
