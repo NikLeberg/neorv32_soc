@@ -27,6 +27,8 @@ set entities {
     "stack"
 
     "bin_to_bcd"
+    "bcd_to_bin"
+    "bcd_to_7seg"
     
     "rpn"
 }
@@ -51,6 +53,7 @@ set testbenches {
     "math_tb"
 
     "bin_to_bcd_tb"
+    "bcd_to_bin_tb"
 
     "stack_tb"
 }

@@ -67,7 +67,7 @@ BEGIN
             ASSERT s_bin = to_signed(i, c_num_bits)
             REPORT "Failed with positive number " & INTEGER'image(i) &
                 ", returned " & INTEGER'image(to_integer(s_bin)) & "."
-                SEVERITY note;
+                SEVERITY failure;
         END LOOP;
 
         -- test negative values
@@ -83,7 +83,7 @@ BEGIN
             ASSERT s_bin = to_signed(-i, c_num_bits)
             REPORT "Failed with negative number " & INTEGER'image(i) &
                 ", returned " & INTEGER'image(to_integer(s_bin)) & "."
-                SEVERITY note;
+                SEVERITY failure;
         END LOOP;
 
         -- report successful test
