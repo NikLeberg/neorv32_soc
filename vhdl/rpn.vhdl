@@ -76,11 +76,19 @@ ARCHITECTURE no_target_specific OF rpn IS
             bcd : OUT STD_LOGIC_VECTOR(num_bcd * 4 DOWNTO 0)
         );
     END COMPONENT bin_to_bcd;
+    TYPE state_type IS (
+        INPUT_NUMBER, PUSH_NEW_TO_STACK,
+        MATH, POP_B_FROM_STACK,
+        POP_A_FROM_STACK, PUSH_TO_STACK
+    );
 
     SIGNAL s_number : UNSIGNED(3 DOWNTO 0);
     SIGNAL s_pressed : STD_LOGIC;
     SIGNAL s_stack : stack_port_type(10 - 1 DOWNTO 0, 12 - 1 DOWNTO 0);
     SIGNAL s_in : STD_LOGIC_VECTOR(12 - 1 DOWNTO 0);
+    SIGNAL s_operator : operator_type;
+    SIGNAL s_current_state, s_next_state : state_type;
+
 BEGIN
     -- instantiate keypad
     keypad_instance : keypad
@@ -90,7 +98,7 @@ BEGIN
         rows     => rows,
         columns  => columns,
         number   => s_number,
-        operator => OPEN,
+        operator => s_operator,
         pressed  => s_pressed
     );
     -- instantiate stack
@@ -125,4 +133,45 @@ BEGIN
             led_matrix(i * 12 + j) <= s_stack(i, j);
         END GENERATE;
     END GENERATE;
+
+    state_memory : PROCESS (clock) IS
+    BEGIN
+        IF (rising_edge(clock)) THEN
+            IF (n_reset = '0') THEN
+                s_current_state <= INPUT_NUMBER;
+            ELSE
+                s_current_state <= s_next_state;
+            END IF;
+        END IF;
+    END PROCESS state_memory;
+
+    nsl : PROCESS (s_current_state, s_operator) IS
+    BEGIN
+        CASE (s_current_state) IS
+            WHEN INPUT_NUMBER =>
+                IF (s_operator = NOTHING) THEN
+                    s_next_state <= INPUT_NUMBER;
+                ELSE
+                    s_next_state <= PUSH_NEW_TO_STACK;
+                END IF;
+            WHEN PUSH_NEW_TO_STACK =>
+                IF (s_operator = ENTER) THEN
+                    s_next_state <= INPUT_NUMBER;
+                ELSE
+                    s_next_state <= MATH;
+                END IF;
+            WHEN MATH =>
+                IF (s_operator = CHANGE_SIGN) THEN
+                    s_next_state <= POP_A_FROM_STACK;
+                ELSE
+                    s_next_state <= POP_B_FROM_STACK;
+                END IF;
+            WHEN POP_B_FROM_STACK =>
+                s_next_state <= POP_A_FROM_STACK;
+            WHEN POP_A_FROM_STACK =>
+                s_next_state <= INPUT_NUMBER;
+            WHEN OTHERS =>
+                s_next_state <= INPUT_NUMBER;
+        END CASE;
+    END PROCESS nsl;
 END ARCHITECTURE no_target_specific;
