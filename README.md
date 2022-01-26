@@ -11,16 +11,16 @@ Weiteres kann aus der [Aufgabenstellung](project-rpn-calculator-de.pdf) entnomme
     - [x] Quartus
 3. [ ] Module implementieren
     - [x] Keypad - (leuen4)
-    - [ ] 7-Seg Ansteuerung (reusa1)
-    - [ ] BIN -> BCD, BCD -> BIN Wandler (reusa1)
-    - [ ] Zahleneingabe (reusa1)
+    - [x] 7-Seg Ansteuerung (reusa1)
+    - [x] BIN -> BCD, BCD -> BIN Wandler (reusa1)
+    - [x] Zahleneingabe (reusa1)
     - [x] LIFO Stack (leuen4)
-    - [ ] Stack Anzeige LED (reusa1)
+    - [~] Stack Anzeige LED (reusa1)
     - [x] Addierer (leuen4)
     - [x] Subtrahierer (leuen4)
     - [x] Multiplizierer (leuen4)
     - [x] Dividierer (leuen4)
-    - [ ] Ablaufsteuerung rpn FSM (reusa1, leuen4)
+    - [~] Ablaufsteuerung rpn FSM (reusa1, leuen4)
 
 
 ## Projektstruktur
@@ -98,7 +98,7 @@ Bis zu zehn Zahlen sind im Stack (die LED-Matrix) in binärer Repräsentation si
 Zum Zurücksetzen des Rechners (Power on Reset) kann die **Taste SW6** des GECKOS gedrückt werden.
 
 ## Stand des Projekts
-- ToDo
+- Die Haupt FSM die die einzelnen Teile des rpn Rechner zusammensetzen sollte funtioniert (noch) nicht korrekt. Dies konnte leider nicht in eine vernünftigen Zeit behoben werden.
 
 ## Lizenz
 [MIT](LICENSE) © [N. Leuenberger](mailto:leuen4@bfh.ch), [A. Reusser](mailto:reusa1@bfh.ch).
