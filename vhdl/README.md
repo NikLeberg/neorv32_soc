@@ -33,17 +33,19 @@ flowchart TB;
 
     %% do the math
     INPUT_NUMBER -->|operator /= NOTHING| PUSH_NEW_TO_STACK;
-    PUSH_NEW_TO_STACK -->|operator /= ENTER| MATH
-    PUSH_NEW_TO_STACK -->|operator = ENTER| INPUT_NUMBER
+    PUSH_NEW_TO_STACK -->|operator /= ENTER| DO_MATH;
+    PUSH_NEW_TO_STACK -->|operator = ENTER| CLEAR_OP;
+    
 
     %% only one operand was needed
-    MATH -->|operator = CHANGE_SIGN| POP_A_FROM_STACK;
+    DO_MATH -->|operator = CHANGE_SIGN| POP_A_FROM_STACK;
 
     %% two operands were needed
-    MATH -->|operator /= CHANGE_SIGN| POP_B_FROM_STACK;
+    DO_MATH -->|operator /= CHANGE_SIGN| POP_B_FROM_STACK;
     POP_B_FROM_STACK --> POP_A_FROM_STACK;
     POP_A_FROM_STACK --> PUSH_TO_STACK;
-    PUSH_TO_STACK --> INPUT_NUMBER;
+    PUSH_TO_STACK --> CLEAR_OP;
+    CLEAR_OP-->INPUT_NUMBER;
 
     %% no operands needed
     %%INPUT_NUMBER -->|operator = ENTER| PUSH_RESULT_TO_STACK
