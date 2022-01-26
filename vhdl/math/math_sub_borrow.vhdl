@@ -23,7 +23,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE work.datatypes.ALL;
 
 ENTITY math_sub_borrow IS
     GENERIC (

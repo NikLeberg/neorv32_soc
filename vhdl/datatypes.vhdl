@@ -25,12 +25,4 @@ PACKAGE datatypes IS
     -- Keys A - F of keypad are mapped to following operators:
     TYPE operator_type IS (NOTHING, ADD, SUBTRACT, MULTIPLY, DIVIDE, ENTER, CHANGE_SIGN);
 
-    -- BCD representation of numbers
-    TYPE bcd_type IS RECORD
-        ones : UNSIGNED(3 DOWNTO 0); -- 0 - 9 for the right most digit
-        tenths : UNSIGNED(3 DOWNTO 0); -- 0 - 9 for the middle digit
-        hundredths : UNSIGNED(3 DOWNTO 0); -- 0 - 9 for the left most digit
-        negative : STD_LOGIC; -- 1 if negative
-    END RECORD;
-
 END PACKAGE datatypes;

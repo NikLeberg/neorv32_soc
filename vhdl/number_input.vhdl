@@ -17,16 +17,19 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE work.datatypes.ALL;
 
 ENTITY number_input IS
+    GENERIC (
+        -- number of digits
+        num_bcd : POSITIVE
+    );
     PORT (
         clock   : IN STD_LOGIC;
         n_reset : IN STD_LOGIC;
         number  : IN UNSIGNED(3 DOWNTO 0);
         pressed : IN STD_LOGIC; -- 1 if a new number was pressed
 
-        bcd : OUT bcd_type -- BCD representation of the last three numbers
+        bcd : OUT STD_LOGIC_VECTOR(num_bcd * 4 DOWNTO 0)
     );
 END ENTITY number_input;
 

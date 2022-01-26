@@ -17,7 +17,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE work.datatypes.ALL;
 
 ENTITY bin_to_bcd_tb IS
     -- testbench needs no ports
