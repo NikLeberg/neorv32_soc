@@ -9,11 +9,12 @@
 --
 -- Description:             Transform the given bcd value back to a binary value
 --                          by multiplying each bcd value by (1, 10 or 100). We 
---                          could have taken the same algorhytm as bin_to_bcd
+--                          could have taken the same algorithm as bin_to_bcd
 --                          and reverse it. But we decided, to use our own 
 --                          multiplication to calculate the binary value.
 --
--- Changes:                
+-- Changes:                 0.1, 2021-12-15, reusa1
+--                              initial version
 -- =============================================================================
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
@@ -38,14 +39,22 @@ ARCHITECTURE no_target_specific OF bcd_to_bin IS
 
     --the multiplication component is added in oder to use multiplication later
     COMPONENT math_mul
+        GENERIC (
+            num_bits : POSITIVE
+        );
         PORT (
             a, b : IN SIGNED(num_bits - 1 DOWNTO 0);
             y    : OUT SIGNED(num_bits - 1 DOWNTO 0)
         );
     END COMPONENT math_mul;
 BEGIN
-    --
-    add_mul : FOR i IN num_bcd - 1 DOWNTO 0 GENERATE
+    -- =========================================================================
+    -- Purpose: Multiply bcd digits with its "power of ten"
+    -- Type:    combinational
+    -- Inputs:  bcd, s_result
+    -- Outputs: s_result
+    -- =========================================================================
+    power_mul : FOR i IN num_bcd - 1 DOWNTO 0 GENERATE
         digit_0 : IF i = 0 GENERATE
             --the first digit can be left as it is. It needs no multiplication, 
             --but the number has to be risized. 
@@ -73,6 +82,12 @@ BEGIN
         END GENERATE;
     END GENERATE;
 
+    -- =========================================================================
+    -- Purpose: Add all multiplied digits together
+    -- Type:    combinational
+    -- Inputs:  bcd, s_result
+    -- Outputs: bin
+    -- =========================================================================
     add_value : PROCESS (s_result, bcd) IS
         VARIABLE v_add : signed (num_bits - 1 DOWNTO 0);
     BEGIN
