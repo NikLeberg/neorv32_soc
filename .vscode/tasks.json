@@ -175,7 +175,7 @@
         },
         {
             "label": "quartus-program",
-            "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;rpn.sof'",
+            "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;geni.sof'",
             "options": {
                 "cwd": "./quartus/output_files"
             },

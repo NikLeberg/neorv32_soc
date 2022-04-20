@@ -2,12 +2,12 @@
 package require ::quartus::project
 
 # Create project
-project_new "rpn" -overwrite
+project_new "geni" -overwrite
 
 # Assign family, device, and top-level entity
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE15F23C8
-set_global_assignment -name TOP_LEVEL_ENTITY rpn
+set_global_assignment -name TOP_LEVEL_ENTITY geni
 
 # Default settings
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"

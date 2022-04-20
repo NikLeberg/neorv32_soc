@@ -1,27 +1,9 @@
-# RPN-Rechner in VHDL
-
-Ein (ungewöhnlicher) Taschenrechner. Erstellt als Projekt für das Modul BTE5023 – Elektronische Systeme. Ziel des Projektes ist auf einem [GECKO4-Education](https://gecko-wiki.ti.bfh.ch/gecko4education:start) einen einfachen [reverse Polish notation](https://de.wikipedia.org/wiki/Umgekehrte_polnische_Notation) Rechner zu implementieren.
-Weiteres kann aus der [Aufgabenstellung](project-rpn-calculator-de.pdf) entnommen werden.
+# Geni - Funktionsgenerator
+Ein 2-Kanal-Funktionsgenerator mittels Direct Digital Synthesis (DDS). Erstellt als Projekt für das Modul BTE5024 – Anwendungen elektronischer Systeme. Ziel des Projektes ist auf einem [GECKO4-Education](https://gecko-wiki.ti.bfh.ch/gecko4education:start) einen zweikanaligen Funktionsgeneretor mittels [Direct Digital Synthesis](https://de.wikipedia.org/wiki/Direct_Digital_Synthesis) Verfahren zu implementieren.
+Weiteres kann aus der [Aufgabenstellung](dds_project_description_de.pdf) entnommen werden.
 
 ## Projektablauf
-1. [x] Aufgabenstellung analysieren
-2. [x] Projekt aufsetzen
-    - [x] GitLab
-    - [x] ModelSim
-    - [x] Quartus
-3. [ ] Module implementieren
-    - [x] Keypad - (leuen4)
-    - [x] 7-Seg Ansteuerung (reusa1)
-    - [x] BIN -> BCD, BCD -> BIN Wandler (reusa1)
-    - [x] Zahleneingabe (reusa1)
-    - [x] LIFO Stack (leuen4)
-    - [~] Stack Anzeige LED (reusa1)
-    - [x] Addierer (leuen4)
-    - [x] Subtrahierer (leuen4)
-    - [x] Multiplizierer (leuen4)
-    - [x] Dividierer (leuen4)
-    - [~] Ablaufsteuerung rpn FSM (reusa1, leuen4)
-
+ToDo
 
 ## Projektstruktur
 ```bash
@@ -30,7 +12,7 @@ Weiteres kann aus der [Aufgabenstellung](project-rpn-calculator-de.pdf) entnomme
 ├───modelsim    # ModelSim Arbeitsordner, Projektdateien werden mit modelsim_* - Skripts aus dem scripts-Ordner generiert.
 ├───quartus     # Quartus Arbeitsordner, Projektdateien werden mit quartus_* - Skripts aus dem scripts-Ordner generiert.
 ├───scripts     # Tcl Skripts um Projektdateien zu generieren.
-└───vhdl        # VHDL Quelldateien, beschreiben die benötigten rpn entities.
+└───vhdl        # VHDL Quelldateien, beschreiben die benötigten Geni entities.
 ```
 Erweiterte Erläuterungen sind in den jeweiligen `README.md` Dateien der Unterordner gegeben.
 
@@ -67,7 +49,7 @@ quartus_sh -t ../scripts/quartus_compile.tcl
 
 3. Volatiles Laden auf das GECKO-Board:
 ```bash
-quartus_pgm -c USB-Blaster --mode jtag --operation='p;rpn.sof'
+quartus_pgm -c USB-Blaster --mode jtag --operation='p;geni.sof'
 ```
 
 - (optional) Permanentes Laden auf das GECKO-Board:
@@ -77,28 +59,14 @@ quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartu
 
 - (optional) Öffnen der Quartus GUI:
 ```bash
-quartus rpn.qpf
+quartus geni.qpf
 ```
 
 ## Bedienung
-Wurde das GECKO-Board mit dem Bitfile programmiert und das PmodKYPD ist angeschlossen, so kann er als funktionstüchtiger RPN-Rechner verwendet werden. Die Bedienung erfolgt über die Tasten 0 - F:
-- **Ziffern 0 - 9**: Zahleneingabe
-- **Taste A**: Addieren
-- **Taste B**: Subtrahieren
-- **Taste C**: Multiplizieren
-- **Taste D**: Dividieren
-- **Taste E**: "Enter" oder verschieben einer Zahl in den Stack
-- **Taste F**: Vorzeichenwechsel
-
-Bis zu zehn Zahlen sind im Stack (die LED-Matrix) in binärer Repräsentation sichtbar. Jede Zeile an LEDs steht für eine Zahl:
-| LED11 | LED10 | LED9:LED0 |
-|-------|-------|-----------|
-| an wenn belegt | an wenn negativ | Zahl in binärer Repräsentation |
-
-Zum Zurücksetzen des Rechners (Power on Reset) kann die **Taste SW6** des GECKOS gedrückt werden.
+ToDo
 
 ## Stand des Projekts
-- Die Haupt FSM die die einzelnen Teile des rpn Rechner zusammensetzen sollte funtioniert (noch) nicht korrekt. Dies konnte leider nicht in eine vernünftigen Zeit behoben werden.
+ToDo
 
 ## Lizenz
 [MIT](LICENSE) © [N. Leuenberger](mailto:leuen4@bfh.ch), [A. Reusser](mailto:reusa1@bfh.ch).

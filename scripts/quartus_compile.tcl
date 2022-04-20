@@ -2,7 +2,7 @@
 package require ::quartus::project
 
 # Open project
-project_open "rpn"
+project_open "geni"
 
 # Run compile design flow
 load_package flow
