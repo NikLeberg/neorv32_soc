@@ -35,6 +35,8 @@ ARCHITECTURE simulation OF example_tb IS
     -- component definition for device under test
     COMPONENT example
         PORT (
+            clock, n_reset : IN STD_LOGIC;
+
             a : IN STD_LOGIC;
             b : IN STD_LOGIC;
             y : OUT STD_LOGIC
@@ -48,9 +50,11 @@ BEGIN
     -- instantiate the device under test
     dut : example
     PORT MAP(
-        a => s_a,
-        b => s_b,
-        y => s_y
+        clock   => '1',
+        n_reset => '1',
+        a       => s_a,
+        b       => s_b,
+        y       => s_y
     );
 
     -- =========================================================================
