@@ -6,6 +6,9 @@ set files [glob ../vhdl/*.vhdl ../vhdl/**/*.vhdl ../vhdl/**/tb/*.vhdl]
 # entity file and entity itself have the same name.)
 set entities {
     "example"
+
+    "inc"
+    "dac"
     
     "geni"
 }
