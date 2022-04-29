@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  dac
 --
@@ -17,6 +17,8 @@
 --                              interface definition
 --                          0.2, 2022-04-29, leuen4
 --                              initial implementation
+--                          0.3, 2022-04-29, leuen4
+--                              rename signals for clarity
 -- =============================================================================
 
 LIBRARY ieee;
@@ -38,10 +40,10 @@ END ENTITY dac;
 
 ARCHITECTURE no_target_specific OF dac IS
     -- Use a 6 bit counter as FSM state. MSB indicates active channel a or b.
-    SIGNAL s_current_state, s_next_state : unsigned(5 DOWNTO 0);
-    -- Helper signals, MSB of counter, counter state except MSB
-    SIGNAL s_state_msb : STD_LOGIC;
-    SIGNAL s_state_lower : UNSIGNED(s_current_state'HIGH - 1 DOWNTO 0);
+    SIGNAL s_counter : unsigned(5 DOWNTO 0);
+    -- Helper signals, MSB of counter and rest of counter except MSB
+    SIGNAL s_counter_msb : STD_LOGIC;
+    SIGNAL s_counter_lower : UNSIGNED(s_counter'HIGH - 1 DOWNTO 0);
 
     -- 24 bit shift register.
     SIGNAL s_shift_reg : STD_LOGIC_VECTOR(23 DOWNTO 0);
@@ -58,27 +60,27 @@ BEGIN
     -- =========================================================================
     -- Purpose: State memory i.e. up-counter, with synchronous reset
     -- Type:    sequential
-    -- Inputs:  clock, n_reset, s_next_state
-    -- Outputs: s_current_state
+    -- Inputs:  clock, n_reset
+    -- Outputs: s_counter
     -- =========================================================================
-    state_memory : PROCESS (clock) IS
+    count_up : PROCESS (clock) IS
     BEGIN
         IF (rising_edge(clock)) THEN
             IF (n_reset = '0') THEN
-                s_current_state <= (OTHERS => '0');
+                s_counter <= (OTHERS => '0');
             ELSE
-                s_current_state <= s_current_state + 1;
+                s_counter <= s_counter + 1;
             END IF;
         END IF;
-    END PROCESS state_memory;
+    END PROCESS count_up;
     -- helper signals
-    s_state_msb <= s_current_state(s_current_state'HIGH);
-    s_state_lower <= s_current_state(s_current_state'HIGH - 1 DOWNTO 0);
+    s_counter_msb <= s_counter(s_counter'HIGH);
+    s_counter_lower <= s_counter(s_counter'HIGH - 1 DOWNTO 0);
 
     -- =========================================================================
     -- Purpose: Shift register for serial data output
     -- Type:    sequential
-    -- Inputs:  clock, n_reset, s_current_state
+    -- Inputs:  clock, n_reset, s_counter
     -- Outputs: s_shift_reg
     -- =========================================================================
     shift_register : PROCESS (clock) IS
@@ -90,8 +92,8 @@ BEGIN
                 -- On a counter value of 0 (except MSB) init the data for the
                 -- shift register. Depending on counter MSB a or b is loaded. On
                 -- any other value, the shift register is shifted to the left.
-                IF (s_state_lower = 0) THEN
-                    IF (s_state_msb = '0') THEN
+                IF (s_counter_lower = 0) THEN
+                    IF (s_counter_msb = '0') THEN
                         s_shift_reg <=
                             c_command_update & c_address_a & STD_LOGIC_VECTOR(a) & c_dont_care;
                     ELSE
@@ -109,13 +111,13 @@ BEGIN
     -- =========================================================================
     -- Purpose: Output logic
     -- Type:    combinational
-    -- Inputs:  s_current_state, s_last_key
+    -- Inputs:  s_counter, s_last_key
     -- Outputs: new_pressed, new_key
     -- =========================================================================
     -- Data is serially sent out MSB first.
     mosi <= s_shift_reg(s_shift_reg'HIGH);
     -- Chip select is low from count 1 to 25 while valid data is being sent out.
-    cs <= '0' WHEN s_state_lower < 25 AND s_state_lower /= 0 ELSE
+    cs <= '0' WHEN s_counter_lower < 25 AND s_counter_lower /= 0 ELSE
         '1';
     -- Our system is synchronized on the rising clock. As the SPI interface is
     -- also synchronized on the rising edge, use an inverted clock to satisfy
