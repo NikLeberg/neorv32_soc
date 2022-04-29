@@ -7,6 +7,8 @@ set files [glob ../vhdl/*.vhdl ../vhdl/**/*.vhdl ../vhdl/**/tb/*.vhdl]
 set entities {
     "example"
 
+    "save_io"
+
     "inc"
     "dac"
     
@@ -17,6 +19,8 @@ set entities {
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
     "example_tb"
+    
+    "save_io_tb"
 
     "dac_tb"
 }
