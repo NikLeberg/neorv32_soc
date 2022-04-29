@@ -17,4 +17,6 @@ set entities {
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
     "example_tb"
+
+    "dac_tb"
 }
