@@ -1,30 +1,32 @@
 -- =============================================================================
--- File:                    save_io_tb.vhdl
+-- File:                    safe_io_tb.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
--- Entity:                  save_io_tb
+-- Entity:                  safe_io_tb
 --
--- Description:             Testbench for save_io entity. Checks if the inputs
+-- Description:             Testbench for safe_io entity. Checks if the inputs
 --                          are correctly synced and debounced.
 --
 -- Changes:                 0.1, 2022-04-29, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-04, leuen4
+--                              minor formatting improvements
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
-ENTITY save_io_tb IS
+ENTITY safe_io_tb IS
     -- Testbench needs no ports.
-END ENTITY save_io_tb;
+END ENTITY safe_io_tb;
 
-ARCHITECTURE simulation OF save_io_tb IS
+ARCHITECTURE simulation OF safe_io_tb IS
     -- Component definition for device under test.
-    COMPONENT save_io
+    COMPONENT safe_io
         GENERIC (
             N_COUNTER_BITS : POSITIVE
         );
@@ -34,7 +36,7 @@ ARCHITECTURE simulation OF save_io_tb IS
             x : IN STD_LOGIC;
             y : OUT STD_LOGIC
         );
-    END COMPONENT save_io;
+    END COMPONENT safe_io;
     -- Signals for sequential DUTs.
     SIGNAL s_clock : STD_LOGIC := '1';
     SIGNAL s_n_reset : STD_LOGIC := '0';
@@ -44,7 +46,7 @@ ARCHITECTURE simulation OF save_io_tb IS
 
 BEGIN
     -- Instantiate the device under test.
-    dut : save_io
+    dut : safe_io
     GENERIC MAP(
         N_COUNTER_BITS => 2 -- total delay of 2^2 + 2 = 6 cycles
     )
@@ -57,7 +59,7 @@ BEGIN
 
     -- Clock with 50 MHz.
     s_clock <= '0' WHEN s_done = '1' ELSE
-    NOT s_clock AFTER 10 ns;
+        NOT s_clock AFTER 10 ns;
 
     -- Power on reset the DUT, lasts two clock cycles.
     s_n_reset <= '0', '1' AFTER 40 ns;
@@ -80,8 +82,8 @@ BEGIN
             END LOOP;
             ASSERT s_y = y
             REPORT "Expected y to be " & STD_LOGIC'image(y) & " but got " &
-            STD_LOGIC'image(s_y) & "."
-            SEVERITY failure;
+                STD_LOGIC'image(s_y) & "."
+                SEVERITY failure;
             -- Restore initial simulation conditions: x is 0, y is 0 and
             -- simulation is in sync with the clock.
             s_x <= '0';

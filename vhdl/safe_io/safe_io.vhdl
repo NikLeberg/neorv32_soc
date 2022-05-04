@@ -1,11 +1,11 @@
 -- =============================================================================
--- File:                    save_io.vhdl
+-- File:                    safe_io.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
--- Entity:                  save_io
+-- Entity:                  safe_io
 --
 -- Description:             Processes direct I/O pins and makes them usable for
 --                          inside the FPGA. The input gets synchronized to the
@@ -18,25 +18,27 @@
 --
 -- Changes:                 0.1, 2022-04-29, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-04, leuen4
+--                              minor formatting improvements
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
-ENTITY save_io IS
+ENTITY safe_io IS
     GENERIC (
         N_COUNTER_BITS : POSITIVE := 2 -- width for counter, counts to 2^N
     );
     PORT (
         clock, n_reset : IN STD_LOGIC;
 
-        x : IN STD_LOGIC; -- unsave, hazardous, bouncy, direct I/O pin
-        y : OUT STD_LOGIC -- save, synchronized, debounced, FPGA signal
+        x : IN STD_LOGIC; -- unsafe, hazardous, bouncy, direct I/O pin
+        y : OUT STD_LOGIC -- safe, synchronized, debounced, FPGA signal
     );
-END ENTITY save_io;
+END ENTITY safe_io;
 
-ARCHITECTURE no_target_specific OF save_io IS
+ARCHITECTURE no_target_specific OF safe_io IS
     -- Signals for shift register i.e. two flip-flops in a row for input sync.
     SIGNAL s_sync : STD_LOGIC_VECTOR(1 DOWNTO 0);
     SIGNAL s_synced : STD_LOGIC;
@@ -58,7 +60,7 @@ BEGIN
         IF (rising_edge(clock)) THEN
             IF (n_reset = '0') THEN
                 s_sync <= (OTHERS => '0');
-                ELSE
+            ELSE
                 -- Route direct I/O through two flip-flops to remove hazards.
                 s_sync <= s_sync(s_sync'HIGH - 1 DOWNTO 0) & x;
             END IF;
@@ -79,14 +81,14 @@ BEGIN
             IF (n_reset = '0') THEN
                 s_count <= (OTHERS => '0');
                 s_debounced <= '0';
-                ELSE
+            ELSE
                 -- Count up if input level has changed. If it changes back, the
                 -- counter is reset to zero. Only if the change has lasted for
                 -- more than 2^N clocks it is let trought.
                 IF (s_synced /= s_debounced) THEN
                     s_count <= s_count + 1;
-                    ELSE
-                    s_count <= to_unsigned(0, N_COUNTER_BITS);
+                ELSE
+                    s_count <= (OTHERS => '0');
                 END IF;
                 IF (s_count = c_max_count) THEN
                     s_debounced <= s_synced;

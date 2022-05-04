@@ -11,7 +11,7 @@ set files [glob                                                                \
 set entities {
     "example"
 
-    "save_io"
+    "safe_io"
 
     "inc"
     "dac"
@@ -24,7 +24,7 @@ set entities {
 set testbenches {
     "example_tb"
     
-    "save_io_tb"
+    "safe_io_tb"
 
     "dac_tb"
 }
