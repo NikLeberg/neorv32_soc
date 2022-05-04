@@ -3,4 +3,6 @@ work.files = [
     "./vhdl/*.vhdl",
     "./vhdl/**/*.vhdl",
     "./vhdl/**/tb/*.vhdl",
+    "./vhdl/**/**/*.vhdl",
+    "./vhdl/**/**/tb/*.vhdl",
 ]

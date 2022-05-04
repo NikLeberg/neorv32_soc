@@ -1,6 +1,10 @@
 # Gather all available vhdl source files. (This assumes the vhdl entities are
 # organized in subfolders and have their testbenches in a tb subfolders.)
-set files [glob ../vhdl/*.vhdl ../vhdl/**/*.vhdl ../vhdl/**/tb/*.vhdl]
+set files [glob                                                                \
+    ../vhdl/*.vhdl                                                             \
+    ../vhdl/**/*.vhdl ../vhdl/**/tb/*.vhdl                                     \
+    ../vhdl/**/**/*.vhdl ../vhdl/**/**/tb/*.vhdl                               \
+]
 
 # List the entities in the order that they should be compiled. (This assumes
 # entity file and entity itself have the same name.)
