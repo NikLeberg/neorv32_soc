@@ -25,6 +25,26 @@
             "fileLocation": "relative"
         },
         {
+            // catches failures on design loading
+            // # ** Fatal: (vsim-3809) Types do not match between component and entity for generic "VALUE_MAX".
+            // #    Time: 0 ns  Iteration: 0  Instance: /offset_tb/dut File: ../vhdl/dds/offset.vhdl Line: 25
+            // # FATAL ERROR while loading design
+            "source": "ModelSim",
+            "pattern": [
+                {
+                    "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
+                    "message": 1
+                },
+                {
+                    "regexp": "^.+Time:.+File: \\.(.+) Line: (\\d+)$",
+                    "file": 1,
+                    "line": 2
+                }
+            ],
+            "severity": "error",
+            "fileLocation": "relative"
+        },
+        {
             // catches test failures
             // # ** Failure: 1 AND 0 should equal 0.
             // #    Time: 20 ns  Iteration: 0  Process: /example_tb/test File: ../vhdl/example_tb.vhdl
