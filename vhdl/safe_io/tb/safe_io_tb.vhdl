@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  safe_io_tb
 --
@@ -14,6 +14,8 @@
 --                              initial implementation
 --                          0.2, 2022-05-04, leuen4
 --                              minor formatting improvements
+--                          0.3, 2022-05-08, leuen4
+--                              fix check procedure input declarations
 -- =============================================================================
 
 LIBRARY ieee;
@@ -65,15 +67,15 @@ BEGIN
     s_n_reset <= '0', '1' AFTER 40 ns;
 
     test : PROCESS IS
-        -- Procedure that generates stimuli for the given sequencea. Response form
-        -- DUT is checked for correctness.
+        -- Procedure that generates stimuli for the given sequence. Response
+        -- from DUT is checked for correctness.
         PROCEDURE check (
             -- Sequence of bits to stimulate the DUT with.
-            CONSTANT x : IN STD_LOGIC_VECTOR(19 DOWNTO 0);
+            CONSTANT x : STD_LOGIC_VECTOR(19 DOWNTO 0);
             -- Expected output after t * 20.
             CONSTANT y : STD_LOGIC;
             -- For how long each bit of the sequence is active.
-            CONSTANT t : IN TIME
+            CONSTANT t : TIME
         ) IS
         BEGIN
             FOR i IN 19 DOWNTO 0 LOOP
