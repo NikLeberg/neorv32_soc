@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.3
+-- Version:                 0.4
 --
 -- Entity:                  dac
 --
@@ -19,6 +19,8 @@
 --                              initial implementation
 --                          0.3, 2022-04-29, leuen4
 --                              rename signals for clarity
+--                          0.4, 2022-05-08, leuen4
+--                              fix simulation warning "metavalue detected"
 -- =============================================================================
 
 LIBRARY ieee;
@@ -40,10 +42,10 @@ END ENTITY dac;
 
 ARCHITECTURE no_target_specific OF dac IS
     -- Use a 6 bit counter as FSM state. MSB indicates active channel a or b.
-    SIGNAL s_counter : unsigned(5 DOWNTO 0);
+    SIGNAL s_counter : UNSIGNED(5 DOWNTO 0) := (OTHERS => '0');
     -- Helper signals, MSB of counter and rest of counter except MSB
     SIGNAL s_counter_msb : STD_LOGIC;
-    SIGNAL s_counter_lower : UNSIGNED(s_counter'HIGH - 1 DOWNTO 0);
+    SIGNAL s_counter_lower : UNSIGNED(s_counter'HIGH - 1 DOWNTO 0) := (OTHERS => '0');
 
     -- 24 bit shift register.
     SIGNAL s_shift_reg : STD_LOGIC_VECTOR(23 DOWNTO 0);
