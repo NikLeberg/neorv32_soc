@@ -15,6 +15,8 @@ set entities {
 
     "inc"
     "dac"
+
+    "phase_acc"
     
     "geni"
 }
@@ -27,4 +29,6 @@ set testbenches {
     "safe_io_tb"
 
     "dac_tb"
+
+    "phase_acc_tb"
 }
