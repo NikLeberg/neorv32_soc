@@ -17,6 +17,7 @@ set entities {
     "dac"
 
     "phase_acc"
+    "offset"
     
     "geni"
 }
@@ -31,4 +32,5 @@ set testbenches {
     "dac_tb"
 
     "phase_acc_tb"
+    "offset_tb"
 }
