@@ -16,6 +16,7 @@ set entities {
     "inc"
     "dac"
 
+    "delta_phase"
     "phase_acc"
     "offset"
     
@@ -31,6 +32,7 @@ set testbenches {
 
     "dac_tb"
 
+    "delta_phase_tb"
     "phase_acc_tb"
     "offset_tb"
 }
