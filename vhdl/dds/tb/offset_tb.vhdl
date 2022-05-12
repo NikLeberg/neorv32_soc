@@ -38,7 +38,7 @@ ARCHITECTURE simulation OF offset_tb IS
     -- Signals for connecting to the DUT.
     CONSTANT c_n_bits : POSITIVE := 10;
     CONSTANT c_max : POSITIVE := 2 ** c_n_bits - 1;
-    SIGNAL s_x, s_offset, s_y : unsigned(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL s_x, s_offset, s_y : UNSIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
 BEGIN
     -- Instantiate the device under test.
     dut : offset
@@ -56,7 +56,6 @@ BEGIN
         -- Procedure that generates stimuli for the given values. Response from
         -- DUT is checked for correctness.
         PROCEDURE check (
-            -- Sequence of bits to stimulate the DUT with.
             CONSTANT x      : INTEGER; -- input value
             CONSTANT offset : INTEGER; -- offset to apply
             CONSTANT y      : INTEGER  -- expected output
