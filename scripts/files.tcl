@@ -20,6 +20,7 @@ set entities {
     "sine_wave"
     "delta_phase"
     "phase_acc"
+    "amplitude"
     "offset"
     
     "geni"
@@ -37,5 +38,6 @@ set testbenches {
     "sine_wave_tb"
     "delta_phase_tb"
     "phase_acc_tb"
+    "amplitude_tb"
     "offset_tb"
 }
