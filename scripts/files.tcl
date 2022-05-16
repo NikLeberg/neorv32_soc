@@ -16,6 +16,8 @@ set entities {
     "inc"
     "dac"
 
+    "lut_sine"
+    "sine_wave"
     "delta_phase"
     "phase_acc"
     "offset"
@@ -32,6 +34,7 @@ set testbenches {
 
     "dac_tb"
 
+    "sine_wave_tb"
     "delta_phase_tb"
     "phase_acc_tb"
     "offset_tb"
