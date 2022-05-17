@@ -3,19 +3,21 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  sine_wave
 --
 -- Description:             Sine wave for Direct Digital Synthesis. The wave
 --                          with a range of [0 2*pi] gets reconstructed from the
 --                          first quarter of a sine (range of [0 pi/2]) from a
---                          LUT. See entity lut_sine. Generated wave has a
---                          offset such that the full range of the UNSIGNED()
---                          representation is used.
+--                          LUT. See entity lut_sine.
 --
 -- Changes:                 0.1, 2022-05-15, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-17, leuen4
+--                              Change output port from UNSIGNED to SIGNED. This
+--                              allows for easier post processing by offset and
+--                              gain manipulation.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -24,14 +26,13 @@ USE ieee.numeric_std.ALL;
 
 ENTITY sine_wave IS
     GENERIC (
-        -- Width of phase and amplitude. The sine wave will start at 2^(N-1) -1,
-        -- rise up to 2^N -1, fall down to 0 and then come back to the start.
+        -- Width of phase and amplitude.
         N_BITS : POSITIVE := 10
     );
     PORT (
         clock : IN STD_LOGIC;
         phase : IN UNSIGNED(N_BITS - 1 DOWNTO 0);
-        data  : OUT UNSIGNED(N_BITS - 1 DOWNTO 0)
+        data  : OUT SIGNED(N_BITS - 1 DOWNTO 0)
     );
 END ENTITY sine_wave;
 
@@ -57,8 +58,6 @@ ARCHITECTURE no_target_specific OF sine_wave IS
     SIGNAL s_phase_lower : UNSIGNED(N_BITS - 3 DOWNTO 0); -- lower bits
     -- Maximum value of the lower phase (N - 2) bits.
     CONSTANT c_phase_lower_max : UNSIGNED(N_BITS - 3 DOWNTO 0) := to_unsigned(2 ** (N_BITS - 2) - 1, N_BITS - 2);
-    -- Middle value of the output. Used to offset the LUT value.
-    CONSTANT c_middle : UNSIGNED(N_BITS - 1 DOWNTO 0) := 2 ** (N_BITS - 1) - to_unsigned(1, N_BITS);
 BEGIN
 
     -- Instantiate sine LUT.
@@ -93,18 +92,18 @@ BEGIN
     wave_reconstruct : PROCESS (s_phase_upper, s_phase_lower, s_lut_data) IS
     BEGIN
         CASE s_phase_upper IS
-            WHEN "00" => -- First quarter, middle value + LUT.
+            WHEN "00" => -- First quarter, LUT.
                 s_lut_addr <= s_phase_lower;
-                data <= c_middle + ('0' & s_lut_data);
-            WHEN "01" => -- Second quarter, middle value + inverted LUT.
+                data <= SIGNED('0' & s_lut_data);
+            WHEN "01" => -- Second quarter, inverted LUT.
                 s_lut_addr <= c_phase_lower_max - s_phase_lower;
-                data <= c_middle + ('0' & s_lut_data);
-            WHEN "10" => -- Third quarter, middle value - LUT.
+                data <= SIGNED('0' & s_lut_data);
+            WHEN "10" => -- Third quarter, negative LUT.
                 s_lut_addr <= s_phase_lower;
-                data <= c_middle - ('0' & s_lut_data);
-            WHEN "11" => -- Fourth quarter, middle value - inverted LUT.
+                data <= - SIGNED('0' & s_lut_data);
+            WHEN "11" => -- Fourth quarter, negative inverted LUT.
                 s_lut_addr <= c_phase_lower_max - s_phase_lower;
-                data <= c_middle - ('0' & s_lut_data);
+                data <= - SIGNED('0' & s_lut_data);
             WHEN OTHERS => -- Invalid signals.
                 s_lut_addr <= (OTHERS => '0');
                 data <= (OTHERS => '0');

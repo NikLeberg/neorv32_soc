@@ -3,19 +3,22 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  sine_wave_tb
 --
 -- Description:             Testbench for sine_wave entity. Checks together with
 --                          the math_real library sin() function if the sine
 --                          reconstructed from LUT is accurate with only a small
---                          error (+-3).
+--                          error (+-2).
 --
 -- Changes:                 0.1, 2022-05-16, leuen4
 --                              initial implementation
 --                          0.2, 2022-05-16, leuen4
 --                              fix allowed error comparison
+--                          0.3, 2022-05-17, leuen4
+--                              Output port changed from UNSIGNED to SIGNED.
+--                              Change checks to match the now offset free sine.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -36,7 +39,7 @@ ARCHITECTURE simulation OF sine_wave_tb IS
         PORT (
             clock : IN STD_LOGIC;
             phase : IN UNSIGNED(N_BITS - 1 DOWNTO 0);
-            data  : OUT UNSIGNED(N_BITS - 1 DOWNTO 0)
+            data  : OUT SIGNED(N_BITS - 1 DOWNTO 0)
         );
     END COMPONENT sine_wave;
     -- Signals for sequential DUTs.
@@ -45,9 +48,10 @@ ARCHITECTURE simulation OF sine_wave_tb IS
     SIGNAL s_done : STD_LOGIC := '0';
     -- Signals for connecting to the DUT.
     CONSTANT c_n_bits : POSITIVE := 10;
-    SIGNAL s_phase, s_data : UNSIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL s_phase : UNSIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL s_data : SIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
     -- Allowed error of difference between calculated and DUT sine wave.
-    CONSTANT c_allowed_error : POSITIVE := 3;
+    CONSTANT c_allowed_error : POSITIVE := 2;
 BEGIN
     -- Instantiate the device under test.
     dut : sine_wave
@@ -68,13 +72,13 @@ BEGIN
     s_n_reset <= '0', '1' AFTER 40 ns;
 
     test : PROCESS IS
-        -- Proceudure that generates stimuli (phase value) for the DUT. The
+        -- Procedure that generates stimuli (phase value) for the DUT. The
         -- returned sine value will be compared with sin() from math_real.
         PROCEDURE check (
             CONSTANT phase : INTEGER -- phase in range [0 2^N-1]
         ) IS
             CONSTANT c_max_phase : POSITIVE := (2 ** c_n_bits) - 1;
-            CONSTANT c_max_value : POSITIVE := (2 ** c_n_bits) - 1;
+            CONSTANT c_max_value : POSITIVE := (2 ** (c_n_bits - 1)) - 1;
             VARIABLE v_sin_real : REAL;
             VARIABLE v_sin_int : INTEGER;
         BEGIN
@@ -84,8 +88,8 @@ BEGIN
             WAIT FOR 1 ns; -- A bit of time for combinational logic to settle.
             -- Calculate sine for current phase.
             v_sin_real := sin(REAL(phase) * 2.0 * MATH_PI / REAL(c_max_phase));
-            -- Map from float range [-1 +1] to integer range [0 2^N-1].
-            v_sin_int := INTEGER(round(0.5 * (v_sin_real + 1.0) * REAL(c_max_value)));
+            -- Map from float range +-1 to integer range +-2^(N-1).
+            v_sin_int := INTEGER(round(v_sin_real * REAL(c_max_value)));
             -- Check that the sine value is where it should be, but allow a
             -- small error.
             ASSERT ABS(to_integer(s_data) - v_sin_int) <= c_allowed_error
@@ -100,7 +104,7 @@ BEGIN
         -- Wait for power on reset to finish.
         WAIT UNTIL rising_edge(s_n_reset);
 
-        -- Check every possible phase times.
+        -- Check every possible phase.
         FOR i IN 2 ** c_n_bits - 1 DOWNTO 0 LOOP
             check(i);
         END LOOP;
