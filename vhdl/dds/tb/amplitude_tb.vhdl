@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  amplitude_tb
 --
@@ -14,6 +14,9 @@
 --
 -- Changes:                 0.1, 2022-05-16, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-19, leuen4
+--                              Output port changed from UNSIGNED to SIGNED.
+--                              Change checks to match the now signed amplitude.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -36,7 +39,7 @@ ARCHITECTURE simulation OF amplitude_tb IS
 
             sig_type : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
             phase    : IN UNSIGNED(N_BITS - 1 DOWNTO 0);
-            amp      : OUT UNSIGNED(N_BITS - 1 DOWNTO 0)
+            amp      : OUT SIGNED(N_BITS - 1 DOWNTO 0)
         );
     END COMPONENT amplitude;
     -- Signals for sequential DUTs.
@@ -46,7 +49,8 @@ ARCHITECTURE simulation OF amplitude_tb IS
     -- Signals for connecting to the DUT.
     CONSTANT c_n_bits : POSITIVE := 10;
     SIGNAL s_sig_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
-    SIGNAL s_phase, s_amp : UNSIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL s_phase : UNSIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL s_amp : SIGNED(c_n_bits - 1 DOWNTO 0) := (OTHERS => '0');
 BEGIN
     -- Instantiate the device under test.
     dut : amplitude
@@ -75,7 +79,7 @@ BEGIN
             -- "00": Sine, "01": Rectangle, "10": Triangle, "11": Sawtooth
             CONSTANT sig_type      : STD_LOGIC_VECTOR(1 DOWNTO 0);
             CONSTANT phase         : NATURAL; -- phase in range [0 2^N-1]
-            CONSTANT expected      : NATURAL; -- expected value
+            CONSTANT expected      : INTEGER; -- expected value
             CONSTANT allowed_error : NATURAL  -- maximum error
         ) IS
         BEGIN
@@ -96,8 +100,8 @@ BEGIN
                 SEVERITY failure;
         END PROCEDURE check;
         -- Helper constants.
-        CONSTANT c_value_min : NATURAL := 0;
-        CONSTANT c_value_max : POSITIVE := (2 ** c_n_bits) - 1;
+        CONSTANT c_value_min : INTEGER := (-2 ** (c_n_bits - 1));
+        CONSTANT c_value_max : INTEGER := (2 ** (c_n_bits - 1)) - 1;
         CONSTANT c_phase_min : NATURAL := 0;
         CONSTANT c_phase_one_fourth : NATURAL := 2 ** (c_n_bits - 2);
         CONSTANT c_phase_two_fourths : NATURAL := 2 * c_phase_one_fourth;
@@ -108,23 +112,26 @@ BEGIN
         WAIT UNTIL rising_edge(s_n_reset);
 
         -- Rectangle
-        check("01", c_phase_min, c_value_min, 0);
-        check("01", c_phase_one_fourth, c_value_min, 0);
-        check("01", c_phase_two_fourths - 1, c_value_min, 0);
-        check("01", c_phase_two_fourths, c_value_max, 0);
-        check("01", c_phase_three_fourths, c_value_max, 0);
-        check("01", c_phase_max, c_value_max, 0);
+        FOR i IN c_phase_min TO c_phase_two_fourths - 1 LOOP
+            check("01", i, c_value_max, 0);
+        END LOOP;
+        FOR i IN c_phase_two_fourths TO c_phase_max LOOP
+            check("01", i, c_value_min, 0);
+        END LOOP;
 
         -- Triangle
-        check("10", c_phase_min, c_value_min, 1);
-        check("10", c_phase_one_fourth, c_value_max / 2, 1);
-        check("10", c_phase_two_fourths, c_value_max, 1);
-        check("10", c_phase_three_fourths, c_value_max / 2, 1);
-        check("10", c_phase_max, c_value_min, 1);
+        check("10", c_phase_min, 0, 1);
+        check("10", c_phase_one_fourth, c_value_max, 1);
+        check("10", c_phase_two_fourths, 0, 1);
+        check("10", c_phase_three_fourths, c_value_min, 1);
+        check("10", c_phase_max, 0, 1);
 
         -- Sawtooth
-        FOR i IN c_phase_max DOWNTO 0 LOOP
+        FOR i IN c_phase_min TO c_phase_two_fourths - 1 LOOP
             check("11", i, i, 0);
+        END LOOP;
+        FOR i IN c_phase_two_fourths TO c_phase_max LOOP
+            check("11", i, i + 2 * c_value_min, 0);
         END LOOP;
 
         -- Report successful test.

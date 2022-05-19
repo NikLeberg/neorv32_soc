@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  amplitude
 --
@@ -14,6 +14,10 @@
 --
 -- Changes:                 0.1, 2022-05-09, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-19, leuen4
+--                              Change output port from UNSIGNED to SIGNED. This
+--                              allows for easier post processing by offset and
+--                              gain manipulation.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -31,7 +35,7 @@ ENTITY amplitude IS
         -- "00": Sine, "01": Rectangle, "10": Triangle, "11": Sawtooth
         sig_type : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
         phase    : IN UNSIGNED(N_BITS - 1 DOWNTO 0); -- MSB's of phase
-        amp      : OUT UNSIGNED(N_BITS - 1 DOWNTO 0) -- Amplitude of signal type
+        amp      : OUT SIGNED(N_BITS - 1 DOWNTO 0)   -- Amplitude of signal type
     );
 END ENTITY amplitude;
 
@@ -44,15 +48,18 @@ ARCHITECTURE no_target_specific OF amplitude IS
         PORT (
             clock : IN STD_LOGIC;
             phase : IN UNSIGNED(N_BITS - 1 DOWNTO 0);
-            data  : OUT UNSIGNED(N_BITS - 1 DOWNTO 0)
+            data  : OUT SIGNED(N_BITS - 1 DOWNTO 0)
         );
     END COMPONENT sine_wave;
     -- Signals of the different signal types.
-    SIGNAL s_sine : UNSIGNED(N_BITS - 1 DOWNTO 0);
-    SIGNAL s_rectangle : UNSIGNED(N_BITS - 1 DOWNTO 0);
-    SIGNAL s_triangle : UNSIGNED(N_BITS - 1 DOWNTO 0);
-    SIGNAL s_sawtooth : UNSIGNED(N_BITS - 1 DOWNTO 0);
-    CONSTANT c_amp_max : UNSIGNED(N_BITS - 1 DOWNTO 0) := to_unsigned(2 ** N_BITS - 1, N_BITS);
+    SIGNAL s_sine : SIGNED(N_BITS - 1 DOWNTO 0);
+    SIGNAL s_rectangle : SIGNED(N_BITS - 1 DOWNTO 0);
+    SIGNAL s_triangle_helper : SIGNED(N_BITS - 1 DOWNTO 0); -- phase * 2
+    SIGNAL s_triangle : SIGNED(N_BITS - 1 DOWNTO 0);
+    SIGNAL s_sawtooth : SIGNED(N_BITS - 1 DOWNTO 0);
+    -- Helper constants.
+    CONSTANT c_amp_max : SIGNED(N_BITS - 1 DOWNTO 0) := to_signed((2 ** (N_BITS - 1)) - 1, N_BITS);
+    CONSTANT c_amp_min : SIGNED(N_BITS - 1 DOWNTO 0) := to_signed((-2 ** (N_BITS - 1)), N_BITS);
 BEGIN
 
     -- =========================================================================
@@ -79,8 +86,8 @@ BEGIN
     -- Outputs: s_rectangle
     -- =========================================================================
     -- MSB of phase determines signal level.
-    s_rectangle <= (OTHERS => '0') WHEN phase(phase'HIGH) = '0' ELSE
-        (OTHERS => '1');
+    s_rectangle <= c_amp_max WHEN phase(phase'HIGH) = '0' ELSE
+        c_amp_min;
 
     -- =========================================================================
     -- Purpose: Signal generation for triangle type
@@ -88,10 +95,14 @@ BEGIN
     -- Inputs:  phase
     -- Outputs: s_triangle
     -- =========================================================================
-    -- For first half of the phase just double it (left shift 1 bit) and for the
-    -- second half subtract the doubled phase (withouh MSB) from the max value.
-    s_triangle <= (phase(phase'HIGH - 1 DOWNTO 0) & '0') WHEN phase(phase'HIGH) = '0' ELSE
-        c_amp_max - (phase(phase'HIGH - 1 DOWNTO 0) & '0');
+    -- When first two bits of phase are identical we are in the first and fourth
+    -- quarter of the phase. There just use the phase shifted one to the left.
+    -- Explicid UNSIGNED to SIGNED will cause the fourth quarter to be negative.
+    -- In the second and third quarter of the phase use the negative of the
+    -- shifted phase. Explicid SIGNED conversation causes the correct wave.
+    s_triangle_helper <= SIGNED(phase(phase'HIGH - 1 DOWNTO 0) & '1');
+    s_triangle <= s_triangle_helper WHEN phase(phase'HIGH) = phase(phase'HIGH - 1) ELSE
+        - s_triangle_helper;
 
     -- =========================================================================
     -- Purpose: Signal generation for sawtooth type
@@ -99,7 +110,7 @@ BEGIN
     -- Inputs:  phase
     -- Outputs: s_sawtooth
     -- =========================================================================
-    s_sawtooth <= phase; -- maximum simplicity
+    s_sawtooth <= SIGNED(phase); -- maximum simplicity
 
     -- =========================================================================
     -- Purpose: Output logic for signal type selection
