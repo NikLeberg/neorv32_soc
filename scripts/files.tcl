@@ -21,6 +21,7 @@ set entities {
     "delta_phase"
     "phase_acc"
     "amplitude"
+    "gain"
     "offset"
     
     "geni"
@@ -39,5 +40,6 @@ set testbenches {
     "delta_phase_tb"
     "phase_acc_tb"
     "amplitude_tb"
+    "gain_tb"
     "offset_tb"
 }
