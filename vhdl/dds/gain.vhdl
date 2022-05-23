@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  gain
 --
@@ -17,8 +17,17 @@
 --                          entity then scales it down. The effectively applied
 --                          gain is max. 1 and min. 1 / 2^N_GAIN.
 --
+-- Note:                    Synthesizer should be inferring a multiplier.
+--                          Quartus Prime states successful inferring in a log
+--                          message like so: "Info (278001): Inferred 1
+--                          megafunctions from design logic" and "Info (278003):
+--                          Inferred multiplier megafunction ("lpm_mult") from
+--                          the following logic: <>"
+--
 -- Changes:                 0.1, 2022-05-20, leuen4
 --                              initial implementation
+--                          0.2, 2022-05-23, leneu4
+--                              add note on multiplier inferring
 -- =============================================================================
 
 LIBRARY ieee;
