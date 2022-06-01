@@ -14,6 +14,7 @@ set entities {
     "safe_io"
 
     "inc"
+
     "dac"
     "signed_to_unsigned"
 
@@ -24,6 +25,7 @@ set entities {
     "amplitude"
     "gain"
     "offset"
+    "dds"
     
     "geni"
 }
@@ -44,4 +46,5 @@ set testbenches {
     "amplitude_tb"
     "gain_tb"
     "offset_tb"
+    "dds_tb"
 }
