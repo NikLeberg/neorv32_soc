@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  amplitude
 --
@@ -18,6 +18,8 @@
 --                              Change output port from UNSIGNED to SIGNED. This
 --                              allows for easier post processing by offset and
 --                              gain manipulation.
+--                          0.3, 2022-06-01, leuen4
+--                              Add missing generic NBITS in sine_wave instance.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -71,7 +73,7 @@ BEGIN
     -- Note: Sine lags one clock behind as underlying LUT is sequential entity!
     sine1 : sine_wave
     GENERIC MAP(
-        N_BITS => 10
+        N_BITS => N_BITS
     )
     PORT MAP(
         clock => clock,
