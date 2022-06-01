@@ -15,6 +15,7 @@ set entities {
 
     "inc"
     "dac"
+    "signed_to_unsigned"
 
     "lut_sine"
     "sine_wave"
@@ -35,6 +36,7 @@ set testbenches {
     "safe_io_tb"
 
     "dac_tb"
+    "signed_to_unsigned_tb"
 
     "sine_wave_tb"
     "delta_phase_tb"
