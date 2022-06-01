@@ -44,7 +44,7 @@ ENTITY lut_sine IS
         -- additional bits of address. Those are not necessary here.
         N_BITS_ADDRESS : POSITIVE := 8;
         -- Value resolution of sine. The sine wave will start at 0 and end after
-        -- pi/2 at a value of 2^N - 1. A consumint entity that reconstruct the
+        -- pi/2 at a value of 2^N - 1. A consuming entity that reconstructs the
         -- full sine wave needs one additional bit for the value. That is not
         -- necessary here.
         N_BITS_VALUE : POSITIVE := 9

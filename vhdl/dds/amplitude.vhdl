@@ -95,11 +95,11 @@ BEGIN
     -- Inputs:  phase
     -- Outputs: s_triangle
     -- =========================================================================
-    -- When first two bits of phase are identical we are in the first and fourth
-    -- quarter of the phase. There just use the phase shifted one to the left.
-    -- Explicid UNSIGNED to SIGNED will cause the fourth quarter to be negative.
-    -- In the second and third quarter of the phase use the negative of the
-    -- shifted phase. Explicid SIGNED conversation causes the correct wave.
+    -- When the first two bits of phase are identical we are in the first and
+    -- fourth quarter of the phase. There just use the phase shifted one to the
+    -- left. Explicid UNSIGNED to SIGNED will cause the fourth quarter to be
+    -- negative. In the second and third quarter of the phase use the negative
+    -- of the shifted phase. Explicid SIGNED conversation causes a correct wave.
     s_triangle_helper <= SIGNED(phase(phase'HIGH - 1 DOWNTO 0) & '1');
     s_triangle <= s_triangle_helper WHEN phase(phase'HIGH) = phase(phase'HIGH - 1) ELSE
         - s_triangle_helper;
