@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  delta_phase
 --
@@ -35,6 +35,8 @@
 --
 -- Changes:                 0.1, 2022-05-12, leuen4
 --                              initial implementation
+--                          0.2, 2022-06-01, leuen4
+--                              rename input f to frequency
 -- =============================================================================
 
 LIBRARY ieee;
@@ -44,7 +46,7 @@ USE ieee.math_real.ALL;
 
 ENTITY delta_phase IS
     PORT (
-        f           : IN UNSIGNED(32 - 1 DOWNTO 0); -- desired frequency [Hz]
+        frequency   : IN UNSIGNED(32 - 1 DOWNTO 0); -- desired frequency [Hz]
         delta_phase : OUT UNSIGNED(32 - 1 DOWNTO 0) -- delta for accumulator
     );
 END ENTITY delta_phase;
@@ -59,21 +61,21 @@ BEGIN
     -- =========================================================================
     -- Purpose: Intermediate addition f*64 + f*16 = f<<6 + f<<4
     -- Type:    combinational
-    -- Inputs:  f
+    -- Inputs:  frequency
     -- Outputs: s_intermediate_1
     -- =========================================================================
-    s_f_shift_6 <= f(f'HIGH - 6 DOWNTO 0) & "000000";
-    s_f_shift_4 <= f(f'HIGH - 4 DOWNTO 0) & "0000";
+    s_f_shift_6 <= frequency(frequency'HIGH - 6 DOWNTO 0) & "000000";
+    s_f_shift_4 <= frequency(frequency'HIGH - 4 DOWNTO 0) & "0000";
     s_intermediate_1 <= s_f_shift_6 + s_f_shift_4;
 
     -- =========================================================================
     -- Purpose: Intermediate addition f*4 + f*2 = f<<2 + f<<1
     -- Type:    combinational
-    -- Inputs:  f
+    -- Inputs:  frequency
     -- Outputs: s_intermediate_2
     -- =========================================================================
-    s_f_shift_2 <= f(f'HIGH - 2 DOWNTO 0) & "00";
-    s_f_shift_1 <= f(f'HIGH - 1 DOWNTO 0) & '0';
+    s_f_shift_2 <= frequency(frequency'HIGH - 2 DOWNTO 0) & "00";
+    s_f_shift_1 <= frequency(frequency'HIGH - 1 DOWNTO 0) & '0';
     s_intermediate_2 <= s_f_shift_2 + s_f_shift_1;
 
     -- =========================================================================
