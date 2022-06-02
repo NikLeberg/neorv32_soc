@@ -14,6 +14,7 @@ set entities {
     "safe_io"
     
     "signed_to_unsigned"
+    "bin_to_bcd"
 
     "inc"
 
@@ -39,6 +40,7 @@ set testbenches {
     "safe_io_tb"
 
     "signed_to_unsigned_tb"
+    "bin_to_bcd_tb"
 
     "dac_tb"
 
