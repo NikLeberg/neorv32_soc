@@ -17,7 +17,7 @@
 --                          multiplied with a constant that is determined based
 --                          on system clock and phase bit width. As a
 --                          multiplication with a constant can be represented in
---                          an addition of the idividual multiples of 2 e.g.
+--                          an addition of the individual multiples of 2 e.g.
 --                          7 * 24 = 7 * 16 + 7 * 8 and a multiplication with a
 --                          power of 2 is just a shift, this makes for an easy
 --                          algorithm.
@@ -42,7 +42,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
-USE ieee.math_real.ALL;
 
 ENTITY delta_phase IS
     PORT (
