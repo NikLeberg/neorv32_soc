@@ -16,6 +16,7 @@ set entities {
     
     "signed_to_unsigned"
     "bin_to_bcd"
+    "bcd_to_bin"
 
     "inc"
 
@@ -43,6 +44,7 @@ set testbenches {
 
     "signed_to_unsigned_tb"
     "bin_to_bcd_tb"
+    "bcd_to_bin_tb"
 
     "dac_tb"
 
