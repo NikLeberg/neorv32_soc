@@ -8,12 +8,13 @@
 -- Entity:                  signed_to_unsigned
 --
 -- Description:             Converts a signed value with N bits into a unsigned
---                          value with M bits for use with a DAC (see dac.vhdl).
---                          N needs to be at least 1 bigger than M. This cant be
---                          done in a simple UNSIGNED cast as the representation
---                          needs to be changed as well. So for y < 0, x = 0.
---                          And for y > 0, x is set to the upper M bits of y
---                          excluding the sign bit.
+--                          value with M bits. N needs to be at least 1 bigger
+--                          than M. This cant be done in a simple UNSIGNED cast
+--                          as the representation needs to be changed as well.
+--                          So for y < 0, x = 0. And for y > 0, x is set to the
+--                          upper M bits of y excluding the sign bit.
+--
+-- Note:                    Entity is designed to work with a DAC, see dac.vhdl.
 --
 -- Changes:                 0.1, 2022-06-01, leuen4
 --                              initial implementation
