@@ -12,6 +12,7 @@ set entities {
     "example"
 
     "safe_io"
+    "mul_10"
     
     "signed_to_unsigned"
     "bin_to_bcd"
@@ -38,6 +39,7 @@ set testbenches {
     "example_tb"
     
     "safe_io_tb"
+    "mul_10_tb"
 
     "signed_to_unsigned_tb"
     "bin_to_bcd_tb"
