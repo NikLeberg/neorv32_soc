@@ -51,7 +51,7 @@ BEGIN
     -- Inputs:  bcd
     -- Outputs: seg
     -- =========================================================================
-    pro_1 : PROCESS (bcd) IS
+    map_digits : PROCESS (bcd) IS
         -- Local static variable as case selector, otherwise modelsim complains.
         VARIABLE v_digit : STD_LOGIC_VECTOR(3 DOWNTO 0);
         VARIABLE v_segment : STD_LOGIC_VECTOR(6 DOWNTO 0);
@@ -80,7 +80,7 @@ BEGIN
                 seg(i * 8) <= '0';
             END IF;
         END LOOP;
-    END PROCESS pro_1;
+    END PROCESS map_digits;
 
     -- =========================================================================
     -- Purpose: Set negative sign in leftmost segment if option enabled.
@@ -90,8 +90,8 @@ BEGIN
     -- =========================================================================
     sign_enabled : IF E_SIGN = 1 GENERATE
         -- MSB of bcd value signals the negative sign.
-        seg(seg'HIGH DOWNTO seg'HIGH - 8) <= "00000000" WHEN bcd(bcd'HIGH) = '0' ELSE
-        "00000010";
+        seg(seg'HIGH DOWNTO seg'HIGH - 7) <= "00000000" WHEN bcd(bcd'HIGH) = '0' ELSE
+            "00000010";
     END GENERATE;
 
 END ARCHITECTURE no_target_specific;
