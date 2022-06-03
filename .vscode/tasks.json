@@ -13,6 +13,7 @@
             // # ** Warning: ../vhdl/example.vhdl(30): (vcom-1400) Synthesis Warning: Signal "a" is read in the process but is not in the sensitivity list.
             // # ** Error: ../vhdl/example.vhdl(31): near "END": (vcom-1576) expecting ';'.
             "source": "ModelSim",
+            "owner": "ModelSim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (Error|Warning).*: \\.(.+)\\((\\d+)\\): (.+)$",
@@ -30,6 +31,7 @@
             // #    Time: 0 ns  Iteration: 0  Instance: /offset_tb/dut File: ../vhdl/dds/offset.vhdl Line: 25
             // # FATAL ERROR while loading design
             "source": "ModelSim",
+            "owner": "ModelSim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
@@ -54,6 +56,7 @@
             // #    Time: 0 ns  Iteration: 0  Process: /math_add_tb/test File: ../vhdl/math/tb/math_add_tb.vhdl
             // # Fatal error in ForLoop loop at ../vhdl/math/tb/math_add_tb.vhdl line 69
             "source": "ModelSim",
+            "owner": "ModelSim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
@@ -75,6 +78,7 @@
             // catches compilation warnings and errors
             // Error (10500): VHDL syntax error at datatypes.vhdl(34) near text "END";  expecting ";" File: datatypes.vhdl Line: 34
             "source": "Quartus",
+            "owner": "Quartus",
             "pattern": [
                 {
                     "regexp": "^(Warning|Error) \\([0-9]+\\): (.+) File: (.+) Line: (.+)$",
