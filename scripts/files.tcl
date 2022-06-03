@@ -17,6 +17,7 @@ set entities {
     "signed_to_unsigned"
     "bin_to_bcd"
     "bcd_to_bin"
+    "bcd_to_7seg"
 
     "inc"
 

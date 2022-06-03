@@ -52,8 +52,6 @@ BEGIN
     );
 
     test : PROCESS IS
-        VARIABLE ones, tens, hunderts : INTEGER;
-
         -- Procedure that generates stimuli (bcd value) for the DUT. The
         -- returned binary value will be compared with expected value.
         PROCEDURE check (CONSTANT x : INTEGER) IS -- x: input value
