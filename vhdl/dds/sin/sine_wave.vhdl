@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  sine_wave
 --
@@ -12,12 +12,21 @@
 --                          first quarter of a sine (range of [0 pi/2]) from a
 --                          LUT. See entity lut_sine.
 --
+-- Note:                    The LUT would be capable of dual port operation (as
+--                          is typical for ROM blocks). This would allow for two
+--                          instances of this entity to share a single LUT. But
+--                          experiments with a synthesizer (Quartus Prime)
+--                          showed, that it optimizes (for speed?) and replaces
+--                          the dual port ROM with two single port ROMs.
+--
 -- Changes:                 0.1, 2022-05-15, leuen4
 --                              initial implementation
 --                          0.2, 2022-05-17, leuen4
 --                              Change output port from UNSIGNED to SIGNED. This
 --                              allows for easier post processing by offset and
 --                              gain manipulation.
+--                          0.3, 2022-06-04, leuenr
+--                              Add note on dual port LUT, i.e. lack therof.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -69,7 +78,7 @@ BEGIN
     PORT MAP(
         clock  => clock,
         addr_a => s_lut_addr,
-        addr_b => (OTHERS => '0'), -- port B is unused for now
+        addr_b => (OTHERS => '0'), -- port B is unused, see note
         data_a => s_lut_data,
         data_b => OPEN
     );
