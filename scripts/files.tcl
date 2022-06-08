@@ -49,6 +49,8 @@ set testbenches {
     "bin_to_bcd_tb"
     "bcd_to_bin_tb"
 
+    "inc_tb"
+
     "dac_tb"
 
     "sine_wave_tb"

@@ -3,7 +3,7 @@
 --
 -- Authors:                 Reusser Adrian <reusa1@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.3
 --
 -- Entity:                  inc
 --
@@ -16,12 +16,15 @@
 --
 -- Changes:                 0.1, 2022-04-28, leuen4
 --                              interface definition
+--                          0.2, 2022-06-07, reusa1
+--                              initial implementation
+--                          0.3, 2022-06-08, leuen4
+--                              add state memory
 -- =============================================================================
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-USE ieee.std_logic_ARITH.ALL;
-USE ieee.std_logic_UNSIGNED.ALL;
+
 ENTITY inc IS
     PORT (
         clock, n_reset : IN STD_LOGIC;
@@ -36,100 +39,102 @@ END ENTITY inc;
 ARCHITECTURE no_target_specific OF inc IS
     TYPE stateType IS (idle, R1, R2, R3, L1, L2, L3, puls_pos, puls_neg);
     SIGNAL curState, nextState : stateType;
-
 BEGIN
 
-    next_state : PROCESS (curState, A, B)
-
+    -- State memory.
+    state_memory : PROCESS (clock) IS
     BEGIN
+        IF (rising_edge(clock)) THEN
+            IF (n_reset = '0') THEN
+                curState <= idle;
+            ELSE
+                curState <= nextState;
+            END IF;
+        END IF;
+    END PROCESS state_memory;
+
+    -- Next state logic.
+    next_state : PROCESS (curState, A, B) IS
+    BEGIN
+        -- Default to prevent latches and minimize if/else chains.
+        nextState <= curState;
+
         CASE curState IS
-                --detent position
-            WHEN idle =>
+            WHEN idle => -- detent position
 
-                IF B = '0' THEN
+                IF A = '0' AND B = '1' THEN
                     nextState <= R1;
-                ELSIF A = '0' THEN
+                ELSIF A = '1' AND B = '0' THEN
                     nextState <= L1;
-                ELSE
-                    nextState <= idle;
-                END IF;
-                -- start of right cycle
-                --R1
-            WHEN R1 =>
-
-                IF B = '1' THEN
-                    nextState <= idle;
-                ELSIF A = '0' THEN
-                    nextState <= R2;
-                ELSE
-                    nextState <= R1;
                 END IF;
 
-                --R2  					
-            WHEN R2 =>
+            WHEN R1 => -- start of right cycle
 
-                IF A = '1' THEN
-                    nextState <= R1;
-                ELSIF B = '1' THEN
-                    nextState <= R3;
-                ELSE
-                    nextState <= R2;
-                END IF;
-
-                --R3	
-            WHEN R3 =>
-
-                IF B = '0' THEN
+                IF A = '0' AND B = '0' THEN
                     nextState <= R2;
                 ELSIF A = '1' THEN
+                    nextState <= idle;
+                END IF;
+
+            WHEN R2 => -- R2
+
+                IF A = '1' AND B = '0' THEN
+                    nextState <= R3;
+                ELSIF B = '1' THEN
+                    nextState <= idle;
+                END IF;
+
+            WHEN R3 => --R3
+
+                IF A = '1' AND B = '1' THEN
                     nextState <= puls_pos;
-                ELSE
-                    nextState <= R3;
+                ELSIF A = '0' THEN
+                    nextState <= idle;
                 END IF;
+
             WHEN puls_pos =>
-                pos <= '1';
+
                 nextState <= idle;
 
-                -- start of left cycle
-                --L1 
-            WHEN L1 =>
+            WHEN L1 => -- start of left cycle
 
-                IF A = '1' THEN
-                    nextState <= idle;
-                ELSIF B = '0' THEN
-                    nextState <= L2;
-                ELSE
-                    nextState <= L1;
-                END IF;
-
-                --L2	
-            WHEN L2 =>
-
-                IF B = '1' THEN
-                    nextState <= L1;
-                ELSIF A = '1' THEN
-                    nextState <= L3;
-                ELSE
-                    nextState <= L2;
-                END IF;
-
-                --L3
-            WHEN L3 =>
-
-                IF A = '0' THEN
+                IF A = '0' AND B = '0' THEN
                     nextState <= L2;
                 ELSIF B = '1' THEN
-                    nextState <= puls_neg;
-                ELSE
-                    nextState <= L3;
+                    nextState <= idle;
                 END IF;
+
+            WHEN L2 => -- L2
+
+                IF A = '0' AND B = '1' THEN
+                    nextState <= L3;
+                ELSIF A = '1' THEN
+                    nextState <= idle;
+                END IF;
+
+            WHEN L3 => -- L3
+
+                IF A = '1' AND B = '1' THEN
+                    nextState <= puls_neg;
+                ELSIF B = '0' THEN
+                    nextState <= idle;
+                END IF;
+
             WHEN puls_neg =>
-                neg <= '1';
+
                 nextState <= idle;
+
             WHEN OTHERS =>
 
                 nextState <= idle;
+
         END CASE;
     END PROCESS;
+
+    -- Output logic.
+    pos <= '1' WHEN curState = puls_pos ELSE
+        '0';
+    neg <= '1' WHEN curState = puls_neg ELSE
+        '0';
 
 END ARCHITECTURE no_target_specific;
