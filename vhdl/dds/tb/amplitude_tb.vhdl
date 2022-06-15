@@ -7,7 +7,7 @@
 --
 -- Entity:                  amplitude_tb
 --
--- Description:             Testbench for amplitude entity. Checks weather the
+-- Description:             Testbench for amplitude entity. Checks wether the
 --                          generated waves of type rectangle, triangle or
 --                          sawtooth are correct. Sine wave is not checked as it
 --                          is already tested with testbench sine_wave_tb.
