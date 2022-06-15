@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.4
+-- Version:                 0.5
 --
 -- Entity:                  dac
 --
@@ -21,6 +21,9 @@
 --                              rename signals for clarity
 --                          0.4, 2022-05-08, leuen4
 --                              fix simulation warning "metavalue detected"
+--                          0.5, 2022-06-15, leuen4
+--                              prevent possible hazards in chip select output,
+--                              route through register (feedback by Mr. Kluter)
 -- =============================================================================
 
 LIBRARY ieee;
@@ -49,6 +52,9 @@ ARCHITECTURE no_target_specific OF dac IS
 
     -- 24 bit shift register.
     SIGNAL s_shift_reg : STD_LOGIC_VECTOR(23 DOWNTO 0);
+
+    -- Output register for chip select.
+    SIGNAL s_cs : STD_LOGIC;
 
     -- Command "Write to and Update (Power-Up) DAC n" from table 1 of datasheet.
     CONSTANT c_command_update : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0011";
@@ -111,20 +117,40 @@ BEGIN
     END PROCESS shift_register;
 
     -- =========================================================================
+    -- Purpose: Register for chip select output
+    -- Type:    sequential
+    -- Inputs:  clock, n_reset, s_counter_lower
+    -- Outputs: s_cs
+    -- =========================================================================
+    cs_register : PROCESS (clock) IS
+    BEGIN
+        IF (rising_edge(clock)) THEN
+            IF (n_reset = '0') THEN
+                s_cs <= '0';
+            ELSE
+                -- Set to low for count below 25 while valid data is sent out.
+                IF (s_counter_lower < 25) THEN
+                    s_cs <= '0';
+                ELSE
+                    s_cs <= '1';
+                END IF;
+            END IF;
+        END IF;
+    END PROCESS cs_register;
+
+    -- =========================================================================
     -- Purpose: Output logic
     -- Type:    combinational
-    -- Inputs:  s_counter, s_last_key
-    -- Outputs: new_pressed, new_key
+    -- Inputs:  s_shift_reg, s_cs, clock
+    -- Outputs: mosi, cs, clk
     -- =========================================================================
     -- Data is serially sent out MSB first.
     mosi <= s_shift_reg(s_shift_reg'HIGH);
-    -- Chip select is low from count 1 to 25 while valid data is being sent out.
-    cs <= '0' WHEN s_counter_lower < 25 AND s_counter_lower /= 0 ELSE
-        '1';
+    cs <= s_cs;
     -- Our system is synchronized on the rising clock. As the SPI interface is
     -- also synchronized on the rising edge, use an inverted clock to satisfy
     -- setup and hold timing requirements. See t1 and t2 in figure 1 of
-    -- datasheet.
+    -- datasheet. This works here but may break requirements on other hardware.
     clk <= NOT clock;
 
 END ARCHITECTURE no_target_specific;
