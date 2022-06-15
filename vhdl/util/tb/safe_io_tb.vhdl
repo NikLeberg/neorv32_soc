@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.3
+-- Version:                 0.4
 --
 -- Entity:                  safe_io_tb
 --
@@ -16,6 +16,8 @@
 --                              minor formatting improvements
 --                          0.3, 2022-05-08, leuen4
 --                              fix check procedure input declarations
+--                          0.4, 2022-06-15, leuen4
+--                              add new generic input N_SYNC_LENGTH
 -- =============================================================================
 
 LIBRARY ieee;
@@ -30,6 +32,7 @@ ARCHITECTURE simulation OF safe_io_tb IS
     -- Component definition for device under test.
     COMPONENT safe_io
         GENERIC (
+            N_SYNC_LENGTH  : POSITIVE;
             N_COUNTER_BITS : POSITIVE
         );
         PORT (
@@ -50,7 +53,8 @@ BEGIN
     -- Instantiate the device under test.
     dut : safe_io
     GENERIC MAP(
-        N_COUNTER_BITS => 2 -- total delay of 2^2 + 2 = 6 cycles
+        N_SYNC_LENGTH  => 2, -- sync with 2 flip-flops
+        N_COUNTER_BITS => 2  -- total delay of 2^2 + 2 = 6 cycles
     )
     PORT MAP(
         clock   => s_clock,

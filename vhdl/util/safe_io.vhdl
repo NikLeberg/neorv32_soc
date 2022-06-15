@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  safe_io
 --
@@ -13,13 +13,16 @@
 --                          debounce can be configured with generic input. The N
 --                          value defines how many (2^N) clocks the input has to
 --                          be stable before a level change is allowed. Note
---                          that due the synchronization the total delay for the
---                          signal is 2^N + 2.
+--                          that the total delay for the signal is
+--                          2^N_COUNTER_BITS + N_SYNC_LENGTH.
 --
 -- Changes:                 0.1, 2022-04-29, leuen4
 --                              initial implementation
 --                          0.2, 2022-05-04, leuen4
 --                              minor formatting improvements
+--                          0.3, 2022-06-15, leuen4
+--                              fix naming "hazard -> metastability" and extend
+--                              with generic syncronizer length
 -- =============================================================================
 
 LIBRARY ieee;
@@ -28,19 +31,20 @@ USE ieee.numeric_std.ALL;
 
 ENTITY safe_io IS
     GENERIC (
-        N_COUNTER_BITS : POSITIVE := 2 -- width for counter, counts to 2^N
+        N_SYNC_LENGTH  : POSITIVE := 3; -- length of synchronizer
+        N_COUNTER_BITS : POSITIVE := 2  -- width for counter, counts to 2^N
     );
     PORT (
         clock, n_reset : IN STD_LOGIC;
 
-        x : IN STD_LOGIC; -- unsafe, hazardous, bouncy, direct I/O pin
+        x : IN STD_LOGIC; -- unsafe, unsynchronized, bouncy, direct I/O pin
         y : OUT STD_LOGIC -- safe, synchronized, debounced, FPGA signal
     );
 END ENTITY safe_io;
 
 ARCHITECTURE no_target_specific OF safe_io IS
-    -- Signals for shift register i.e. two flip-flops in a row for input sync.
-    SIGNAL s_sync : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    -- Signals for shift register i.e. multiple flip-flops in a row.
+    SIGNAL s_sync : STD_LOGIC_VECTOR(N_SYNC_LENGTH - 1 DOWNTO 0);
     SIGNAL s_synced : STD_LOGIC;
 
     -- Signals for debouncer i.e. up-counter.
@@ -50,7 +54,7 @@ ARCHITECTURE no_target_specific OF safe_io IS
 BEGIN
 
     -- =========================================================================
-    -- Purpose: Synchronize input to clock and remove hazards
+    -- Purpose: Synchronize input to clock for metastability prevention
     -- Type:    sequential
     -- Inputs:  clock, n_reset, x
     -- Outputs: s_sync, s_synced
@@ -61,7 +65,7 @@ BEGIN
             IF (n_reset = '0') THEN
                 s_sync <= (OTHERS => '0');
             ELSE
-                -- Route direct I/O through two flip-flops to remove hazards.
+                -- Route direct I/O through multiple flip-flops.
                 s_sync <= s_sync(s_sync'HIGH - 1 DOWNTO 0) & x;
             END IF;
         END IF;
