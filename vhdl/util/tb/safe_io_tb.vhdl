@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.4
+-- Version:                 0.5
 --
 -- Entity:                  safe_io_tb
 --
@@ -18,6 +18,9 @@
 --                              fix check procedure input declarations
 --                          0.4, 2022-06-15, leuen4
 --                              add new generic input N_SYNC_LENGTH
+--                          0.5, 2022-06-23, leuen4
+--                              The DUT output is now not only checked at the
+--                              end but also at each sequence step.
 -- =============================================================================
 
 LIBRARY ieee;
@@ -72,12 +75,12 @@ BEGIN
 
     test : PROCESS IS
         -- Procedure that generates stimuli for the given sequence. Response
-        -- from DUT is checked for correctness.
+        -- from DUT is checked at each timestep for correctness.
         PROCEDURE check (
             -- Sequence of bits to stimulate the DUT with.
             CONSTANT x : STD_LOGIC_VECTOR(19 DOWNTO 0);
-            -- Expected output after t * 20.
-            CONSTANT y : STD_LOGIC;
+            -- Expected output at after each step of the sequence.
+            CONSTANT y : STD_LOGIC_VECTOR(19 DOWNTO 0);
             -- For how long each bit of the sequence is active.
             CONSTANT t : TIME
         ) IS
@@ -85,13 +88,14 @@ BEGIN
             FOR i IN 19 DOWNTO 0 LOOP
                 s_x <= x(i);
                 WAIT FOR t;
+                ASSERT s_y = y(i)
+                REPORT "Expected y to be " & STD_LOGIC'image(y(i)) &
+                    " but got " & STD_LOGIC'image(s_y) & ". " &
+                    "Was in sequence at step " & INTEGER'image(y'HIGH - i) & "."
+                    SEVERITY failure;
+                -- Restore initial simulation conditions: x is 0, y is 0 and
+                -- simulation is in sync with the clock.
             END LOOP;
-            ASSERT s_y = y
-            REPORT "Expected y to be " & STD_LOGIC'image(y) & " but got " &
-                STD_LOGIC'image(s_y) & "."
-                SEVERITY failure;
-            -- Restore initial simulation conditions: x is 0, y is 0 and
-            -- simulation is in sync with the clock.
             s_x <= '0';
             FOR i IN 5 DOWNTO 0 LOOP
                 WAIT UNTIL rising_edge(s_clock);
@@ -106,21 +110,25 @@ BEGIN
         -- 4 * 20 ns (at least at the positive clock edges) should be let
         -- through. Note the delay of two additional cycles because of the sync.
 
-        -- Check that hazardous signals aren't let through.
-        check("01010101010101010101", '0', 1 ns);
-        check("01010101010101010101", '0', 1.1 ns);
-        check("10111010001000000010", '0', 9 ns);
+        -- Check that fast signals aren't let through.
+        check("01010101010101010101", "00000000000000000000", 1 ns);
+        check("01010101010101010101", "00000000000000000000", 1.1 ns);
+        check("10111010001000000010", "00000000000000000000", 9 ns);
 
         -- Check that valid signals are let through.
-        check("11111111111111111111", '1', 20 ns);
-        check("00000000000001111110", '1', 20 ns);
-        check("00000000000000000000", '0', 20 ns);
-        check("11110000111100001111", '0', 20 ns); -- still 0 because of delay
+        check("11111111111111111111", "00000011111111111111", 20 ns);
+        check("00000000000001111110", "00000000000000000001", 20 ns);
+        check("00000000000000000000", "00000000000000000000", 20 ns);
+        -- steady signals for 4 * 20 ns
+        check("11110000111100001111", "00000011110000111100", 20 ns);
 
         -- Check that invalid signals aren't let through.
-        check("11110000111100001111", '0', 10 ns); -- not steady for long enough
-        check("11100011100011100011", '0', 20 ns); -- not steady for 4 clocks
-        check("11111011111110111111", '0', 7 ns); -- not steady on pos edge
+        -- not steady for long enough
+        check("11110000111100001111", "00000000000000000000", 10 ns);
+        -- not steady for 4 clocks
+        check("11100011100011100011", "00000000000000000000", 20 ns);
+        -- not steady on positive clock edge
+        check("11111011111110111111", "00000000000000000000", 7 ns);
 
         -- Report successful test.
         REPORT "Test OK";
