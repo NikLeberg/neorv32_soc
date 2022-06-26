@@ -13,7 +13,7 @@
 # set_location_assignment PIN_G4 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO2>
 # set_location_assignment PIN_G3 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO3>
 # set_location_assignment PIN_H2 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO4>
-# set_location_assignment PIN_H1 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO7>
-# set_location_assignment PIN_J3 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO8>
-# set_location_assignment PIN_J2 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO9>
-# set_location_assignment PIN_J1 -to <ENTITY_PORT_NAME_CONNECTED_TO_PMOD2_IO10>
+set_location_assignment PIN_H1 -to b
+set_location_assignment PIN_J3 -to a
+set_location_assignment PIN_J2 -to btn
+set_location_assignment PIN_J1 -to swt
