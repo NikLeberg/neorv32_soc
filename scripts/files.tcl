@@ -32,6 +32,8 @@ set entities {
     "gain"
     "offset"
     "dds"
+
+    "bcd_digit"
     
     "geni"
 }
