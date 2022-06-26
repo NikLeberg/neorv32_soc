@@ -35,6 +35,8 @@ set entities {
     "dds"
 
     "bcd_digit"
+    "number"
+    "number_frequency"
     "matrix_part"
     
     "geni"
