@@ -1,20 +1,19 @@
-stages:
-  - test
+default:
+  image: ghcr.io/nikleberg/quartus-prime:latest
 
-modelsim:
+example:
   stage: test
-  # https://github.com/goldenSniperOS/modelsim-docker
-  image: goldensniper/modelsim-docker
+  before_script: |
+    apt-get -q -y update
+    apt-get -q -y install net-tools
+    ifconfig eth0 down
+    ifconfig eth0 hw ether "00:ab:ab:ab:ab:ab"
+    ifconfig eth0 up
   script: |
     cd ./modelsim
     vsim -c -do ../scripts/modelsim_compile.tcl
     vsim -c -do ../scripts/modelsim_test.tcl
-
-quartus:
-  stage: test
-  image: $CI_REGISTRY/leuen4/container_builder/vhdl_rpn-ci
-  script: |
-    cd ./quartus
+    cd ./../quartus
     quartus_sh -t ../scripts/quartus_project.tcl
     quartus_sh -t ../scripts/quartus_compile.tcl
   artifacts:
