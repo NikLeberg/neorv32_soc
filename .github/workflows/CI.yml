@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/nikleberg/neorv32_soc:latest
+      options: --mac-address=00:ab:ab:ab:ab:ab # for QuestaSim license
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Run Simulation
+      run: |
+        cd sim
+        vsim -c -do ../scripts/sim_compile.tcl
+        vsim -c -do ../scripts/sim_test.tcl
+
+    - name: Run Synthesis
+      run: |
+        cd quartus
+        quartus_sh -t ../scripts/quartus_project.tcl
+        quartus_sh -t ../scripts/quartus_compile.tcl
+
+    - name: Archive Synthesis Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: quartus_sof
+        path: quartus/output_files/*.sof
