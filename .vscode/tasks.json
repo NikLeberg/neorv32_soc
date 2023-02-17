@@ -149,9 +149,9 @@
             "options": {
                 "cwd": "${workspaceFolder}/quartus/output_files"
             },
-            "dependsOn": [
-                "quartus-compile"
-            ]
+            // "dependsOn": [
+            //     "quartus-compile"
+            // ]
         },
         {
             "label": "quartus-flash",
@@ -170,9 +170,39 @@
                 "reveal": "silent"
             }
         },
-        
-        
-        
-        
+        {
+            "label": "sw-build",
+            "command": "make exe",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            }
+        },
+        {
+            "label": "sw-clean",
+            "command": "make clean_all",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "sw-debug",
+            "command": "make debug",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            },
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "sw-env",
+            "command": "bash -l",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            }
+        }
     ]
 }
