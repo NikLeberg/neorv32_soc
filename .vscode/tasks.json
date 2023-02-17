@@ -102,7 +102,9 @@
         {
             "label": "sim-test",
             "command": "vsim -c -do ../scripts/sim_test.tcl",
-            "options": {},
+            "options": {
+                "cwd": "${workspaceFolder}/sim"
+            },
             "dependsOn": [
                 "sim-compile"
             ]
