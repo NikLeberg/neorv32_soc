@@ -5,5 +5,11 @@ work.files = [
     "./vhdl/**/tb/*.vhd*",
     "./vhdl/**/**/*.vhd*",
     "./vhdl/**/**/tb/*.vhd*",
-
+]
+neorv32.files = [
+    "./lib/neorv32/rtl/core/*.vhd",
+    "./lib/neorv32/rtl/core/**/*.default.vhd",
+]
+sdram_fpga.files = [
+    "./lib/sdram-fpga/*.vhd"
 ]

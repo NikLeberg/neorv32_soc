@@ -1,0 +1,6 @@
+[submodule "lib/neorv32"]
+	path = lib/neorv32
+	url = https://github.com/stnolting/neorv32.git
+[submodule "lib/sdram-fpga"]
+	path = lib/sdram-fpga
+	url = https://github.com/nullobject/sdram-fpga.git

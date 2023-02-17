@@ -14,6 +14,10 @@ set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name NUM_PARALLEL_PROCESSORS [expr {[get_environment_info -num_logical_processors] / 2}]
 
+# Add library design files.
+set ::lib_target "quartus"
+source ../lib/libs.tcl
+
 # Get definitions of files and entities.
 source ../scripts/files.tcl
 
