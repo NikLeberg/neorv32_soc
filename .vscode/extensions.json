@@ -10,6 +10,9 @@
         // easy access for tasks defined in tasks.json
         "spmeesseman.vscode-taskexplorer",
         // TCL script coloring
-        "rashwell.tcl"
+        "rashwell.tcl",
+        // C code Intellisense and code formater / helpers.
+        "ms-vscode.cpptools",
+        "cschlosser.doxdocgen"
     ]
 }

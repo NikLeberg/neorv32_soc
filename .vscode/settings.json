@@ -42,6 +42,13 @@
     // auto wrap long text in markdown files
     "[markdown]": {
         "editor.wordWrap": "wordWrapColumn",
-        "editor.quickSuggestions": false
-    }
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "strings": "off",
+            "other": "off"
+        }
+    },
+    "taskExplorer.exclude": [
+        "/workspaces/neorv32_soc/lib/neorv32/**"
+    ]
 }
