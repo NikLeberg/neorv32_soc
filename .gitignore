@@ -1,9 +1,9 @@
 # ignore run output of vsim / vcom
 transcript
 stderr
-# ignore generated files by ModelSim
-modelsim/*
-!modelsim/*.gitkeep
+# ignore generated files by ModelSim / QuestaSim
+sim/*
+!sim/*.gitkeep
 # ignore generated files by Quartus
 quartus/*
 !quartus/*.gitkeep

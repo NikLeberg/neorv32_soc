@@ -1,2 +1,2 @@
-# Open quartus in the background
-exec quartus geni.qpf &
+# Open quartus GUI
+exec quartus top.qpf
