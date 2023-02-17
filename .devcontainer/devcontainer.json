@@ -1,0 +1,41 @@
+{
+    "name": "neorv32_soc",
+    "image": "ghcr.io/nikleberg/neorv32_soc:latest",
+    "runArgs": [
+        "--hostname",
+        "neorv32_soc",
+        "-e",
+        "DISPLAY=host.docker.internal:0.0", // X11 display from VcXsrv that is running on Windows Host
+        "-v",
+        "/dev:/dev", // access to JTAG USB Blaster
+        "--mac-address",
+        "00:ab:ab:ab:ab:ab", // fixed NIC id for QuestaSim license
+        "--privileged"
+    ],
+    "customizations": {
+        "vscode": {
+            // IDs of extensions installed when the container is created.
+            "extensions": [
+                // syntax coloring
+                "puorc.awesome-vhdl",
+                // auto formatter
+                "vinrobot.vhdl-formatter",
+                // language server for linting
+                // comes also with coloring, overwritten by puorc.awesome-vhdl
+                "hbohlin.vhdl-ls",
+                // easy access for tasks defined in tasks.json
+                "spmeesseman.vscode-taskexplorer",
+                // TCL script coloring
+                "rashwell.tcl",
+                // C code Intellisense and code formater / helpers.
+                "ms-vscode.cpptools",
+                "cschlosser.doxdocgen"
+            ],
+            // Container specific settings.json values on container create.
+            "settings": {
+                // Slow down scrolling in intergrated terminal
+                "terminal.integrated.mouseWheelScrollSensitivity": 0.2
+            }
+        }
+    }
+}
