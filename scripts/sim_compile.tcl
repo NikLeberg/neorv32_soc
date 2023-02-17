@@ -10,19 +10,23 @@ if [file exists work] {
 }
 vlib work
 
+# Compile library entity files.
+set ::lib_target "sim"
+source ../lib/libs.tcl
+
 # Get definitions of files and entities.
 quietly source ../scripts/files.tcl
 
 # Compile the entity files.
 foreach ent $entities {
-    quietly set file [lsearch -inline -glob $files "*$ent.vhdl"]
+    quietly set file [lsearch -inline -glob $files "*$ent.vhd*"]
     echo "Compiling entity $ent from file $file"
     vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint $file
 }
 
 # Compile the testbench files.
 foreach testbench $testbenches {
-    quietly set file [lsearch -inline -glob $files "*/tb/$testbench.vhdl"]
+    quietly set file [lsearch -inline -glob $files "*/tb/$testbench.vhd*"]
     echo "Compiling testbench $testbench from file $file"
     vcom -quiet -2008 -pedanticerrors -check_synthesis -lint $file
 }

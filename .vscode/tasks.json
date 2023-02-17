@@ -12,8 +12,8 @@
             // catches compilation warnings and errors
             // # ** Warning: ../vhdl/example.vhdl(30): (vcom-1400) Synthesis Warning: Signal "a" is read in the process but is not in the sensitivity list.
             // # ** Error: ../vhdl/example.vhdl(31): near "END": (vcom-1576) expecting ';'.
-            "source": "ModelSim",
-            "owner": "ModelSim",
+            "source": "Sim",
+            "owner": "Sim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (Error|Warning).*: \\.(.+)\\((\\d+)\\): (.+)$",
@@ -30,8 +30,8 @@
             // # ** Fatal: (vsim-3809) Types do not match between component and entity for generic "VALUE_MAX".
             // #    Time: 0 ns  Iteration: 0  Instance: /offset_tb/dut File: ../vhdl/dds/offset.vhdl Line: 25
             // # FATAL ERROR while loading design
-            "source": "ModelSim",
-            "owner": "ModelSim",
+            "source": "Sim",
+            "owner": "Sim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
@@ -55,8 +55,8 @@
             // # ** Fatal: (vsim-3734) Index value 2 is out of range 1 downto 0.
             // #    Time: 0 ns  Iteration: 0  Process: /math_add_tb/test File: ../vhdl/math/tb/math_add_tb.vhdl
             // # Fatal error in ForLoop loop at ../vhdl/math/tb/math_add_tb.vhdl line 69
-            "source": "ModelSim",
-            "owner": "ModelSim",
+            "source": "Sim",
+            "owner": "Sim",
             "pattern": [
                 {
                     "regexp": "\\*\\* (?:Failure|Fatal): (.+)$",
@@ -93,79 +93,41 @@
     ],
     "tasks": [
         {
-            "label": "modelsim-compile",
-            "command": "../scripts/modelsim_compile.tcl",
+            "label": "sim-compile",
+            "command": "vsim -c -do ../scripts/sim_compile.tcl",
             "options": {
-                "cwd": "./modelsim",
-                // shell for running .tcl scripts with modelsim
-                "shell": {
-                    "executable": "vsim",
-                    "args": [
-                        "-c",
-                        "-do"
-                    ]
-                }
+                "cwd": "${workspaceFolder}/sim"
             }
         },
         {
-            "label": "modelsim-test",
-            "command": "../scripts/modelsim_test.tcl",
-            "options": {
-                "cwd": "./modelsim",
-                // shell for running .tcl scripts with modelsim
-                "shell": {
-                    "executable": "vsim",
-                    "args": [
-                        "-c",
-                        "-do"
-                    ]
-                }
-            },
+            "label": "sim-test",
+            "command": "vsim -c -do ../scripts/sim_test.tcl",
+            "options": {},
             "dependsOn": [
-                "modelsim-compile"
+                "sim-compile"
             ]
         },
         {
-            "label": "modelsim-open",
-            "command": "../scripts/modelsim_open.tcl ${fileBasenameNoExtension}",
+            "label": "sim-open",
+            // Gui Mode (no -c flag)
+            "command": "vsim -do ../scripts/sim_open.tcl ${fileBasenameNoExtension}",
             "options": {
-                "cwd": "./modelsim",
-                // shell for running .tcl scripts with modelsim (gui mode)
-                "shell": {
-                    "executable": "vsim",
-                    "args": [
-                        "-do"
-                    ]
-                }
+                "cwd": "${workspaceFolder}/sim"
             },
-            "dependsOn": "modelsim-compile"
+            "dependsOn": "sim-compile"
         },
         {
             "label": "quartus-project",
-            "command": "../scripts/quartus_project.tcl",
+            "command": "quartus_sh -t ../scripts/quartus_project.tcl",
             "options": {
-                "cwd": "./quartus",
-                // shell for running .tcl scripts with quartus
-                "shell": {
-                    "executable": "quartus_sh",
-                    "args": [
-                        "-t",
-                    ]
-                }
+                "cwd": "${workspaceFolder}/quartus"
             }
         },
         {
             "label": "quartus-compile",
-            "command": "../scripts/quartus_compile.tcl",
+            "command": "quartus_sh -t ../scripts/quartus_compile.tcl",
             "options": {
-                "cwd": "./quartus",
-                // shell for running .tcl scripts with quartus
-                "shell": {
-                    "executable": "quartus_sh",
-                    "args": [
-                        "-t",
-                    ]
-                }
+                "cwd": "${workspaceFolder}/quartus"
             },
             "dependsOn": [
                 "quartus-project"
@@ -173,16 +135,9 @@
         },
         {
             "label": "quartus-open",
-            "command": "../scripts/quartus_open.tcl",
+            "command": "quartus_sh -t ../scripts/quartus_open.tcl",
             "options": {
-                "cwd": "./quartus",
-                // shell for running .tcl scripts with quartus
-                "shell": {
-                    "executable": "quartus_sh",
-                    "args": [
-                        "-t",
-                    ]
-                }
+                "cwd": "${workspaceFolder}/quartus"
             },
             "dependsOn": [
                 "quartus-project"
@@ -190,9 +145,9 @@
         },
         {
             "label": "quartus-program",
-            "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;geni.sof'",
+            "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;top.sof'",
             "options": {
-                "cwd": "./quartus/output_files"
+                "cwd": "${workspaceFolder}/quartus/output_files"
             },
             "dependsOn": [
                 "quartus-compile"
@@ -202,7 +157,7 @@
             "label": "quartus-flash",
             "command": "quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartus_flash.cdf",
             "options": {
-                "cwd": "./quartus/output_files",
+                "cwd": "${workspaceFolder}/quartus/output_files",
             },
             "dependsOn": [
                 "quartus-compile"
@@ -210,10 +165,14 @@
         },
         {
             "label": "clean",
-            "command": "Remove-Item -Path quartus/*, modelsim/* -Exclude *gitkeep -Recurse",
+            "command": "rm -rf quartus/* sim/* && touch quartus/.gitkeep && touch sim/.gitkeep",
             "presentation": {
                 "reveal": "silent"
             }
-        }
+        },
+        
+        
+        
+        
     ]
 }

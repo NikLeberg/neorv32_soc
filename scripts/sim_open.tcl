@@ -2,7 +2,7 @@
 set ent [lindex $argv 0]
 
 # load simulation of given entity
-vsim -t ns $ent
+vsim -t ns -debugDB $ent
 
 # add all available signals from testbench and dut
 add wave -divider testbench

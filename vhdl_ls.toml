@@ -1,8 +1,9 @@
 [libraries]
 work.files = [
-    "./vhdl/*.vhdl",
-    "./vhdl/**/*.vhdl",
-    "./vhdl/**/tb/*.vhdl",
-    "./vhdl/**/**/*.vhdl",
-    "./vhdl/**/**/tb/*.vhdl",
+    "./vhdl/*.vhd*",
+    "./vhdl/**/*.vhd*",
+    "./vhdl/**/tb/*.vhd*",
+    "./vhdl/**/**/*.vhd*",
+    "./vhdl/**/**/tb/*.vhd*",
+
 ]

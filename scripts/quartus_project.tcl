@@ -2,12 +2,12 @@
 package require ::quartus::project
 
 # Create project
-project_new "geni" -overwrite
+project_new "top" -overwrite
 
 # Assign family, device, and top-level entity
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE15F23C8
-set_global_assignment -name TOP_LEVEL_ENTITY geni
+set_global_assignment -name TOP_LEVEL_ENTITY top
 
 # Default settings
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
@@ -19,7 +19,7 @@ source ../scripts/files.tcl
 
 # Set design files. (This adds ALL known .vhdl files.)
 foreach ent $entities {
-    set file [lsearch -inline -glob $files "*$ent.vhdl"]
+    set file [lsearch -inline -glob $files "*$ent.vhd*"]
     set_global_assignment -name VHDL_FILE $file
 }
 

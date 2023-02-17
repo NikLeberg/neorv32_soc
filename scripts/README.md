@@ -2,7 +2,7 @@
 
 In diesem Ordner sind diverse Tcl-Skripte zur Automatisierung verschiedener Aufgaben abgelegt.
 
-Die `modelsim_*.tcl` Skripte können wie folgt aus dem Ordner `../modelsim` ausgeführt werden: `vsim -c -do ../scripts/<script>.tcl`. Soll zusätzlich die ModelSim GUI gestartet werden, so kann der `-c` Parameter weggelassen werden.
+Die `sim_*.tcl` Skripte können wie folgt aus dem Ordner `../sim` ausgeführt werden: `vsim -c -do ../scripts/<script>.tcl`. Soll zusätzlich die ModelSim oder QuestaSim GUI gestartet werden, so kann der `-c` Parameter weggelassen werden.
 
 Analog dazu lassen sich die `quartus_*.tcl` Skripte wie folgt aus dem Ordner `../quartus` heraus ausführen: `quartus_sh -t ../scripts/<script>.tcl`.
 
