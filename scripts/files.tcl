@@ -9,7 +9,7 @@ set files [glob                                                                \
 # List the entities in the order that they should be compiled. For example if
 # you put "counter" a file named "counter.vhd{l}" is searched for.
 set entities {
-    "example"
+    "sdram_controller"
 
     "top"
 }
