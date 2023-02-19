@@ -235,7 +235,7 @@ BEGIN
     GENERIC MAP(
         -- General --
         CLOCK_FREQUENCY => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
-        BASE_ADDRESS    => x"8200_0000"     -- start address of SDRAM
+        BASE_ADDRESS    => x"4000_0000"     -- start address of SDRAM
     )
     PORT MAP(
         -- Global control --

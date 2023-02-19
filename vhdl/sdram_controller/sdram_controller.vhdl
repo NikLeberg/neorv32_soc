@@ -13,8 +13,24 @@
 --                          Gecko4Education board. Datasheet:
 --                          https://gecko-wiki.ti.bfh.ch/_media/gecko4education:is42vm16160k.pdf
 --
+-- Note:                    The Wishbone bus is organized with 32 bit addresses
+--                          and byte resolution. The SDRAM has 256 Mbit of data
+--                          with an address resolution of 24 bits that each
+--                          address 16 bits of data. The SDRAM controller from
+--                          nullobject abstracts this away to 32 bit data access
+--                          by issuing a burst read/write of two addresses. This
+--                          leaves 23 bits of address with a data resolution of
+--                          32 bits.
+--                          The 32 bit Wishbone address is split up like so:
+--                           - first 7 bits: coarse SDRAM address
+--                           - next 23 bits: fine SDRAM address
+--                           - last  2 bits: allways zero because byte access is
+--                                           not allowed, only 32 bit word.
+--
 -- Changes:                 0.1, 2023-02-05, leuen4
 --                              initial version
+--                          0.2, 2023-02-19, leuen4
+--                              fix byte/word access
 -- =============================================================================
 
 LIBRARY ieee;
@@ -65,7 +81,7 @@ ARCHITECTURE no_target_specific OF sdram_controller IS
             -- clock cycles required for the other timing values.
             CLK_FREQ : real;
             -- 32-bit controller interface
-            ADDR_WIDTH : NATURAL := 23;
+            ADDR_WIDTH : NATURAL := 23; -- 23 bit address with 32 bit data = 32 MB
             DATA_WIDTH : NATURAL := 32;
             -- SDRAM interface
             SDRAM_ADDR_WIDTH : NATURAL := 13;
@@ -145,8 +161,8 @@ BEGIN
     wb_dat_o <= STD_ULOGIC_VECTOR(wb_dat_o_res);
     wb_sel_i_res <= STD_LOGIC_VECTOR(wb_sel_i_res);
 
-    -- Decode Wishbone address and generate selected signal --
-    selected <= '1' WHEN wb_adr_i_u(31 DOWNTO 24) = BASE_ADDRESS(31 DOWNTO 24) ELSE
+    -- Coarse decode Wishbone address (7 MSB bits) and generate select signal --
+    selected <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) ELSE
         '0';
 
     -- Generate handshake signals --
@@ -160,7 +176,9 @@ BEGIN
         '1' WHEN wb_we_i = '0' AND sdram_valid = '1' ELSE -- read
         '1' WHEN wb_we_i = '1' AND sdram_ack = '1' ELSE -- write
         '0';
-    wb_err_o <= '0';
+    -- Wishbone transaction goes into error when address is unaligned.
+    wb_err_o <= '1' WHEN wb_adr_i(1 DOWNTO 0) /= "00" AND selected = '1' ELSE
+        '0';
 
     -- Negate reset signal --
     rst <= NOT rstn_i;
@@ -183,14 +201,14 @@ BEGIN
         reset => rst,
         clk   => clk_i,
         -- Interconnect --
-        addr  => wb_adr_i_u(22 DOWNTO 0), -- address bus
+        addr  => wb_adr_i_u(24 DOWNTO 2), -- address bus (convert byte address to word address)
         data  => wb_dat_i_res,            -- input data bus
         we    => wb_we_i,                 -- asserted == write operation
         req   => sdram_req,               -- asserted == operation will be performed
         ack   => sdram_ack,               -- asserted == request accepted
         valid => sdram_valid,             -- asserted == data from sdram valid
         q     => wb_dat_o_res,            -- output data bus
-        -- SDRAM interface
+        -- SDRAM interface --
         sdram_a     => sdram_addr,
         sdram_ba    => sdram_ba,
         sdram_dq    => sdram_d,
