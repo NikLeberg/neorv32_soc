@@ -194,9 +194,6 @@
             "command": "make debug",
             "options": {
                 "cwd": "${workspaceFolder}/sw"
-            },
-            "presentation": {
-                "reveal": "silent"
             }
         },
         {
