@@ -32,10 +32,12 @@ ENTITY top IS
         altera_reserved_tdi : IN STD_ULOGIC;
         altera_reserved_tdo : OUT STD_ULOGIC;
         -- XIP (execute in place via SPI) --
-        xip_csn_o : OUT STD_ULOGIC;       -- chip-select, low-active
-        xip_clk_o : OUT STD_ULOGIC;       -- serial clock
-        xip_sdi_i : IN STD_ULOGIC := 'L'; -- device data input
-        xip_sdo_o : OUT STD_ULOGIC;       -- controller data output
+        xip_csn_o   : OUT STD_ULOGIC;        -- chip-select, low-active
+        xip_holdn_o : OUT STD_ULOGIC := '1'; -- hold serial communication, low-active
+        xip_clk_o   : OUT STD_ULOGIC;        -- serial clock
+        xip_sdi_i   : IN STD_ULOGIC := 'L';  -- device data input
+        xip_sdo_o   : OUT STD_ULOGIC;        -- controller data output
+        xip_wpn_o   : OUT STD_ULOGIC := '1'; -- write-protect, low-active
         -- GPIO --
         gpio0_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
         gpio1_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
