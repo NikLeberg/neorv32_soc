@@ -23,7 +23,7 @@ source ../scripts/files.tcl
 
 # Set design files. (This adds ALL known .vhdl files.)
 foreach ent $entities {
-    set file [lsearch -inline -glob $files "*$ent.vhd*"]
+    set file [lsearch -inline -glob $files "*/$ent.vhd*"]
     set_global_assignment -name VHDL_FILE $file
 }
 

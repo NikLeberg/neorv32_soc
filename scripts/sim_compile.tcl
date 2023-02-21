@@ -19,7 +19,7 @@ quietly source ../scripts/files.tcl
 
 # Compile the entity files.
 foreach ent $entities {
-    quietly set file [lsearch -inline -glob $files "*$ent.vhd*"]
+    quietly set file [lsearch -inline -glob $files "*/$ent.vhd*"]
     echo "Compiling entity $ent from file $file"
     vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint $file
 }
