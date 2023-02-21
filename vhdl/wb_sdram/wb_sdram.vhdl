@@ -1,11 +1,11 @@
 -- =============================================================================
--- File:                    sdram_controller.vhdl
+-- File:                    wb_sdram.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.3
 --
--- Entity:                  sdram_controller
+-- Entity:                  wb_sdram
 --
 -- Description:             Wishbone wrapper for SDRAM controller of nullobject
 --                          https://github.com/nullobject/sdram-fpga. Configured
@@ -31,6 +31,8 @@
 --                              initial version
 --                          0.2, 2023-02-19, leuen4
 --                              fix byte/word access
+--                          0.3, 2023-02-22, leuen4
+--                              rename entity from sdram_controller to ws_sdram
 -- =============================================================================
 
 LIBRARY ieee;
@@ -38,7 +40,7 @@ USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 USE ieee.math_real.ALL;
 
-ENTITY sdram_controller IS
+ENTITY wb_sdram IS
     GENERIC (
         -- General --
         CLOCK_FREQUENCY : NATURAL               := 50000000;    -- clock frequency of clk_i in Hz
@@ -71,9 +73,9 @@ ENTITY sdram_controller IS
         sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
         sdram_clk   : OUT STD_LOGIC                                           -- clk
     );
-END ENTITY sdram_controller;
+END ENTITY wb_sdram;
 
-ARCHITECTURE no_target_specific OF sdram_controller IS
+ARCHITECTURE no_target_specific OF wb_sdram IS
     COMPONENT sdram IS
         GENERIC (
             -- clock frequency (in MHz)
@@ -112,6 +114,8 @@ ARCHITECTURE no_target_specific OF sdram_controller IS
             clk : IN STD_LOGIC;
             -- address bus
             addr : IN unsigned(ADDR_WIDTH - 1 DOWNTO 0);
+            -- byte enable
+            benable : IN STD_LOGIC_VECTOR(DATA_WIDTH/8 - 1 DOWNTO 0);
             -- input data bus
             data : IN STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
             -- When the write enable signal is asserted, a write operation will be performed.
@@ -140,35 +144,31 @@ ARCHITECTURE no_target_specific OF sdram_controller IS
         );
     END COMPONENT sdram;
 
-    -- Helper signals --
-    SIGNAL rst : STD_ULOGIC;
-    SIGNAL wb_tag_i_res : STD_LOGIC_VECTOR(02 DOWNTO 0); -- request tag
+    -- Wishbone signals --
+    SIGNAL wb_ss : STD_LOGIC;
     SIGNAL wb_adr_i_u : UNSIGNED(31 DOWNTO 0); -- address
     SIGNAL wb_dat_i_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- read data
     SIGNAL wb_dat_o_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- write data
     SIGNAL wb_sel_i_res : STD_LOGIC_VECTOR(03 DOWNTO 0); -- byte enable
 
-    -- Selected signal --
-    SIGNAL selected : STD_LOGIC;
-
-    -- Handshake signals --
-    SIGNAL sdram_req, sdram_ack, sdram_valid : STD_LOGIC;
+    -- SDRAM signals --
+    SIGNAL sdram_rst : STD_ULOGIC; -- reset, non inverted
+    SIGNAL sdram_req, sdram_ack, sdram_valid : STD_LOGIC; -- handshake
 BEGIN
     -- Convert Wishbone signals to the resolved or casted signals --
-    wb_tag_i_res <= STD_LOGIC_VECTOR(wb_tag_i);
     wb_adr_i_u <= UNSIGNED(wb_adr_i);
     wb_dat_i_res <= STD_LOGIC_VECTOR(wb_dat_i);
     wb_dat_o <= STD_ULOGIC_VECTOR(wb_dat_o_res);
     wb_sel_i_res <= STD_LOGIC_VECTOR(wb_sel_i_res);
 
     -- Coarse decode Wishbone address (7 MSB bits) and generate select signal --
-    selected <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) ELSE
+    wb_ss <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) ELSE
         '0';
 
     -- Generate handshake signals --
     -- SDRAM is requested to read/write data when the address matches, a
     -- wishbone cycle is ongoing and the current wb signals are valid (strobe).
-    sdram_req <= selected AND wb_cyc_i AND wb_stb_i;
+    sdram_req <= wb_ss AND wb_cyc_i AND wb_stb_i;
     -- Wishbone transaction is acknowledged when:
     --  - read operation:  sdram has valid data (valid signal asserted)
     --  - write operation: sdram did ack transaction (ack signal asserted)
@@ -177,11 +177,8 @@ BEGIN
         '1' WHEN wb_we_i = '1' AND sdram_ack = '1' ELSE -- write
         '0';
     -- Wishbone transaction goes into error when address is unaligned.
-    wb_err_o <= '1' WHEN wb_adr_i(1 DOWNTO 0) /= "00" AND selected = '1' ELSE
+    wb_err_o <= '1' WHEN wb_adr_i(1 DOWNTO 0) /= "00" AND wb_ss = '1' ELSE
         '0';
-
-    -- Negate reset signal --
-    rst <= NOT rstn_i;
 
     -- SDRAM Controller --
     sdram_inst : sdram
@@ -198,16 +195,17 @@ BEGIN
         T_REFI => 7800.0    -- average refresh interval
     )
     PORT MAP(
-        reset => rst,
+        reset => sdram_rst,
         clk   => clk_i,
         -- Interconnect --
-        addr  => wb_adr_i_u(24 DOWNTO 2), -- address bus (convert byte address to word address)
-        data  => wb_dat_i_res,            -- input data bus
-        we    => wb_we_i,                 -- asserted == write operation
-        req   => sdram_req,               -- asserted == operation will be performed
-        ack   => sdram_ack,               -- asserted == request accepted
-        valid => sdram_valid,             -- asserted == data from sdram valid
-        q     => wb_dat_o_res,            -- output data bus
+        addr    => wb_adr_i_u(24 DOWNTO 2), -- address bus (convert byte address to word address)
+        benable => wb_sel_i_res,            -- byte enable
+        data    => wb_dat_i_res,            -- input data bus
+        we      => wb_we_i,                 -- asserted == write operation
+        req     => sdram_req,               -- asserted == operation will be performed
+        ack     => sdram_ack,               -- asserted == request accepted
+        valid   => sdram_valid,             -- asserted == data from sdram valid
+        q       => wb_dat_o_res,            -- output data bus
         -- SDRAM interface --
         sdram_a     => sdram_addr,
         sdram_ba    => sdram_ba,
@@ -221,7 +219,8 @@ BEGIN
         sdram_dqmh  => sdram_dqm(1)
     );
 
-    -- SDRAM clk output --
+    -- SDRAM extra signals --
+    sdram_rst <= NOT rstn_i;
     sdram_clk <= clk_i;
 
 END ARCHITECTURE no_target_specific;

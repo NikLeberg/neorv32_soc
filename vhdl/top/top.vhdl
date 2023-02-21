@@ -86,7 +86,7 @@ ARCHITECTURE top_arch OF top IS
         );
     END COMPONENT;
 
-    COMPONENT sdram_controller IS
+    COMPONENT wb_sdram IS
         GENERIC (
             -- General --
             CLOCK_FREQUENCY : NATURAL; -- clock frequency of clk_i in Hz
@@ -119,7 +119,7 @@ ARCHITECTURE top_arch OF top IS
             sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
             sdram_clk   : OUT STD_LOGIC                                           -- clk
         );
-    END COMPONENT sdram_controller;
+    END COMPONENT wb_sdram;
 
     CONSTANT CLOCK_FREQUENCY : POSITIVE := 50000000; -- clock frequency of clk_i in Hz
 
@@ -134,7 +134,7 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_wb_stb : STD_ULOGIC; -- strobe
     SIGNAL con_wb_cyc : STD_ULOGIC; -- valid cycle
     SIGNAL con_wb_ack : STD_ULOGIC; -- transfer acknowledge
-    SIGNAL con_wb_err : STD_ULOGIC; -- transfer error
+    SIGNAL con_wb_err : STD_ULOGIC := '0'; -- transfer error
 
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
 BEGIN
@@ -233,7 +233,7 @@ BEGIN
     );
 
     -- SDRAM Controller --
-    sdram_controller_inst : sdram_controller
+    wb_sdram_inst : wb_sdram
     GENERIC MAP(
         -- General --
         CLOCK_FREQUENCY => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
