@@ -223,7 +223,7 @@ architecture arch of sdram is
   signal data_reg : std_logic_vector(DATA_WIDTH-1 downto 0);
   signal we_reg   : std_logic;
   signal q_reg    : std_logic_vector(DATA_WIDTH-1 downto 0);
-  signal ben_reg  : std_logic_vector(DATA_WIDTH/8-1 downto 0);
+  signal dqm_reg  : std_logic_vector(DATA_WIDTH/8-1 downto 0);
 
   -- aliases to decode the address register
   alias col  : unsigned(SDRAM_COL_WIDTH-1 downto 0) is addr_reg(SDRAM_COL_WIDTH-1 downto 0);
@@ -374,7 +374,7 @@ begin
         addr_reg <= shift_left(resize(addr, addr_reg'length), 1);
         data_reg <= data;
         we_reg   <= we;
-        ben_reg  <= benable;
+        dqm_reg  <= not benable; -- mask individual bytes
       end if;
     end if;
   end process;
@@ -445,19 +445,19 @@ begin
       (others => '0') when others;
 
   -- decode the next 16-bit word from the write buffer
-  sdram_dq <= data_reg((BURST_LENGTH-wait_counter)*SDRAM_DATA_WIDTH-1 downto (BURST_LENGTH-wait_counter-1)*SDRAM_DATA_WIDTH) when state = WRITE else (others => 'Z');
+  sdram_dq <= data_reg((BURST_LENGTH-wait_counter)*SDRAM_DATA_WIDTH-1 downto (BURST_LENGTH-wait_counter-1)*SDRAM_DATA_WIDTH) when state = WRITE and wait_counter < BURST_LENGTH else (others => 'Z');
 
   -- set SDRAM data mask
-  process (we_reg, wait_counter, ben_reg)
+  process (state, wait_counter, dqm_reg)
   begin
-    if (we_reg = '1') then
+    if (state = WRITE) then
       -- write according to byte enable
       if (wait_counter = 0) then
-        sdram_dqmh <= not ben_reg(3);
-        sdram_dqml <= not ben_reg(2);
+        sdram_dqmh <= dqm_reg(3);
+        sdram_dqml <= dqm_reg(2);
       else
-        sdram_dqmh <= not ben_reg(1);
-        sdram_dqml <= not ben_reg(0);
+        sdram_dqmh <= dqm_reg(1);
+        sdram_dqml <= dqm_reg(0);
       end if;
     else
       -- always read all bytes

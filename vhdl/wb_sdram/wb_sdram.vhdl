@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.3
+-- Version:                 0.4
 --
 -- Entity:                  wb_sdram
 --
@@ -24,8 +24,12 @@
 --                          The 32 bit Wishbone address is split up like so:
 --                           - first 7 bits: coarse SDRAM address
 --                           - next 23 bits: fine SDRAM address
---                           - last  2 bits: allways zero because byte access is
---                                           not allowed, only 32 bit word.
+--                           - last  2 bits: ignored by address bus but used for
+--                                           byte enable mask to read/write
+--                                           individual bytes 
+--                          Supports: - 32 bit r/w on 4 byte boundaries
+--                                    - 16 bit r/w on 2 byte boundaries
+--                                    -  8 bit r/2 on any byte address
 --
 -- Changes:                 0.1, 2023-02-05, leuen4
 --                              initial version
@@ -33,6 +37,8 @@
 --                              fix byte/word access
 --                          0.3, 2023-02-22, leuen4
 --                              rename entity from sdram_controller to ws_sdram
+--                          0.4, 2023-02-25, leuen4
+--                              allow for individual byte access with masking
 -- =============================================================================
 
 LIBRARY ieee;
@@ -53,8 +59,8 @@ ENTITY wb_sdram IS
         -- Wishbone slave interface --
         wb_tag_i : IN STD_ULOGIC_VECTOR(02 DOWNTO 0);  -- request tag
         wb_adr_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- address
-        wb_dat_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- read data
-        wb_dat_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- write data
+        wb_dat_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- write data
+        wb_dat_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- read data
         wb_we_i  : IN STD_ULOGIC;                      -- read/write
         wb_sel_i : IN STD_ULOGIC_VECTOR(03 DOWNTO 0);  -- byte enable
         wb_stb_i : IN STD_ULOGIC;                      -- strobe
@@ -113,7 +119,7 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
             -- clock
             clk : IN STD_LOGIC;
             -- address bus
-            addr : IN unsigned(ADDR_WIDTH - 1 DOWNTO 0);
+            addr : IN UNSIGNED(ADDR_WIDTH - 1 DOWNTO 0);
             -- byte enable
             benable : IN STD_LOGIC_VECTOR(DATA_WIDTH/8 - 1 DOWNTO 0);
             -- input data bus
@@ -131,8 +137,8 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
             -- output data bus
             q : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
             -- SDRAM interface (e.g. AS4C16M16SA-6TCN, IS42S16400F, etc.)
-            sdram_a     : OUT unsigned(SDRAM_ADDR_WIDTH - 1 DOWNTO 0);
-            sdram_ba    : OUT unsigned(SDRAM_BANK_WIDTH - 1 DOWNTO 0);
+            sdram_a     : OUT UNSIGNED(SDRAM_ADDR_WIDTH - 1 DOWNTO 0);
+            sdram_ba    : OUT UNSIGNED(SDRAM_BANK_WIDTH - 1 DOWNTO 0);
             sdram_dq    : INOUT STD_LOGIC_VECTOR(SDRAM_DATA_WIDTH - 1 DOWNTO 0);
             sdram_cke   : OUT STD_LOGIC;
             sdram_cs_n  : OUT STD_LOGIC;
@@ -145,40 +151,88 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
     END COMPONENT sdram;
 
     -- Wishbone signals --
-    SIGNAL wb_ss : STD_LOGIC;
+    SIGNAL wb_ss : STD_ULOGIC;
     SIGNAL wb_adr_i_u : UNSIGNED(31 DOWNTO 0); -- address
-    SIGNAL wb_dat_i_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- read data
-    SIGNAL wb_dat_o_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- write data
+    SIGNAL wb_dat_i_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- write data
+    SIGNAL wb_dat_o_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- read data
     SIGNAL wb_sel_i_res : STD_LOGIC_VECTOR(03 DOWNTO 0); -- byte enable
 
     -- SDRAM signals --
     SIGNAL sdram_rst : STD_ULOGIC; -- reset, non inverted
     SIGNAL sdram_req, sdram_ack, sdram_valid : STD_LOGIC; -- handshake
+
+    -- Access Request FSM --
+    TYPE req_state_t IS (IDLE, WAIT_ACK, WAIT_VALID, DONE);
+    SIGNAL req_state, req_state_next : req_state_t := IDLE;
 BEGIN
     -- Convert Wishbone signals to the resolved or casted signals --
     wb_adr_i_u <= UNSIGNED(wb_adr_i);
     wb_dat_i_res <= STD_LOGIC_VECTOR(wb_dat_i);
     wb_dat_o <= STD_ULOGIC_VECTOR(wb_dat_o_res);
-    wb_sel_i_res <= STD_LOGIC_VECTOR(wb_sel_i_res);
+    wb_sel_i_res <= STD_LOGIC_VECTOR(wb_sel_i);
 
-    -- Coarse decode Wishbone address (7 MSB bits) and generate select signal --
-    wb_ss <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) ELSE
+    -- Wishbone slave is selected when:
+    --  > coarse decode of addess (7 MSB bits) is a match
+    --  > a cycle is ongoing
+    --  > the current wb signals are valid (strobe)
+    wb_ss <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) AND wb_cyc_i = '1' AND wb_stb_i = '1' ELSE
         '0';
 
-    -- Generate handshake signals --
-    -- SDRAM is requested to read/write data when the address matches, a
-    -- wishbone cycle is ongoing and the current wb signals are valid (strobe).
-    sdram_req <= wb_ss AND wb_cyc_i AND wb_stb_i;
-    -- Wishbone transaction is acknowledged when:
-    --  - read operation:  sdram has valid data (valid signal asserted)
-    --  - write operation: sdram did ack transaction (ack signal asserted)
-    wb_ack_o <= '0' WHEN sdram_req = '0' ELSE
-        '1' WHEN wb_we_i = '0' AND sdram_valid = '1' ELSE -- read
-        '1' WHEN wb_we_i = '1' AND sdram_ack = '1' ELSE -- write
+    -- Access Request FSM --
+    --  > The sdram_req signal shall only be active until ack is asserted by the
+    --    controller. Otherwise a consecutive read/write is triggered.
+    --  > The Wishbone request is acknowledged after an sdram_valid for reads or
+    --  > after an sdram_ack for writes.
+    --  > Address and data bus are not registered, SDRAM controller handles it.
+    request_fsm_ff : PROCESS (clk_i) IS
+    BEGIN
+        IF rising_edge(clk_i) THEN
+            IF rstn_i = '0' THEN
+                req_state <= IDLE;
+            ELSE
+                req_state <= req_state_next;
+            END IF;
+        END IF;
+    END PROCESS request_fsm_ff;
+
+    request_fsm_nsl : PROCESS (req_state, wb_ss, wb_we_i, sdram_ack, sdram_valid) IS
+    BEGIN
+        req_state_next <= req_state; -- default assignment
+        CASE req_state IS
+            WHEN IDLE =>
+                IF wb_ss = '1' THEN
+                    req_state_next <= WAIT_ACK;
+                END IF;
+            WHEN WAIT_ACK => -- wait for ack signal
+                IF sdram_ack = '1' AND wb_we_i = '0' THEN
+                    req_state_next <= WAIT_VALID;
+                ELSIF sdram_ack = '1' AND wb_we_i = '1' THEN
+                    req_state_next <= DONE;
+                END IF;
+            WHEN WAIT_VALID => -- wait for valid signal (for reads)
+                IF sdram_valid = '1' THEN
+                    req_state_next <= DONE;
+                END IF;
+            WHEN DONE => -- done with request, send wishbone ack
+                req_state_next <= IDLE;
+            WHEN OTHERS =>
+                req_state_next <= IDLE;
+        END CASE;
+
+        -- Always abort request if Wishbone cycle terminates.
+        IF wb_ss = '0' THEN
+            req_state_next <= IDLE;
+        END IF;
+    END PROCESS request_fsm_nsl;
+
+    -- SDRAM extra signals --
+    sdram_req <= '1' WHEN req_state = WAIT_ACK ELSE
         '0';
-    -- Wishbone transaction goes into error when address is unaligned.
-    wb_err_o <= '1' WHEN wb_adr_i(1 DOWNTO 0) /= "00" AND wb_ss = '1' ELSE
+    wb_ack_o <= '1' WHEN req_state = DONE ELSE
         '0';
+    sdram_rst <= NOT rstn_i;
+    sdram_clk <= clk_i;
+    wb_err_o <= '0';
 
     -- SDRAM Controller --
     sdram_inst : sdram
@@ -218,9 +272,5 @@ BEGIN
         sdram_dqml  => sdram_dqm(0),
         sdram_dqmh  => sdram_dqm(1)
     );
-
-    -- SDRAM extra signals --
-    sdram_rst <= NOT rstn_i;
-    sdram_clk <= clk_i;
 
 END ARCHITECTURE no_target_specific;
