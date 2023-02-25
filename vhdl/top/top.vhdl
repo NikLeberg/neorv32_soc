@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  top
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2023-01-16, leuen4
 --                              initial version
+--                          0.2, 2023-02-25, leuen4
+--                              implement IMEM with SDRAM
 -- =============================================================================
 
 LIBRARY ieee;
@@ -158,11 +160,10 @@ BEGIN
         FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
         FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
         -- Internal Instruction memory --
-        MEM_INT_IMEM_EN   => true,      -- implement processor-internal instruction memory
-        MEM_INT_IMEM_SIZE => 32 * 1024, -- size of processor-internal instruction memory in bytes
+        MEM_INT_IMEM_EN => false, -- implement processor-internal instruction memory
         -- Internal Data memory --
-        MEM_INT_DMEM_EN   => true,     -- implement processor-internal data memory
-        MEM_INT_DMEM_SIZE => 8 * 1024, -- size of processor-internal data memory in bytes
+        MEM_INT_DMEM_EN   => true,      -- implement processor-internal data memory
+        MEM_INT_DMEM_SIZE => 40 * 1024, -- size of processor-internal data memory in bytes
         -- External memory interface --
         MEM_EXT_EN => true, -- implement external memory bus interface?
         -- average delay of SDRAM is about 4096 cycles, double it to be safe
@@ -176,6 +177,7 @@ BEGIN
         IO_UART0_RX_FIFO => 32,   -- RX fifo depth, has to be a power of two, min 1
         IO_UART0_TX_FIFO => 32,   -- TX fifo depth, has to be a power of two, min 1
         IO_TRNG_EN       => true, -- implement true random number generator (TRNG)?
+        IO_TRNG_FIFO     => 32,   -- TRNG fifo depth, has to be a power of two, min 1
         IO_XIP_EN        => false -- implement execute in place module (XIP)?
     )
     PORT MAP(
@@ -237,7 +239,7 @@ BEGIN
     GENERIC MAP(
         -- General --
         CLOCK_FREQUENCY => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
-        BASE_ADDRESS    => x"4000_0000"     -- start address of SDRAM
+        BASE_ADDRESS    => x"0000_0000"     -- start address of SDRAM
     )
     PORT MAP(
         -- Global control --
