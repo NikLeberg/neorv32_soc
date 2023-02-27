@@ -23,6 +23,8 @@ USE ieee.math_real.ALL;
 LIBRARY neorv32;
 USE neorv32.neorv32_package.ALL;
 
+USE work.wb_pkg.ALL;
+
 ENTITY top IS
     PORT (
         -- Global control --
@@ -88,38 +90,45 @@ ARCHITECTURE top_arch OF top IS
         );
     END COMPONENT;
 
+    COMPONENT wb_intercon IS
+        GENERIC (
+            -- General --
+            N_SLAVES   : NATURAL; -- number of connected slaves
+            MEMORY_MAP : wb_map_t -- memory map of address space
+        );
+        PORT (
+            -- Wishbone master interface --
+            wb_master_i : IN wb_master_tx_sig_t;
+            wb_master_o : OUT wb_master_rx_sig_t;
+            -- Wishbone slave interface(s) --
+            wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
+            wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0)
+        );
+    END COMPONENT wb_intercon;
+
     COMPONENT wb_sdram IS
         GENERIC (
             -- General --
-            CLOCK_FREQUENCY : NATURAL; -- clock frequency of clk_i in Hz
-            BASE_ADDRESS    : UNSIGNED -- start address of SDRAM
+            CLOCK_FREQUENCY : NATURAL -- clock frequency of clk_i in Hz
         );
         PORT (
             -- Global control --
             clk_i  : IN STD_ULOGIC; -- global clock, rising edge
             rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
             -- Wishbone slave interface --
-            wb_tag_i : IN STD_ULOGIC_VECTOR(02 DOWNTO 0);  -- request tag
-            wb_adr_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- address
-            wb_dat_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- read data
-            wb_dat_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- write data
-            wb_we_i  : IN STD_ULOGIC;                      -- read/write
-            wb_sel_i : IN STD_ULOGIC_VECTOR(03 DOWNTO 0);  -- byte enable
-            wb_stb_i : IN STD_ULOGIC;                      -- strobe
-            wb_cyc_i : IN STD_ULOGIC;                      -- valid cycle
-            wb_ack_o : OUT STD_ULOGIC;                     -- transfer acknowledge
-            wb_err_o : OUT STD_ULOGIC;                     -- transfer error
+            wb_slave_i : IN wb_slave_rx_sig_t;
+            wb_slave_o : OUT wb_slave_tx_sig_t;
             -- SDRAM --
-            sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                              -- addr
-            sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                               -- ba
-            sdram_n_cas : OUT STD_LOGIC;                                          -- cas_n
-            sdram_cke   : OUT STD_LOGIC;                                          -- cke
-            sdram_n_cs  : OUT STD_LOGIC;                                          -- cs_n
-            sdram_d     : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
-            sdram_dqm   : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
-            sdram_n_ras : OUT STD_LOGIC;                                          -- ras_n
-            sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
-            sdram_clk   : OUT STD_LOGIC                                           -- clk
+            sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                               -- addr
+            sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                                -- ba
+            sdram_n_cas : OUT STD_ULOGIC;                                          -- cas_n
+            sdram_cke   : OUT STD_ULOGIC;                                          -- cke
+            sdram_n_cs  : OUT STD_ULOGIC;                                          -- cs_n
+            sdram_d     : INOUT STD_ULOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
+            sdram_dqm   : OUT STD_ULOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
+            sdram_n_ras : OUT STD_ULOGIC;                                          -- ras_n
+            sdram_n_we  : OUT STD_ULOGIC;                                          -- we_n
+            sdram_clk   : OUT STD_ULOGIC                                           -- clk
         );
     END COMPONENT wb_sdram;
 
@@ -127,18 +136,18 @@ ARCHITECTURE top_arch OF top IS
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
 
-    SIGNAL con_wb_tag : STD_ULOGIC_VECTOR(02 DOWNTO 0); -- request tag
-    SIGNAL con_wb_adr : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- address
-    SIGNAL con_wb_dat_i : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- read data
-    SIGNAL con_wb_dat_o : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- write data
-    SIGNAL con_wb_we : STD_ULOGIC; -- read/write
-    SIGNAL con_wb_sel : STD_ULOGIC_VECTOR(03 DOWNTO 0); -- byte enable
-    SIGNAL con_wb_stb : STD_ULOGIC; -- strobe
-    SIGNAL con_wb_cyc : STD_ULOGIC; -- valid cycle
-    SIGNAL con_wb_ack : STD_ULOGIC; -- transfer acknowledge
-    SIGNAL con_wb_err : STD_ULOGIC := '0'; -- transfer error
-
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
+
+    -- Wishbone interface signals
+    CONSTANT WB_N_SLAVES : NATURAL := 2;
+    CONSTANT WB_MEMORY_MAP : wb_map_t := (
+    (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
+        (x"8200_0000", 3 * 4) -- GCD Accelerator
+    );
+    SIGNAL wb_master_o : wb_master_tx_sig_t;
+    SIGNAL wb_master_i : wb_master_rx_sig_t;
+    SIGNAL wb_slaves_i : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
 BEGIN
     -- The Core Of The Problem ----------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
@@ -191,16 +200,16 @@ BEGIN
         jtag_tdo_o  => con_jtag_tdo, -- serial data output
         jtag_tms_i  => con_jtag_tms, -- mode select
         -- Wishbone bus interface (available if MEM_EXT_EN = true) --
-        wb_tag_o => con_wb_tag,   -- request tag
-        wb_adr_o => con_wb_adr,   -- address
-        wb_dat_i => con_wb_dat_i, -- read data
-        wb_dat_o => con_wb_dat_o, -- write data
-        wb_we_o  => con_wb_we,    -- read/write
-        wb_sel_o => con_wb_sel,   -- byte enable
-        wb_stb_o => con_wb_stb,   -- strobe
-        wb_cyc_o => con_wb_cyc,   -- valid cycle
-        wb_ack_i => con_wb_ack,   -- transfer acknowledge
-        wb_err_i => con_wb_err,   -- transfer error
+        wb_tag_o => OPEN,            -- request tag (unused)
+        wb_adr_o => wb_master_o.adr, -- address
+        wb_dat_i => wb_master_i.dat, -- read data
+        wb_dat_o => wb_master_o.dat, -- write data
+        wb_we_o  => wb_master_o.we,  -- read/write
+        wb_sel_o => wb_master_o.sel, -- byte enable
+        wb_stb_o => wb_master_o.stb, -- strobe
+        wb_cyc_o => wb_master_o.cyc, -- valid cycle
+        wb_ack_i => wb_master_i.ack, -- transfer acknowledge
+        wb_err_i => wb_master_i.err, -- transfer error
         -- XIP (execute in place via SPI) signals (available if IO_XIP_EN = true) --
         xip_csn_o => xip_csn_o, -- chip-select, low-active
         xip_clk_o => xip_clk_o, -- serial clock
@@ -234,28 +243,35 @@ BEGIN
         usr1user    => OPEN
     );
 
+    -- Wishbone interconnect --
+    wb_intercon_inst : wb_intercon
+    GENERIC MAP(
+        -- General --
+        N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
+        MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
+    )
+    PORT MAP(
+        -- Wishbone master interface --
+        wb_master_i => wb_master_o,
+        wb_master_o => wb_master_i,
+        -- Wishbone slave interface(s) --
+        wb_slaves_o => wb_slaves_i,
+        wb_slaves_i => wb_slaves_o
+    );
+
     -- SDRAM Controller --
     wb_sdram_inst : wb_sdram
     GENERIC MAP(
         -- General --
-        CLOCK_FREQUENCY => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
-        BASE_ADDRESS    => x"0000_0000"     -- start address of SDRAM
+        CLOCK_FREQUENCY => CLOCK_FREQUENCY -- clock frequency of clk_i in Hz
     )
     PORT MAP(
         -- Global control --
         clk_i  => clk_i,  -- global clock, rising edge
         rstn_i => rstn_i, -- global reset, low-active, asyn
         -- Wishbone slave interface --
-        wb_tag_i => con_wb_tag,   -- request tag
-        wb_adr_i => con_wb_adr,   -- address
-        wb_dat_i => con_wb_dat_o, -- read data
-        wb_dat_o => con_wb_dat_i, -- write data
-        wb_we_i  => con_wb_we,    -- read/write
-        wb_sel_i => con_wb_sel,   -- byte enable
-        wb_stb_i => con_wb_stb,   -- strobe
-        wb_cyc_i => con_wb_cyc,   -- valid cycle
-        wb_ack_o => con_wb_ack,   -- transfer acknowledge
-        wb_err_o => con_wb_err,   -- transfer error
+        wb_slave_i => wb_slaves_i(0),
+        wb_slave_o => wb_slaves_o(0),
         -- SDRAM --
         sdram_addr  => sdram_addr,  -- addr
         sdram_ba    => sdram_ba,    -- ba
@@ -270,15 +286,15 @@ BEGIN
     );
 
     -- DEBUG --
-    gpio1_o <= STD_ULOGIC_VECTOR(con_wb_adr(7 DOWNTO 0));
-    gpio2_o <= STD_ULOGIC_VECTOR(con_wb_adr(15 DOWNTO 8));
-    gpio3_o <= STD_ULOGIC_VECTOR(con_wb_adr(23 DOWNTO 16));
-    gpio4_o <= STD_ULOGIC_VECTOR(con_wb_adr(31 DOWNTO 24));
+    gpio1_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(7 DOWNTO 0));
+    gpio2_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(15 DOWNTO 8));
+    gpio3_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(23 DOWNTO 16));
+    gpio4_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(31 DOWNTO 24));
 
     -- Wishbone DEBUG --
-    dbg(0) <= con_wb_we; -- read/write
-    dbg(1) <= con_wb_stb; -- strobe
-    dbg(2) <= con_wb_cyc; -- valid cycle
-    dbg(3) <= con_wb_ack; -- transfer acknowledge
+    dbg(0) <= wb_master_o.we; -- read/write
+    dbg(1) <= wb_master_o.stb; -- strobe
+    dbg(2) <= wb_master_o.cyc; -- valid cycle
+    dbg(3) <= wb_master_i.ack; -- transfer acknowledge
 
 END ARCHITECTURE top_arch;

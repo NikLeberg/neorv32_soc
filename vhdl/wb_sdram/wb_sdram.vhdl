@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.4
+-- Version:                 0.5
 --
 -- Entity:                  wb_sdram
 --
@@ -39,6 +39,9 @@
 --                              rename entity from sdram_controller to ws_sdram
 --                          0.4, 2023-02-25, leuen4
 --                              allow for individual byte access with masking
+--                          0.5, 2023-02-26, leuen4
+--                              remove coarse address decoding to make Wishbone
+--                              interconnect compatible
 -- =============================================================================
 
 LIBRARY ieee;
@@ -46,27 +49,20 @@ USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 USE ieee.math_real.ALL;
 
+USE work.wb_pkg.ALL;
+
 ENTITY wb_sdram IS
     GENERIC (
         -- General --
-        CLOCK_FREQUENCY : NATURAL               := 50000000;    -- clock frequency of clk_i in Hz
-        BASE_ADDRESS    : UNSIGNED(31 DOWNTO 0) := x"0000_0000" -- start address of SDRAM
+        CLOCK_FREQUENCY : NATURAL := 50000000 -- clock frequency of clk_i in Hz
     );
     PORT (
         -- Global control --
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
         -- Wishbone slave interface --
-        wb_tag_i : IN STD_ULOGIC_VECTOR(02 DOWNTO 0);  -- request tag
-        wb_adr_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- address
-        wb_dat_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- write data
-        wb_dat_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- read data
-        wb_we_i  : IN STD_ULOGIC;                      -- read/write
-        wb_sel_i : IN STD_ULOGIC_VECTOR(03 DOWNTO 0);  -- byte enable
-        wb_stb_i : IN STD_ULOGIC;                      -- strobe
-        wb_cyc_i : IN STD_ULOGIC;                      -- valid cycle
-        wb_ack_o : OUT STD_ULOGIC;                     -- transfer acknowledge
-        wb_err_o : OUT STD_ULOGIC;                     -- transfer error
+        wb_slave_i : IN wb_slave_rx_sig_t;
+        wb_slave_o : OUT wb_slave_tx_sig_t;
         -- SDRAM --
         sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                               -- addr
         sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                                -- ba
@@ -151,11 +147,7 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
     END COMPONENT sdram;
 
     -- Wishbone signals --
-    SIGNAL wb_ss : STD_ULOGIC;
     SIGNAL wb_adr_i_u : UNSIGNED(31 DOWNTO 0); -- address
-    SIGNAL wb_dat_i_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- write data
-    SIGNAL wb_dat_o_res : STD_LOGIC_VECTOR(31 DOWNTO 0); -- read data
-    SIGNAL wb_sel_i_res : STD_LOGIC_VECTOR(03 DOWNTO 0); -- byte enable
 
     -- SDRAM signals --
     SIGNAL sdram_rst : STD_ULOGIC; -- reset, non inverted
@@ -165,18 +157,8 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
     TYPE req_state_t IS (IDLE, WAIT_ACK, WAIT_VALID, DONE);
     SIGNAL req_state, req_state_next : req_state_t := IDLE;
 BEGIN
-    -- Convert Wishbone signals to the resolved or casted signals --
-    wb_adr_i_u <= UNSIGNED(wb_adr_i);
-    wb_dat_i_res <= STD_LOGIC_VECTOR(wb_dat_i);
-    wb_dat_o <= STD_ULOGIC_VECTOR(wb_dat_o_res);
-    wb_sel_i_res <= STD_LOGIC_VECTOR(wb_sel_i);
-
-    -- Wishbone slave is selected when:
-    --  > coarse decode of addess (7 MSB bits) is a match
-    --  > a cycle is ongoing
-    --  > the current wb signals are valid (strobe)
-    wb_ss <= '1' WHEN wb_adr_i_u(31 DOWNTO 25) = BASE_ADDRESS(31 DOWNTO 25) AND wb_cyc_i = '1' AND wb_stb_i = '1' ELSE
-        '0';
+    -- Convert Wishbone address to resolved unsigned signal --
+    wb_adr_i_u <= UNSIGNED(wb_slave_i.adr);
 
     -- Access Request FSM --
     --  > The sdram_req signal shall only be active until ack is asserted by the
@@ -195,18 +177,18 @@ BEGIN
         END IF;
     END PROCESS request_fsm_ff;
 
-    request_fsm_nsl : PROCESS (req_state, wb_ss, wb_we_i, sdram_ack, sdram_valid) IS
+    request_fsm_nsl : PROCESS (req_state, wb_slave_i, sdram_ack, sdram_valid) IS
     BEGIN
         req_state_next <= req_state; -- default assignment
         CASE req_state IS
             WHEN IDLE =>
-                IF wb_ss = '1' THEN
+                IF wb_slave_i.stb = '1' THEN
                     req_state_next <= WAIT_ACK;
                 END IF;
             WHEN WAIT_ACK => -- wait for ack signal
-                IF sdram_ack = '1' AND wb_we_i = '0' THEN
+                IF sdram_ack = '1' AND wb_slave_i.we = '0' THEN
                     req_state_next <= WAIT_VALID;
-                ELSIF sdram_ack = '1' AND wb_we_i = '1' THEN
+                ELSIF sdram_ack = '1' AND wb_slave_i.we = '1' THEN
                     req_state_next <= DONE;
                 END IF;
             WHEN WAIT_VALID => -- wait for valid signal (for reads)
@@ -220,19 +202,19 @@ BEGIN
         END CASE;
 
         -- Always abort request if Wishbone cycle terminates.
-        IF wb_ss = '0' THEN
+        IF wb_slave_i.stb = '0' THEN
             req_state_next <= IDLE;
         END IF;
     END PROCESS request_fsm_nsl;
 
     -- SDRAM extra signals --
-    sdram_req <= '1' WHEN req_state = WAIT_ACK ELSE
-        '0';
-    wb_ack_o <= '1' WHEN req_state = DONE ELSE
-        '0';
     sdram_rst <= NOT rstn_i;
     sdram_clk <= clk_i;
-    wb_err_o <= '0';
+    sdram_req <= '1' WHEN req_state = WAIT_ACK ELSE
+        '0';
+    wb_slave_o.ack <= '1' WHEN req_state = DONE ELSE
+    '0';
+    wb_slave_o.err <= '0';
 
     -- SDRAM Controller --
     sdram_inst : sdram
@@ -253,13 +235,13 @@ BEGIN
         clk   => clk_i,
         -- Interconnect --
         addr    => wb_adr_i_u(24 DOWNTO 2), -- address bus (convert byte address to word address)
-        benable => wb_sel_i_res,            -- byte enable
-        data    => wb_dat_i_res,            -- input data bus
-        we      => wb_we_i,                 -- asserted == write operation
+        benable => wb_slave_i.sel,          -- byte enable
+        data    => wb_slave_i.dat,          -- input data bus
+        we      => wb_slave_i.we,           -- asserted == write operation
         req     => sdram_req,               -- asserted == operation will be performed
         ack     => sdram_ack,               -- asserted == request accepted
         valid   => sdram_valid,             -- asserted == data from sdram valid
-        q       => wb_dat_o_res,            -- output data bus
+        q       => wb_slave_o.dat,          -- output data bus
         -- SDRAM interface --
         sdram_a     => sdram_addr,
         sdram_ba    => sdram_ba,
