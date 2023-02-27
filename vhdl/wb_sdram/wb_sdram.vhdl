@@ -68,16 +68,16 @@ ENTITY wb_sdram IS
         wb_ack_o : OUT STD_ULOGIC;                     -- transfer acknowledge
         wb_err_o : OUT STD_ULOGIC;                     -- transfer error
         -- SDRAM --
-        sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                              -- addr
-        sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                               -- ba
-        sdram_n_cas : OUT STD_LOGIC;                                          -- cas_n
-        sdram_cke   : OUT STD_LOGIC;                                          -- cke
-        sdram_n_cs  : OUT STD_LOGIC;                                          -- cs_n
-        sdram_d     : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
-        sdram_dqm   : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
-        sdram_n_ras : OUT STD_LOGIC;                                          -- ras_n
-        sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
-        sdram_clk   : OUT STD_LOGIC                                           -- clk
+        sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                               -- addr
+        sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                                -- ba
+        sdram_n_cas : OUT STD_ULOGIC;                                          -- cas_n
+        sdram_cke   : OUT STD_ULOGIC;                                          -- cke
+        sdram_n_cs  : OUT STD_ULOGIC;                                          -- cs_n
+        sdram_d     : INOUT STD_ULOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
+        sdram_dqm   : OUT STD_ULOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
+        sdram_n_ras : OUT STD_ULOGIC;                                          -- ras_n
+        sdram_n_we  : OUT STD_ULOGIC;                                          -- we_n
+        sdram_clk   : OUT STD_ULOGIC                                           -- clk
     );
 END ENTITY wb_sdram;
 
@@ -115,38 +115,38 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
         );
         PORT (
             -- reset
-            reset : IN STD_LOGIC := '0';
+            reset : IN STD_ULOGIC := '0';
             -- clock
-            clk : IN STD_LOGIC;
+            clk : IN STD_ULOGIC;
             -- address bus
             addr : IN UNSIGNED(ADDR_WIDTH - 1 DOWNTO 0);
             -- byte enable
-            benable : IN STD_LOGIC_VECTOR(DATA_WIDTH/8 - 1 DOWNTO 0);
+            benable : IN STD_ULOGIC_VECTOR(DATA_WIDTH/8 - 1 DOWNTO 0);
             -- input data bus
-            data : IN STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+            data : IN STD_ULOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
             -- When the write enable signal is asserted, a write operation will be performed.
-            we : IN STD_LOGIC;
+            we : IN STD_ULOGIC;
             -- When the request signal is asserted, an operation will be performed.
-            req : IN STD_LOGIC;
+            req : IN STD_ULOGIC;
             -- The acknowledge signal is asserted by the SDRAM controller when
             -- a request has been accepted.
-            ack : OUT STD_LOGIC;
+            ack : OUT STD_ULOGIC;
             -- The valid signal is asserted when there is a valid word on the output
             -- data bus.
-            valid : OUT STD_LOGIC;
+            valid : OUT STD_ULOGIC;
             -- output data bus
-            q : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+            q : OUT STD_ULOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
             -- SDRAM interface (e.g. AS4C16M16SA-6TCN, IS42S16400F, etc.)
             sdram_a     : OUT UNSIGNED(SDRAM_ADDR_WIDTH - 1 DOWNTO 0);
             sdram_ba    : OUT UNSIGNED(SDRAM_BANK_WIDTH - 1 DOWNTO 0);
-            sdram_dq    : INOUT STD_LOGIC_VECTOR(SDRAM_DATA_WIDTH - 1 DOWNTO 0);
-            sdram_cke   : OUT STD_LOGIC;
-            sdram_cs_n  : OUT STD_LOGIC;
-            sdram_ras_n : OUT STD_LOGIC;
-            sdram_cas_n : OUT STD_LOGIC;
-            sdram_we_n  : OUT STD_LOGIC;
-            sdram_dqml  : OUT STD_LOGIC;
-            sdram_dqmh  : OUT STD_LOGIC
+            sdram_dq    : INOUT STD_ULOGIC_VECTOR(SDRAM_DATA_WIDTH - 1 DOWNTO 0);
+            sdram_cke   : OUT STD_ULOGIC;
+            sdram_cs_n  : OUT STD_ULOGIC;
+            sdram_ras_n : OUT STD_ULOGIC;
+            sdram_cas_n : OUT STD_ULOGIC;
+            sdram_we_n  : OUT STD_ULOGIC;
+            sdram_dqml  : OUT STD_ULOGIC;
+            sdram_dqmh  : OUT STD_ULOGIC
         );
     END COMPONENT sdram;
 
@@ -159,7 +159,7 @@ ARCHITECTURE no_target_specific OF wb_sdram IS
 
     -- SDRAM signals --
     SIGNAL sdram_rst : STD_ULOGIC; -- reset, non inverted
-    SIGNAL sdram_req, sdram_ack, sdram_valid : STD_LOGIC; -- handshake
+    SIGNAL sdram_req, sdram_ack, sdram_valid : STD_ULOGIC; -- handshake
 
     -- Access Request FSM --
     TYPE req_state_t IS (IDLE, WAIT_ACK, WAIT_VALID, DONE);

@@ -50,16 +50,16 @@ ENTITY top IS
         uart0_txd_o : OUT STD_ULOGIC; -- UART0 send data
         uart0_rxd_i : IN STD_ULOGIC;  -- UART0 receive data
         -- SDRAM --
-        sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                              -- addr
-        sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                               -- ba
-        sdram_n_cas : OUT STD_LOGIC;                                          -- cas_n
-        sdram_cke   : OUT STD_LOGIC;                                          -- cke
-        sdram_n_cs  : OUT STD_LOGIC;                                          -- cs_n
-        sdram_d     : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
-        sdram_dqm   : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
-        sdram_n_ras : OUT STD_LOGIC;                                          -- ras_n
-        sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
-        sdram_clk   : OUT STD_LOGIC;                                          -- clk
+        sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                               -- addr
+        sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                                -- ba
+        sdram_n_cas : OUT STD_ULOGIC;                                          -- cas_n
+        sdram_cke   : OUT STD_ULOGIC;                                          -- cke
+        sdram_n_cs  : OUT STD_ULOGIC;                                          -- cs_n
+        sdram_d     : INOUT STD_ULOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
+        sdram_dqm   : OUT STD_ULOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
+        sdram_n_ras : OUT STD_ULOGIC;                                          -- ras_n
+        sdram_n_we  : OUT STD_ULOGIC;                                          -- we_n
+        sdram_clk   : OUT STD_ULOGIC;                                          -- clk
         -- DEBUG over PMOD --
         dbg : OUT STD_ULOGIC_VECTOR(6 DOWNTO 0)
     );

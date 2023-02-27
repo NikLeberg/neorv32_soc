@@ -84,48 +84,48 @@ entity sdram is
   );
   port (
     -- reset
-    reset : in std_logic := '0';
+    reset : in std_ulogic := '0';
 
     -- clock
-    clk : in std_logic;
+    clk : in std_ulogic;
 
     -- address bus
     addr : in unsigned(ADDR_WIDTH-1 downto 0);
 
     -- byte enable
-    benable : in std_logic_vector(DATA_WIDTH/8-1 downto 0);
+    benable : in std_ulogic_vector(DATA_WIDTH/8-1 downto 0);
 
     -- input data bus
-    data : in std_logic_vector(DATA_WIDTH-1 downto 0);
+    data : in std_ulogic_vector(DATA_WIDTH-1 downto 0);
 
     -- When the write enable signal is asserted, a write operation will be performed.
-    we : in std_logic;
+    we : in std_ulogic;
 
     -- When the request signal is asserted, an operation will be performed.
-    req : in std_logic;
+    req : in std_ulogic;
 
     -- The acknowledge signal is asserted by the SDRAM controller when
     -- a request has been accepted.
-    ack : out std_logic;
+    ack : out std_ulogic;
 
     -- The valid signal is asserted when there is a valid word on the output
     -- data bus.
-    valid : out std_logic;
+    valid : out std_ulogic;
 
     -- output data bus
-    q : out std_logic_vector(DATA_WIDTH-1 downto 0);
+    q : out std_ulogic_vector(DATA_WIDTH-1 downto 0);
 
     -- SDRAM interface (e.g. AS4C16M16SA-6TCN, IS42S16400F, etc.)
     sdram_a     : out unsigned(SDRAM_ADDR_WIDTH-1 downto 0);
     sdram_ba    : out unsigned(SDRAM_BANK_WIDTH-1 downto 0);
-    sdram_dq    : inout std_logic_vector(SDRAM_DATA_WIDTH-1 downto 0);
-    sdram_cke   : out std_logic;
-    sdram_cs_n  : out std_logic;
-    sdram_ras_n : out std_logic;
-    sdram_cas_n : out std_logic;
-    sdram_we_n  : out std_logic;
-    sdram_dqml  : out std_logic;
-    sdram_dqmh  : out std_logic
+    sdram_dq    : inout std_ulogic_vector(SDRAM_DATA_WIDTH-1 downto 0);
+    sdram_cke   : out std_ulogic;
+    sdram_cs_n  : out std_ulogic;
+    sdram_ras_n : out std_ulogic;
+    sdram_cas_n : out std_ulogic;
+    sdram_we_n  : out std_ulogic;
+    sdram_dqml  : out std_ulogic;
+    sdram_dqmh  : out std_ulogic
   );
 end sdram;
 
@@ -135,7 +135,7 @@ architecture arch of sdram is
     return natural(ceil(log2(real(n))));
   end ilog2;
 
-  subtype command_t is std_logic_vector(3 downto 0);
+  subtype command_t is std_ulogic_vector(3 downto 0);
 
   -- commands
   constant CMD_DESELECT     : command_t := "1---";
@@ -149,10 +149,10 @@ architecture arch of sdram is
   constant CMD_NOP          : command_t := "0111";
 
   -- the ordering of the accesses within a burst
-  constant BURST_TYPE : std_logic := '0'; -- 0=sequential, 1=interleaved
+  constant BURST_TYPE : std_ulogic := '0'; -- 0=sequential, 1=interleaved
 
   -- the write burst mode enables bursting for write operations
-  constant WRITE_BURST_MODE : std_logic := '0'; -- 0=burst, 1=single
+  constant WRITE_BURST_MODE : std_ulogic := '0'; -- 0=burst, 1=single
 
   -- the value written to the mode register to configure the memory
   constant MODE_REG : unsigned(SDRAM_ADDR_WIDTH-1 downto 0) := (
@@ -205,14 +205,14 @@ architecture arch of sdram is
   signal cmd, next_cmd : command_t := CMD_NOP;
 
   -- control signals
-  signal start          : std_logic;
-  signal load_mode_done : std_logic;
-  signal active_done    : std_logic;
-  signal refresh_done   : std_logic;
-  signal first_word     : std_logic;
-  signal read_done      : std_logic;
-  signal write_done     : std_logic;
-  signal should_refresh : std_logic;
+  signal start          : std_ulogic;
+  signal load_mode_done : std_ulogic;
+  signal active_done    : std_ulogic;
+  signal refresh_done   : std_ulogic;
+  signal first_word     : std_ulogic;
+  signal read_done      : std_ulogic;
+  signal write_done     : std_ulogic;
+  signal should_refresh : std_ulogic;
 
   -- counters
   signal wait_counter    : natural range 0 to 16383;
@@ -220,10 +220,10 @@ architecture arch of sdram is
 
   -- registers
   signal addr_reg : unsigned(SDRAM_COL_WIDTH+SDRAM_ROW_WIDTH+SDRAM_BANK_WIDTH-1 downto 0);
-  signal data_reg : std_logic_vector(DATA_WIDTH-1 downto 0);
-  signal we_reg   : std_logic;
-  signal q_reg    : std_logic_vector(DATA_WIDTH-1 downto 0);
-  signal dqm_reg  : std_logic_vector(DATA_WIDTH/8-1 downto 0);
+  signal data_reg : std_ulogic_vector(DATA_WIDTH-1 downto 0);
+  signal we_reg   : std_ulogic;
+  signal q_reg    : std_ulogic_vector(DATA_WIDTH-1 downto 0);
+  signal dqm_reg  : std_ulogic_vector(DATA_WIDTH/8-1 downto 0);
 
   -- aliases to decode the address register
   alias col  : unsigned(SDRAM_COL_WIDTH-1 downto 0) is addr_reg(SDRAM_COL_WIDTH-1 downto 0);
