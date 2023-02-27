@@ -170,10 +170,10 @@ BEGIN
         FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
         FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
         -- Internal Instruction memory --
-        MEM_INT_IMEM_EN => false, -- implement processor-internal instruction memory
+        MEM_INT_IMEM_EN   => true,      -- implement processor-internal instruction memory
+        MEM_INT_IMEM_SIZE => 32 * 1024, -- size of processor-internal instruction memory in bytes
         -- Internal Data memory --
-        MEM_INT_DMEM_EN   => true,      -- implement processor-internal data memory
-        MEM_INT_DMEM_SIZE => 40 * 1024, -- size of processor-internal data memory in bytes
+        MEM_INT_DMEM_EN => false, -- implement processor-internal data memory
         -- External memory interface --
         MEM_EXT_EN => true, -- implement external memory bus interface?
         -- average delay of SDRAM is about 4096 cycles, double it to be safe
