@@ -35,13 +35,13 @@ ENTITY top IS
         altera_reserved_tms : IN STD_ULOGIC;
         altera_reserved_tdi : IN STD_ULOGIC;
         altera_reserved_tdo : OUT STD_ULOGIC;
-        -- XIP (execute in place via SPI) --
-        xip_csn_o   : OUT STD_ULOGIC;        -- chip-select, low-active
-        xip_holdn_o : OUT STD_ULOGIC := '1'; -- hold serial communication, low-active
-        xip_clk_o   : OUT STD_ULOGIC;        -- serial clock
-        xip_sdi_i   : IN STD_ULOGIC := 'L';  -- device data input
-        xip_sdo_o   : OUT STD_ULOGIC;        -- controller data output
-        xip_wpn_o   : OUT STD_ULOGIC := '1'; -- write-protect, low-active
+        -- FLASH (plain SPI or XIP execute in place via SPI) --
+        flash_csn_o   : OUT STD_ULOGIC;        -- chip-select, low-active
+        flash_holdn_o : OUT STD_ULOGIC := 'H'; -- hold serial communication, low-active
+        flash_clk_o   : OUT STD_ULOGIC;        -- serial clock
+        flash_sdi_o   : OUT STD_ULOGIC;        -- flash data input
+        flash_sdo_i   : IN STD_ULOGIC;         -- flash data output
+        flash_wpn_o   : OUT STD_ULOGIC := 'H'; -- write-protect, low-active
         -- GPIO --
         gpio0_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
         gpio1_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
@@ -137,6 +137,7 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
 
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
+    SIGNAL con_dummy_spi_csn : STD_ULOGIC_VECTOR(6 DOWNTO 0);
 
     -- Wishbone interface signals
     CONSTANT WB_N_SLAVES : NATURAL := 2;
@@ -185,6 +186,7 @@ BEGIN
         IO_UART0_EN      => true, -- implement primary universal asynchronous receiver/transmitter (UART0)?
         IO_UART0_RX_FIFO => 32,   -- RX fifo depth, has to be a power of two, min 1
         IO_UART0_TX_FIFO => 32,   -- TX fifo depth, has to be a power of two, min 1
+        IO_SPI_EN        => true, -- implement serial peripheral interface (SPI)?
         IO_TRNG_EN       => true, -- implement true random number generator (TRNG)?
         IO_TRNG_FIFO     => 32,   -- TRNG fifo depth, has to be a power of two, min 1
         IO_XIP_EN        => false -- implement execute in place module (XIP)?
@@ -211,15 +213,21 @@ BEGIN
         wb_ack_i => wb_master_i.ack, -- transfer acknowledge
         wb_err_i => wb_master_i.err, -- transfer error
         -- XIP (execute in place via SPI) signals (available if IO_XIP_EN = true) --
-        xip_csn_o => xip_csn_o, -- chip-select, low-active
-        xip_clk_o => xip_clk_o, -- serial clock
-        xip_sdi_i => xip_sdi_i, -- device data input
-        xip_sdo_o => xip_sdo_o, -- controller data output
+        -- xip_csn_o => flash_csn_o, -- chip-select, low-active
+        -- xip_clk_o => flash_clk_o, -- serial clock
+        -- xip_dat_i => flash_sdo_i, -- device data input
+        -- xip_dat_o => flash_sdi_o, -- controller data output
         -- GPIO (available if IO_GPIO_EN = true) --
         gpio_o => con_gpio_o, -- parallel output
         -- primary UART0 (available if IO_UART0_EN = true) --
         uart0_txd_o => uart0_txd_o, -- UART0 send data
-        uart0_rxd_i => uart0_rxd_i  -- UART0 receive data
+        uart0_rxd_i => uart0_rxd_i, -- UART0 receive data
+        -- SPI (available if IO_SPI_EN = true) --
+        spi_clk_o             => flash_clk_o,      -- SPI serial clock
+        spi_dat_o             => flash_sdi_o,      -- controller data out, peripheral data in
+        spi_dat_i             => flash_sdo_i,      -- controller data in, peripheral data out
+        spi_csn_o(0)          => flash_csn_o,      -- SPI CS
+        spi_csn_o(7 DOWNTO 1) => con_dummy_spi_csn -- dummy chip selects
     );
 
     -- GPIO output --
