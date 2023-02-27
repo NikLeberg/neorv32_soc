@@ -10,6 +10,10 @@ set files [glob                                                                \
 # you put "counter" a file named "counter.vhd{l}" is searched for.
 set entities {
     "sdram"
+
+    "wb_pkg"
+    "wb_intercon"
+    
     "wb_sdram"
 
     "top"
