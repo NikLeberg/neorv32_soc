@@ -8,7 +8,8 @@ RISCV_PREFIX = riscv64-unknown-elf-
 MARCH = rv32im_zicsr
 
 # User flags for additional configuration (will be added to compiler flags)
-USER_FLAGS += "-Wl,--defsym,__neorv32_ram_size=8k"
+USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=8k
+USER_FLAGS += -Og
 
 # Include the common neorv32 buildsystem. Provides targets like exe, bin etc.
 include $(NEORV32_HOME)/sw/common/common.mk
@@ -20,13 +21,13 @@ OCD = /opt/aji_openocd/openocd
 PHONY: flash debug
 
 # Flash the program with OpenOCD and GDB to the SoC.
-flash:
+flash: exe
 	$(OCD) -f ./openocd_target.cfg &
 	$(GDB) -x ./gdb_flash.cfg
 	pkill openocd
 
 # Flash the program to the SoC and start cli debugging session.
-debug:
+debug: exe
 	$(OCD) -f ./openocd_target.cfg &
 	$(GDB) -x ./gdb_debug.cfg
 	pkill openocd
