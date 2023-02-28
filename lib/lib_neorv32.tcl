@@ -34,7 +34,7 @@ set lib_entities {
     "neorv32_top"
     "neorv32_sysinfo"
     "neorv32_spi"
-    "neorv32_slink"
+    "neorv32_sdi"
     "neorv32_pwm"
     "neorv32_onewire"
     "neorv32_neoled"
