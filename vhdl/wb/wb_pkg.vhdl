@@ -74,6 +74,24 @@ PACKAGE wb_pkg IS
     -- of each slave and its data space size.
     FUNCTION wb_calc_coarse_decode_msb_bit_nums (memory_map : wb_map_t) RETURN natural_arr_t;
 
+    -- Procedure to simulate read transaction on Wishbone bus. 
+    PROCEDURE wb_sim_read32 (
+        SIGNAL clk          : IN STD_ULOGIC;                                       -- global clock, rising edge
+        SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
+        SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
+        CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to read from
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- expected data
+    );
+
+    -- Procedure to simulate write transaction on Wishbone bus. 
+    PROCEDURE wb_sim_write32 (
+        SIGNAL clk          : IN STD_ULOGIC;                                       -- global clock, rising edge
+        SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
+        SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
+        CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to write to
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- data to write
+    );
+
 END PACKAGE wb_pkg;
 
 PACKAGE BODY wb_pkg IS
@@ -94,5 +112,89 @@ PACKAGE BODY wb_pkg IS
         END LOOP;
         RETURN coarse_decode_msb_bit_nums;
     END FUNCTION;
+
+    PROCEDURE wb_sim_read32 (
+        SIGNAL clk          : IN STD_ULOGIC;                                       -- global clock, rising edge
+        SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
+        SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
+        CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to read from
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- expected data
+    ) IS
+    BEGIN
+        ASSERT WB_DATA_WIDTH >= 32
+        REPORT "Wishbone sim parameter error: Can't read 32 bit data word on architecture with only " & NATURAL'image(WB_DATA_WIDTH) & " bits."
+            SEVERITY error;
+        ASSERT address(1 DOWNTO 0) = "00"
+        REPORT "Wishbone sim parameter error: Can't read unaligned 32 bit data word."
+            SEVERITY error;
+        -- sync to rising edge of clock
+        WAIT UNTIL rising_edge(clk);
+        -- set wishbone bus signals
+        wb_master_tx.we <= '0';
+        wb_master_tx.adr <= address;
+        wb_master_tx.dat <= (OTHERS => 'X'); -- no data to send
+        wb_master_tx.sel(3 DOWNTO 0) <= (OTHERS => '1'); -- full word, 32 bits
+        wb_master_tx.sel(WB_NUM_BYTES - 1 DOWNTO 4) <= (OTHERS => '0');
+        -- start transaction and wait for ack or err
+        wb_master_tx.cyc <= '1';
+        wb_master_tx.stb <= '1';
+        WHILE wb_master_rx.ack = '0' AND wb_master_rx.err = '0' LOOP
+            WAIT UNTIL rising_edge(clk);
+        END LOOP;
+        -- end transaction
+        wb_master_tx.cyc <= '0';
+        wb_master_tx.stb <= '0';
+        -- check response
+        ASSERT wb_master_rx.err = '0'
+        REPORT "Wishbone sim read failure: Slave did respond with ERR."
+            SEVERITY failure;
+        ASSERT wb_master_rx.ack = '1'
+        REPORT "Wishbone sim read failure: Slave did not ACK."
+            SEVERITY failure;
+        REPORT INTEGER'image(to_integer(UNSIGNED(wb_master_rx.dat)));
+        ASSERT wb_master_rx.dat = data
+        REPORT "Wishbone sim read failure: Slave did send unexpected data."
+            SEVERITY failure;
+    END PROCEDURE;
+
+    PROCEDURE wb_sim_write32 (
+        SIGNAL clk          : IN STD_ULOGIC;                                       -- global clock, rising edge
+        SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
+        SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
+        CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to write to
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- data to write
+    ) IS
+    BEGIN
+        ASSERT WB_DATA_WIDTH >= 32
+        REPORT "Wishbone sim parameter error: Can't read 32 bit data word on architecture with only " & NATURAL'image(WB_DATA_WIDTH) & " bits."
+            SEVERITY error;
+        ASSERT address(1 DOWNTO 0) = "00"
+        REPORT "Wishbone sim parameter error: Can't write unaligned 32 bit data word."
+            SEVERITY error;
+        -- sync to rising edge of clock
+        WAIT UNTIL rising_edge(clk);
+        -- set wishbone bus signals
+        wb_master_tx.we <= '1';
+        wb_master_tx.adr <= address;
+        wb_master_tx.dat <= data;
+        wb_master_tx.sel(3 DOWNTO 0) <= (OTHERS => '1'); -- full word, 32 bits
+        wb_master_tx.sel(WB_NUM_BYTES - 1 DOWNTO 4) <= (OTHERS => '0');
+        -- start transaction and wait for ack or err
+        wb_master_tx.cyc <= '1';
+        wb_master_tx.stb <= '1';
+        WHILE wb_master_rx.ack = '0' AND wb_master_rx.err = '0' LOOP
+            WAIT UNTIL rising_edge(clk);
+        END LOOP;
+        -- end transaction
+        wb_master_tx.cyc <= '0';
+        wb_master_tx.stb <= '0';
+        -- check response
+        ASSERT wb_master_rx.err = '0'
+        REPORT "Wishbone sim write failure: Slave did respond with ERR."
+            SEVERITY failure;
+        ASSERT wb_master_rx.ack = '1'
+        REPORT "Wishbone sim read failure: Slave did not ACK."
+            SEVERITY failure;
+    END PROCEDURE;
 
 END PACKAGE BODY wb_pkg;
