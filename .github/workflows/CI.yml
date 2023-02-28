@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  example:
+  build:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/nikleberg/neorv32_soc:latest
@@ -29,6 +29,11 @@ jobs:
         cd quartus
         quartus_sh -t ../scripts/quartus_project.tcl
         quartus_sh -t ../scripts/quartus_compile.tcl
+
+    - name: Build Software
+      run: |
+        cd sw
+        make exe
 
     - name: Archive Synthesis Artifacts
       uses: actions/upload-artifact@v3
