@@ -10,11 +10,14 @@ set lib_files [glob                                                            \
     ../lib/neorv32/rtl/core/*.vhd                                              \
     ../lib/neorv32/rtl/core/**/*.vhd                                           \
     ../vhdl/neorv32_debug_dtm_intel/*.vhd                                      \
-    ../vhdl/neorv32_debug_dtm_intel/**/*.vhd                                   \
+    ../vhdl/gcd/*.vhd                                                          \
 ]
 
 # Filter out the default dtm, we use our own custom Intel specific dtm.
 set lib_files [lsearch -inline -all -not $lib_files *neorv32_debug_dtm.vhd]
+
+# Filter out the default cfu, we supply our own custom function unit.
+set lib_files [lsearch -inline -all -not $lib_files */core/neorv32_cpu_cp_cfu.vhd]
 
 # List the entities in the order that they should be compiled. For example if
 # you put "counter" a file named "counter.vhd{l}" is searched for.

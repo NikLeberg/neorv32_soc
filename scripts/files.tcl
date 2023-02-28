@@ -16,11 +16,17 @@ set entities {
     
     "wb_sdram"
 
+    "gcd"
+    "wb_gcd"
+
     "top"
 }
 
 # List the testbenches in the order that they should be compiled and executed.
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
+    "gcd_tb"
+    "wb_gcd_tb"
+
     "top_tb"
 }

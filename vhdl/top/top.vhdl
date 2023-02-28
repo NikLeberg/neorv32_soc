@@ -137,6 +137,17 @@ ARCHITECTURE top_arch OF top IS
         );
     END COMPONENT wb_sdram;
 
+    COMPONENT wb_gcd IS
+        PORT (
+            -- Global control --
+            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
+            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
+            -- Wishbone slave interface --
+            wb_slave_i : IN wb_slave_rx_sig_t;
+            wb_slave_o : OUT wb_slave_tx_sig_t
+        );
+    END COMPONENT wb_gcd;
+
     CONSTANT CLOCK_FREQUENCY : POSITIVE := 50000000; -- clock frequency of clk_i in Hz
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
@@ -146,9 +157,10 @@ ARCHITECTURE top_arch OF top IS
 
     -- Wishbone interface signals
     CONSTANT WB_N_SLAVES : NATURAL := 2;
-    CONSTANT WB_MEMORY_MAP : wb_map_t := (
+    CONSTANT WB_MEMORY_MAP : wb_map_t :=
+    (
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
-        (x"8200_0000", 3 * 4) -- GCD Accelerator
+    (x"8200_0000", 3 * 4) -- GCD Accelerator
     );
     SIGNAL wb_master_o : wb_master_tx_sig_t;
     SIGNAL wb_master_i : wb_master_rx_sig_t;
@@ -177,10 +189,15 @@ BEGIN
         CPU_EXTENSION_RISCV_M        => true, -- implement mul/div extension?
         CPU_EXTENSION_RISCV_Zicsr    => true, -- implement CSR system?
         CPU_EXTENSION_RISCV_Zicntr   => true, -- implement base counters?
+        CPU_EXTENSION_RISCV_Zihpm    => true, -- implement hardware performance monitors?
         CPU_EXTENSION_RISCV_Zifencei => true, -- implement instruction stream sync.? (required for the on-chip debugger)
+        CPU_EXTENSION_RISCV_Zxcfu    => true, -- implement custom (instr.) functions unit?
         -- Tuning Options --
         FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
         FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
+        -- Hardware Performance Monitors (HPM) --
+        HPM_NUM_CNTS  => 5,  -- number of implemented HPM counters (0..29)
+        HPM_CNT_WIDTH => 64, -- total size of HPM counters (0..64)
         -- Internal Instruction memory --
         MEM_INT_IMEM_EN   => true,      -- implement processor-internal instruction memory
         MEM_INT_IMEM_SIZE => 32 * 1024, -- size of processor-internal instruction memory in bytes
@@ -310,7 +327,16 @@ BEGIN
         );
     END GENERATE;
 
-    
+    -- GCD Accelerator --
+    wb_gcd_inst : wb_gcd
+    PORT MAP(
+        -- Global control --
+        clk_i  => clk_i,  -- global clock, rising edge
+        rstn_i => rstn_i, -- global reset, low-active, asyn
+        -- Wishbone slave interface --
+        wb_slave_i => wb_slaves_i(1),
+        wb_slave_o => wb_slaves_o(1)
+    );
 
     -- DEBUG --
     gpio1_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(7 DOWNTO 0));
