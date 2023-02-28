@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  top
 --
@@ -13,6 +13,8 @@
 --                              initial version
 --                          0.2, 2023-02-25, leuen4
 --                              implement IMEM with SDRAM
+--                          0.3, 2023-02-28, leuen4
+--                              disable SDRAM and JTAG if simulating
 -- =============================================================================
 
 LIBRARY ieee;
@@ -26,6 +28,9 @@ USE neorv32.neorv32_package.ALL;
 USE work.wb_pkg.ALL;
 
 ENTITY top IS
+    GENERIC (
+        SIMULATION : BOOLEAN := FALSE -- running in simulation?
+    );
     PORT (
         -- Global control --
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
@@ -149,6 +154,13 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL wb_master_i : wb_master_rx_sig_t;
     SIGNAL wb_slaves_i : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+
+    -- Change behaviour when simulating:
+    --  > do not implement external sdram and replace with neorv32 internal dmem
+    --  > do not implement altera specific jtag atom
+    CONSTANT IMPLEMENT_SDRAM : BOOLEAN := NOT SIMULATION;
+    CONSTANT IMPLEMENT_DMEM : BOOLEAN := SIMULATION;
+    CONSTANT IMPLEMENT_JTAG : BOOLEAN := NOT SIMULATION;
 BEGIN
     -- The Core Of The Problem ----------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
@@ -158,7 +170,7 @@ BEGIN
         CLOCK_FREQUENCY   => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
         INT_BOOTLOADER_EN => true,            -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
         -- On-Chip Debugger (OCD) --
-        ON_CHIP_DEBUGGER_EN => true, -- implement on-chip debugger
+        ON_CHIP_DEBUGGER_EN => IMPLEMENT_JTAG, -- implement on-chip debugger
         -- RISC-V CPU Extensions --
         CPU_EXTENSION_RISCV_B        => true, -- implement bit-manipulation extension?
         CPU_EXTENSION_RISCV_C        => true, -- implement compressed extension?
@@ -173,7 +185,8 @@ BEGIN
         MEM_INT_IMEM_EN   => true,      -- implement processor-internal instruction memory
         MEM_INT_IMEM_SIZE => 32 * 1024, -- size of processor-internal instruction memory in bytes
         -- Internal Data memory --
-        MEM_INT_DMEM_EN => false, -- implement processor-internal data memory
+        MEM_INT_DMEM_EN   => IMPLEMENT_DMEM, -- implement processor-internal data memory
+        MEM_INT_DMEM_SIZE => 8 * 1024,       -- size of processor-internal data memory in bytes
         -- External memory interface --
         MEM_EXT_EN => true, -- implement external memory bus interface?
         -- average delay of SDRAM is about 4096 cycles, double it to be safe
@@ -234,22 +247,24 @@ BEGIN
     gpio0_o <= con_gpio_o(7 DOWNTO 0);
 
     -- JTAG atom --
-    jtag_inst : cycloneive_jtag
-    PORT MAP(
-        tms         => altera_reserved_tms,
-        tck         => altera_reserved_tck,
-        tdi         => altera_reserved_tdi,
-        tdo         => altera_reserved_tdo,
-        tdouser     => con_jtag_tdo,
-        tmsutap     => con_jtag_tms,
-        tckutap     => con_jtag_tck,
-        tdiutap     => con_jtag_tdi,
-        shiftuser   => OPEN, -- don't care, dtm has it's own JTAG FSM
-        clkdruser   => OPEN,
-        updateuser  => OPEN,
-        runidleuser => OPEN,
-        usr1user    => OPEN
-    );
+    gen_jtag : IF IMPLEMENT_JTAG = TRUE GENERATE
+        jtag_inst : cycloneive_jtag
+        PORT MAP(
+            tms         => altera_reserved_tms,
+            tck         => altera_reserved_tck,
+            tdi         => altera_reserved_tdi,
+            tdo         => altera_reserved_tdo,
+            tdouser     => con_jtag_tdo,
+            tmsutap     => con_jtag_tms,
+            tckutap     => con_jtag_tck,
+            tdiutap     => con_jtag_tdi,
+            shiftuser   => OPEN, -- don't care, dtm has it's own JTAG FSM
+            clkdruser   => OPEN,
+            updateuser  => OPEN,
+            runidleuser => OPEN,
+            usr1user    => OPEN
+        );
+    END GENERATE;
 
     -- Wishbone interconnect --
     wb_intercon_inst : wb_intercon
@@ -268,30 +283,34 @@ BEGIN
     );
 
     -- SDRAM Controller --
-    wb_sdram_inst : wb_sdram
-    GENERIC MAP(
-        -- General --
-        CLOCK_FREQUENCY => CLOCK_FREQUENCY -- clock frequency of clk_i in Hz
-    )
-    PORT MAP(
-        -- Global control --
-        clk_i  => clk_i,  -- global clock, rising edge
-        rstn_i => rstn_i, -- global reset, low-active, asyn
-        -- Wishbone slave interface --
-        wb_slave_i => wb_slaves_i(0),
-        wb_slave_o => wb_slaves_o(0),
-        -- SDRAM --
-        sdram_addr  => sdram_addr,  -- addr
-        sdram_ba    => sdram_ba,    -- ba
-        sdram_n_cas => sdram_n_cas, -- cas_n
-        sdram_cke   => sdram_cke,   -- cke
-        sdram_n_cs  => sdram_n_cs,  -- cs_n
-        sdram_d     => sdram_d,     -- dq
-        sdram_dqm   => sdram_dqm,   -- dqm
-        sdram_n_ras => sdram_n_ras, -- ras_n
-        sdram_n_we  => sdram_n_we,  -- we_n
-        sdram_clk   => sdram_clk    -- clk
-    );
+    gen_sdram : IF IMPLEMENT_SDRAM = TRUE GENERATE
+        wb_sdram_inst : wb_sdram
+        GENERIC MAP(
+            -- General --
+            CLOCK_FREQUENCY => CLOCK_FREQUENCY -- clock frequency of clk_i in Hz
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, asyn
+            -- Wishbone slave interface --
+            wb_slave_i => wb_slaves_i(0),
+            wb_slave_o => wb_slaves_o(0),
+            -- SDRAM --
+            sdram_addr  => sdram_addr,  -- addr
+            sdram_ba    => sdram_ba,    -- ba
+            sdram_n_cas => sdram_n_cas, -- cas_n
+            sdram_cke   => sdram_cke,   -- cke
+            sdram_n_cs  => sdram_n_cs,  -- cs_n
+            sdram_d     => sdram_d,     -- dq
+            sdram_dqm   => sdram_dqm,   -- dqm
+            sdram_n_ras => sdram_n_ras, -- ras_n
+            sdram_n_we  => sdram_n_we,  -- we_n
+            sdram_clk   => sdram_clk    -- clk
+        );
+    END GENERATE;
+
+    
 
     -- DEBUG --
     gpio1_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(7 DOWNTO 0));

@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  top_tb
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2023-02-15, leuen4
 --                              initial version
+--                          0.2, 2023-02-28, leuen4
+--                              change implementation of top if simulating
 -- =============================================================================
 
 LIBRARY ieee;
@@ -24,6 +26,9 @@ END ENTITY top_tb;
 ARCHITECTURE simulation OF top_tb IS
     -- Component definition for device under test.
     COMPONENT top IS
+        GENERIC (
+            SIMULATION : BOOLEAN := FALSE -- running in simulation?
+        );
         PORT (
             -- Global control --
             clk_i  : IN STD_ULOGIC; -- global clock, rising edge
@@ -33,11 +38,13 @@ ARCHITECTURE simulation OF top_tb IS
             altera_reserved_tms : IN STD_ULOGIC;
             altera_reserved_tdi : IN STD_ULOGIC;
             altera_reserved_tdo : OUT STD_ULOGIC;
-            -- XIP (execute in place via SPI) --
-            xip_csn_o : OUT STD_ULOGIC;       -- chip-select, low-active
-            xip_clk_o : OUT STD_ULOGIC;       -- serial clock
-            xip_sdi_i : IN STD_ULOGIC := 'L'; -- device data input
-            xip_sdo_o : OUT STD_ULOGIC;       -- controller data output
+            -- FLASH (plain SPI or XIP execute in place via SPI) --
+            flash_csn_o   : OUT STD_ULOGIC;        -- chip-select, low-active
+            flash_holdn_o : OUT STD_ULOGIC := 'H'; -- hold serial communication, low-active
+            flash_clk_o   : OUT STD_ULOGIC;        -- serial clock
+            flash_sdi_o   : OUT STD_ULOGIC;        -- flash data input
+            flash_sdo_i   : IN STD_ULOGIC;         -- flash data output
+            flash_wpn_o   : OUT STD_ULOGIC := 'H'; -- write-protect, low-active
             -- GPIO --
             gpio0_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
             gpio1_o : OUT STD_ULOGIC_VECTOR(7 DOWNTO 0); -- parallel output
@@ -74,6 +81,9 @@ ARCHITECTURE simulation OF top_tb IS
 BEGIN
     -- Instantiate the device under test.
     dut : top
+    GENERIC MAP(
+        SIMULATION => true
+    )
     PORT MAP(
         clk_i               => s_clock,
         rstn_i              => s_n_reset,
@@ -81,6 +91,7 @@ BEGIN
         altera_reserved_tck => '0',
         altera_reserved_tms => '0',
         altera_reserved_tdi => '0',
+        flash_sdo_i         => '0',
         uart0_rxd_i         => '1'
     );
 
@@ -96,7 +107,12 @@ BEGIN
         -- Wait for power on reset to finish.
         WAIT UNTIL rising_edge(s_clock);
 
-        -- nothing so far
+        -- Wait for LSB gpio bit to be high, default bootloader assumes a LED
+        -- connected there and tries to blink it.
+        WAIT UNTIL s_gpio0_o(0) = '1' FOR 1 ms;
+        ASSERT s_gpio0_o(0) = '1'
+        REPORT "LED0 was not observed to go high, did bootloader run?"
+            SEVERITY failure;
 
         -- Report successful test.
         REPORT "Test OK";
