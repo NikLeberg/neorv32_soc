@@ -75,6 +75,13 @@ if {[string equal $::lib_target "quartus"]} {
         set lib_file [lsearch -inline -glob $lib_files "*$lib_ent.vhd"]
         set_global_assignment -name VHDL_FILE $lib_file -library $lib_name
     }
+    # Disable some warnings regarding neoTRNG, we actually want it that way!
+    #  > inferred latches (10631)
+    set_instance_assignment -name MESSAGE_DISABLE 10631 -entity neorv32_trng
+    #  > assumed clocks (332060)
+    set_instance_assignment -name MESSAGE_DISABLE 332060 -entity neorv32_trng
+    #  > combinational loops (332125)
+    set_instance_assignment -name MESSAGE_DISABLE 332125 -entity neorv32_trng
 }
 
 # Add entities to modelsim / questasim compilation database.
