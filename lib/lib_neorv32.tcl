@@ -53,6 +53,7 @@ set lib_entities {
     "neorv32_cpu_cp_shifter"
     "neorv32_cpu_cp_muldiv"
     "neorv32_cpu_cp_fpu"
+    "neorv32_cpu_cp_cond"
     "neorv32_cpu_cp_cfu"
     "neorv32_cpu_cp_bitmanip"
     "neorv32_cpu_control"

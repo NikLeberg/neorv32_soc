@@ -12,6 +12,8 @@
 
 #include <neorv32.h>
 
+#include "hpm_profile.h"
+
 #define BAUD_RATE 19200
 #define N_SAMPLES 100000
 
@@ -19,31 +21,10 @@
 
 uint32_t get_random_uint32(void);
 
-void hpm3_reset(void);
-void hpm3_start(void);
-void hpm3_stop(void);
-uint32_t hpm3_print(char *name, uint32_t n);
-void hpm4_reset(void);
-void hpm4_start(void);
-void hpm4_stop(void);
-uint32_t hpm4_print(char *name, uint32_t n);
-void hpm5_reset(void);
-void hpm5_start(void);
-void hpm5_stop(void);
-uint32_t hpm5_print(char *name, uint32_t n);
-void hpm6_reset(void);
-void hpm6_start(void);
-void hpm6_stop(void);
-uint32_t hpm6_print(char *name, uint32_t n);
-void hpm7_reset(void);
-void hpm7_start(void);
-void hpm7_stop(void);
-uint32_t hpm7_print(char *name, uint32_t n);
 
 uint32_t calc_gcd_sw(uint32_t a, uint32_t b);
 uint32_t calc_gcd_hw(uint32_t a, uint32_t b);
-uint32_t calc_gcd_ci_fun(uint32_t a, uint32_t b);
-#define calc_gcd_ci_inl(a, b) neorv32_cfu_r3_instr(0, 0, a, b)
+uint32_t calc_gcd_cfu(uint32_t a, uint32_t b);
 
 
 /**
@@ -63,7 +44,7 @@ int main() {
     neorv32_gpio_port_set(0);
 
     // init UART at default baud rate, no parity bits, ho hw flow control
-    neorv32_uart0_setup(BAUD_RATE, PARITY_NONE, FLOW_CONTROL_NONE);
+    neorv32_uart_setup(NEORV32_UART0, BAUD_RATE, 0);
 
     // check available hardware extensions and compare with compiler flags
     neorv32_rte_check_isa(0); // silent = 0 -> show message if isa mismatch
@@ -72,73 +53,79 @@ int main() {
     neorv32_trng_enable();
 
     // intro
-    neorv32_uart0_printf("\n<<< NEORV32 GCD Accelerator Demo >>>\n\n");
+    neorv32_uart_printf(NEORV32_UART0, "\n<<< NEORV32 GCD Accelerator Demo >>>\n\n");
 
     int i;
     uint32_t a, b;
     uint32_t r_sw = 0;
     uint32_t r_hw = 0;
-    uint32_t r_ci_fun = 0;
-    uint32_t r_ci_inl = 0;
+    uint32_t r_cfu = 0;
+
+    neorv32_uart_puts(NEORV32_UART0, "\nSimple check of GCD implementations...");
+    a = 294;
+    b = 546;
+    r_sw = calc_gcd_sw(a, b);
+    neorv32_uart_printf(NEORV32_UART0, "\ncalc_gcd_sw(%d, %d) = %d", a, b, r_sw);
+    r_hw = calc_gcd_hw(a, b);
+    neorv32_uart_printf(NEORV32_UART0, "\ncalc_gcd_hw(%d, %d) = %d", a, b, r_hw);
+    r_cfu = calc_gcd_cfu(a, b);
+    neorv32_uart_printf(NEORV32_UART0, "\ncalc_gcd_cfu(%d, %d) = %d", a, b, r_cfu);
+
+    const hpm_setup_t profile_rng = {0, 1, HPMCNT_EVENT_CY, "rng"};
+    const hpm_setup_t profile_sw = {0, 2, HPMCNT_EVENT_CY, "sw"};
+    const hpm_setup_t profile_hw = {0, 3, HPMCNT_EVENT_CY, "hw"};
+    const hpm_setup_t profile_cfu = {0, 4, HPMCNT_EVENT_CY, "cfu"};
 
     while (1) {
-        neorv32_uart0_puts("\nSimple check of GCD implementations...");
-        a = 294;
-        b = 546;
-        r_sw = calc_gcd_sw(a, b);
-        neorv32_uart0_printf("\ncalc_gcd_sw(%d, %d) = %d", a, b, r_sw);
-        r_hw = calc_gcd_hw(a, b);
-        neorv32_uart0_printf("\ncalc_gcd_hw(%d, %d) = %d", a, b, r_hw);
-        r_ci_fun = calc_gcd_ci_fun(a, b);
-        neorv32_uart0_printf("\ncalc_gcd_ci_fun(%d, %d) = %d", a, b, r_ci_fun);
-        r_ci_inl = calc_gcd_ci_inl(a, b);
-        neorv32_uart0_printf("\ncalc_gcd_ci_inl(%d, %d) = %d", a, b, r_ci_inl);
-
-        neorv32_uart0_puts("\n\nRunning GCD benchmark...");
-        // Reset the performance counters
-        hpm3_reset();
-        hpm4_reset();
-        hpm5_reset();
-        hpm6_reset();
-        hpm7_reset();
+        neorv32_uart_puts(NEORV32_UART0, "\n\nRunning GCD benchmark...");
+        // Reset and start the performance counter
+        hpm_reset(profile_rng);
+        hpm_reset(profile_sw);
+        hpm_reset(profile_hw);
+        hpm_reset(profile_cfu);
+        hpm_start_measuring(profile_rng);
+        hpm_start_measuring(profile_sw);
+        hpm_start_measuring(profile_hw);
+        hpm_start_measuring(profile_cfu);
         for (i = 0; i < N_SAMPLES; ++i) {
             // Generate two random variables
+            hpm_begin(profile_rng);
             a = get_random_uint32();
             b = get_random_uint32();
+            hpm_end(profile_rng);
 
             // Calculate the result using the software implementation and measure the execution time
-            hpm4_start();
+            hpm_begin(profile_sw);
             r_sw = calc_gcd_sw(a, b);
-            hpm4_stop();
+            hpm_end(profile_sw);
 
             // Calculate the result using the memory mapped implementation and measure the execution time
-            hpm5_start();
+            hpm_begin(profile_hw);
             r_hw = calc_gcd_hw(a, b);
-            hpm5_stop();
+            hpm_end(profile_hw);
 
-            // Calculate the result using the CI function call and measure the execution time
-            hpm6_start();
-            r_ci_fun = calc_gcd_ci_fun(a, b);
-            hpm6_stop();
-
-            // Calculate the result using the CI inline call and measure the execution time
-            hpm7_start();
-            r_ci_inl = calc_gcd_ci_inl(a, b);
-            hpm7_stop();
+            // Calculate the result using the custom function unit call and measure the execution time
+            hpm_begin(profile_cfu);
+            r_cfu = calc_gcd_cfu(a, b);
+            hpm_end(profile_cfu);
 
             // Check if any error occurred. Print an error line if necessary
-            if ((r_sw != r_hw) || (r_sw != r_ci_fun) || (r_sw != r_ci_inl)) {
-                neorv32_uart0_printf("\nIteration %i, inconsistency for gcd(%d, %d): r_sw = %d, r_hw = %d, r_ci_fun = %d, r_ci_inl = %d", i, a, b, r_sw, r_hw, r_ci_fun, r_ci_inl);
+            if ((r_sw != r_hw) || (r_sw != r_cfu)) {
+                neorv32_uart_printf(NEORV32_UART0, "\nIteration %i, inconsistency for gcd(%d, %d): r_sw = %d, r_hw = %d, r_cfu = %d", i, a, b, r_sw, r_hw, r_cfu);
             }
         }
+        hpm_stop_measuring(profile_rng);
+        hpm_stop_measuring(profile_sw);
+        hpm_stop_measuring(profile_hw);
+        hpm_stop_measuring(profile_cfu);
 
         // Print the result of the performance counters
-        hpm4_print("calc_gcd_sw", N_SAMPLES);
-        hpm5_print("calc_gcd_hw", N_SAMPLES);
-        hpm6_print("calc_gcd_ci_fun", N_SAMPLES);
-        hpm7_print("calc_gcd_ci_inl", N_SAMPLES);
+        hpm_print(profile_rng);
+        hpm_print(profile_sw);
+        hpm_print(profile_hw);
+        hpm_print(profile_cfu);
 
-        neorv32_uart0_puts("\nRestart in 5 s ...");
+        neorv32_uart_puts(NEORV32_UART0, "\nRestart in 5 s ...");
         neorv32_cpu_delay_ms(5 * 1000);
     }
 
@@ -153,126 +140,6 @@ uint32_t get_random_uint32(void) {
             ;
     }
     return data[0] | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
-}
-
-void hpm3_reset(void) {
-    hpm3_stop();
-    // clear HPM counters (low and high word);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER3, 0);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER3H, 0);
-    // configure trigger event: active cycle
-    neorv32_cpu_csr_write(CSR_MHPMEVENT3, 1 << HPMCNT_EVENT_CY);
-}
-void hpm3_start(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit &= ~(1 << 3);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-void hpm3_stop(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit |= (1 << 3);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-uint32_t hpm3_print(char *name, uint32_t n) {
-    uint32_t cycles = neorv32_cpu_csr_read(CSR_MHPMCOUNTER3);
-    neorv32_uart0_printf("\nHPM[3]: %s -> %d average cycles", name, cycles / n);
-    return cycles;
-}
-
-void hpm4_reset(void) {
-    hpm4_stop();
-    // clear HPM counters (low and high word);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER4, 0);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER4H, 0);
-    // configure trigger event: active cycle
-    neorv32_cpu_csr_write(CSR_MHPMEVENT4, 1 << HPMCNT_EVENT_CY);
-}
-void hpm4_start(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit &= ~(1 << 4);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-void hpm4_stop(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit |= (1 << 4);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-uint32_t hpm4_print(char *name, uint32_t n) {
-    uint32_t cycles = neorv32_cpu_csr_read(CSR_MHPMCOUNTER4);
-    neorv32_uart0_printf("\nHPM[4]: %s -> %d average cycles", name, cycles / n);
-    return cycles;
-}
-
-void hpm5_reset(void) {
-    hpm5_stop();
-    // clear HPM counters (low and high word);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER5, 0);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER5H, 0);
-    // configure trigger event: active cycle
-    neorv32_cpu_csr_write(CSR_MHPMEVENT5, 1 << HPMCNT_EVENT_CY);
-}
-void hpm5_start(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit &= ~(1 << 5);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-void hpm5_stop(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit |= (1 << 5);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-uint32_t hpm5_print(char *name, uint32_t n) {
-    uint32_t cycles = neorv32_cpu_csr_read(CSR_MHPMCOUNTER5);
-    neorv32_uart0_printf("\nHPM[5]: %s -> %d average cycles", name, cycles / n);
-    return cycles;
-}
-
-void hpm6_reset(void) {
-    hpm6_stop();
-    // clear HPM counters (low and high word);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER6, 0);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER6H, 0);
-    // configure trigger event: active cycle
-    neorv32_cpu_csr_write(CSR_MHPMEVENT6, 1 << HPMCNT_EVENT_CY);
-}
-void hpm6_start(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit &= ~(1 << 6);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-void hpm6_stop(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit |= (1 << 6);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-uint32_t hpm6_print(char *name, uint32_t n) {
-    uint32_t cycles = neorv32_cpu_csr_read(CSR_MHPMCOUNTER6);
-    neorv32_uart0_printf("\nHPM[6]: %s -> %d average cycles", name, cycles / n);
-    return cycles;
-}
-
-void hpm7_reset(void) {
-    hpm7_stop();
-    // clear HPM counters (low and high word);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER7, 0);
-    neorv32_cpu_csr_write(CSR_MHPMCOUNTER7H, 0);
-    // configure trigger event: active cycle
-    neorv32_cpu_csr_write(CSR_MHPMEVENT7, 1 << HPMCNT_EVENT_CY);
-}
-void hpm7_start(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit &= ~(1 << 7);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-void hpm7_stop(void) {
-    uint32_t inhibit = neorv32_cpu_csr_read(CSR_MCOUNTINHIBIT);
-    inhibit |= (1 << 7);
-    neorv32_cpu_csr_write(CSR_MCOUNTINHIBIT, inhibit);
-}
-uint32_t hpm7_print(char *name, uint32_t n) {
-    uint32_t cycles = neorv32_cpu_csr_read(CSR_MHPMCOUNTER7);
-    neorv32_uart0_printf("\nHPM[7]: %s -> %d average cycles", name, cycles / n);
-    return cycles;
 }
 
 
@@ -300,9 +167,8 @@ uint32_t calc_gcd_sw(uint32_t a, uint32_t b) {
     return a;
 }
 
-// Hardware implementation of the gcd method using PIO
+// Hardware implementation of the gcd method over wishbone bus
 uint32_t calc_gcd_hw(uint32_t a, uint32_t b) {
-    // neorv32_uart0_printf("\na: %d, b: %d", a, b);
     neorv32_cpu_store_unsigned_word(GCD_WB_BASE_ADDRESS, a);
     neorv32_cpu_store_unsigned_word(GCD_WB_BASE_ADDRESS + 4, b);
     uint32_t result;
@@ -311,7 +177,7 @@ uint32_t calc_gcd_hw(uint32_t a, uint32_t b) {
     return result;
 }
 
-// Hardware implementation of the gcd method using CI
-uint32_t calc_gcd_ci_fun(uint32_t a, uint32_t b) {
+// Hardware implementation of the gcd method using custom function unit
+uint32_t calc_gcd_cfu(uint32_t a, uint32_t b) {
     return neorv32_cfu_r3_instr(0, 0, a, b);
 }
