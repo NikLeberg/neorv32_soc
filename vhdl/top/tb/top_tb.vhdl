@@ -64,9 +64,7 @@ ARCHITECTURE simulation OF top_tb IS
             sdram_dqm   : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
             sdram_n_ras : OUT STD_LOGIC;                                          -- ras_n
             sdram_n_we  : OUT STD_LOGIC;                                          -- we_n
-            sdram_clk   : OUT STD_LOGIC;                                          -- clk
-            -- DEBUG over PMOD --
-            dbg : OUT STD_ULOGIC_VECTOR(6 DOWNTO 0)
+            sdram_clk   : OUT STD_LOGIC                                           -- clk
         );
     END COMPONENT top;
 
@@ -77,6 +75,7 @@ ARCHITECTURE simulation OF top_tb IS
 
     -- Signals for connecting to the DUT.
     SIGNAL s_gpio0_o : STD_ULOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL s_uart_tx_o : STD_LOGIC;
 
 BEGIN
     -- Instantiate the device under test.
@@ -92,7 +91,8 @@ BEGIN
         altera_reserved_tms => '0',
         altera_reserved_tdi => '0',
         flash_sdo_i         => '0',
-        uart0_rxd_i         => '1'
+        uart0_rxd_i         => '1',
+        uart0_txd_o         => s_uart_tx_o
     );
 
     -- Clock with 50 MHz.
@@ -112,6 +112,17 @@ BEGIN
         WAIT UNTIL s_gpio0_o(0) = '1' FOR 1 ms;
         ASSERT s_gpio0_o(0) = '1'
         REPORT "LED0 was not observed to go high, did bootloader run?"
+            SEVERITY failure;
+
+        -- Wait for some chatter on the uart, default booloader prints debug
+        -- information there.
+        WAIT UNTIL s_uart_tx_o = '0' FOR 1 ms;
+        ASSERT s_uart_tx_o = '0'
+        REPORT "UART0 was not observed to go low, did bootloader run?"
+            SEVERITY failure;
+        WAIT UNTIL s_uart_tx_o = '1' FOR 1 ms;
+        ASSERT s_uart_tx_o = '1'
+        REPORT "UART0 was not observed to go high, did bootloader run?"
             SEVERITY failure;
 
         -- Report successful test.

@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.3
+-- Version:                 0.4
 --
 -- Entity:                  top
 --
@@ -15,6 +15,8 @@
 --                              implement IMEM with SDRAM
 --                          0.3, 2023-02-28, leuen4
 --                              disable SDRAM and JTAG if simulating
+--                          0.4, 2023-04-16, leuen4
+--                              replace simple bus mux with crossbar
 -- =============================================================================
 
 LIBRARY ieee;
@@ -66,9 +68,7 @@ ENTITY top IS
         sdram_dqm   : OUT STD_ULOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
         sdram_n_ras : OUT STD_ULOGIC;                                          -- ras_n
         sdram_n_we  : OUT STD_ULOGIC;                                          -- we_n
-        sdram_clk   : OUT STD_ULOGIC;                                          -- clk
-        -- DEBUG over PMOD --
-        dbg : OUT STD_ULOGIC_VECTOR(6 DOWNTO 0)
+        sdram_clk   : OUT STD_ULOGIC                                           -- clk
     );
 END ENTITY top;
 
@@ -95,21 +95,25 @@ ARCHITECTURE top_arch OF top IS
         );
     END COMPONENT;
 
-    COMPONENT wb_intercon IS
+    COMPONENT wb_crossbar IS
         GENERIC (
             -- General --
+            N_MASTERS  : NATURAL; -- number of connected masters
             N_SLAVES   : NATURAL; -- number of connected slaves
             MEMORY_MAP : wb_map_t -- memory map of address space
         );
         PORT (
-            -- Wishbone master interface --
-            wb_master_i : IN wb_master_tx_sig_t;
-            wb_master_o : OUT wb_master_rx_sig_t;
+            -- Global control --
+            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
+            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
+            -- Wishbone master interface(s) --
+            wb_masters_i : IN wb_master_tx_arr_t(N_MASTERS - 1 DOWNTO 0);
+            wb_masters_o : OUT wb_master_rx_arr_t(N_MASTERS - 1 DOWNTO 0);
             -- Wishbone slave interface(s) --
             wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
             wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0)
         );
-    END COMPONENT wb_intercon;
+    END COMPONENT wb_crossbar;
 
     COMPONENT wb_sdram IS
         GENERIC (
@@ -156,14 +160,15 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_dummy_spi_csn : STD_ULOGIC_VECTOR(6 DOWNTO 0);
 
     -- Wishbone interface signals
-    CONSTANT WB_N_SLAVES : NATURAL := 2;
+    CONSTANT WB_N_MASTERS : NATURAL := 1;
+    CONSTANT WB_N_SLAVES : NATURAL := 3;
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (x"8200_0000", 3 * 4) -- GCD Accelerator
     );
-    SIGNAL wb_master_o : wb_master_tx_sig_t;
-    SIGNAL wb_master_i : wb_master_rx_sig_t;
+    SIGNAL wb_masters_o : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_slaves_i : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
 
@@ -191,8 +196,9 @@ BEGIN
         CPU_EXTENSION_RISCV_Zifencei => true, -- implement instruction stream sync.? (required for the on-chip debugger)
         CPU_EXTENSION_RISCV_Zxcfu    => true, -- implement custom (instr.) functions unit?
         -- Tuning Options --
-        FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
-        FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
+        FAST_MUL_EN     => true, -- use DSPs for M extension's multiplier
+        FAST_SHIFT_EN   => true, -- use barrel shifter for shift operations
+        CPU_IPB_ENTRIES => 2,    -- entries in instruction prefetch buffer, has to be a power of 2, min 1
         -- Hardware Performance Monitors (HPM) --
         HPM_NUM_CNTS  => 5,  -- number of implemented HPM counters (0..29)
         HPM_CNT_WIDTH => 64, -- total size of HPM counters (0..64)
@@ -209,9 +215,9 @@ BEGIN
         -- External memory interface --
         MEM_EXT_EN => true, -- implement external memory bus interface?
         -- average delay of SDRAM is about 4096 cycles, double it to be safe
-        MEM_EXT_TIMEOUT  => 8191,  -- cycles after a pending bus access auto-terminates (0 = disabled)
-        MEM_EXT_ASYNC_RX => false, -- use register buffer for RX data when false
-        MEM_EXT_ASYNC_TX => false, -- use register buffer for TX data when false
+        MEM_EXT_TIMEOUT  => 8191, -- cycles after a pending bus access auto-terminates (0 = disabled)
+        MEM_EXT_ASYNC_RX => true, -- use register buffer for RX data when false
+        MEM_EXT_ASYNC_TX => true, -- use register buffer for TX data when false
         -- Processor peripherals --
         IO_GPIO_NUM      => 64,   -- number of GPIO input/output pairs (0..64)
         IO_MTIME_EN      => true, -- implement machine system timer (MTIME)?
@@ -234,16 +240,16 @@ BEGIN
         jtag_tdo_o  => con_jtag_tdo, -- serial data output
         jtag_tms_i  => con_jtag_tms, -- mode select
         -- Wishbone bus interface (available if MEM_EXT_EN = true) --
-        wb_tag_o => OPEN,            -- request tag (unused)
-        wb_adr_o => wb_master_o.adr, -- address
-        wb_dat_i => wb_master_i.dat, -- read data
-        wb_dat_o => wb_master_o.dat, -- write data
-        wb_we_o  => wb_master_o.we,  -- read/write
-        wb_sel_o => wb_master_o.sel, -- byte enable
-        wb_stb_o => wb_master_o.stb, -- strobe
-        wb_cyc_o => wb_master_o.cyc, -- valid cycle
-        wb_ack_i => wb_master_i.ack, -- transfer acknowledge
-        wb_err_i => wb_master_i.err, -- transfer error
+        wb_tag_o => OPEN,                -- request tag (unused)
+        wb_adr_o => wb_masters_o(0).adr, -- address
+        wb_dat_i => wb_masters_i(0).dat, -- read data
+        wb_dat_o => wb_masters_o(0).dat, -- write data
+        wb_we_o  => wb_masters_o(0).we,  -- read/write
+        wb_sel_o => wb_masters_o(0).sel, -- byte enable
+        wb_stb_o => wb_masters_o(0).stb, -- strobe
+        wb_cyc_o => wb_masters_o(0).cyc, -- valid cycle
+        wb_ack_i => wb_masters_i(0).ack, -- transfer acknowledge
+        wb_err_i => wb_masters_i(0).err, -- transfer error
         -- XIP (execute in place via SPI) signals (available if IO_XIP_EN = true) --
         -- xip_csn_o => flash_csn_o, -- chip-select, low-active
         -- xip_clk_o => flash_clk_o, -- serial clock
@@ -286,16 +292,20 @@ BEGIN
     END GENERATE;
 
     -- Wishbone interconnect --
-    wb_intercon_inst : wb_intercon
+    wb_crossbar_inst : wb_crossbar
     GENERIC MAP(
         -- General --
+        N_MASTERS  => WB_N_MASTERS, -- number of connected masters
         N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
         MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
     )
     PORT MAP(
+        -- Global control --
+        clk_i  => clk_i,  -- global clock, rising edge
+        rstn_i => rstn_i, -- global reset, low-active, asyn
         -- Wishbone master interface --
-        wb_master_i => wb_master_o,
-        wb_master_o => wb_master_i,
+        wb_masters_i => wb_masters_o,
+        wb_masters_o => wb_masters_i,
         -- Wishbone slave interface(s) --
         wb_slaves_o => wb_slaves_i,
         wb_slaves_i => wb_slaves_o
@@ -341,15 +351,9 @@ BEGIN
     );
 
     -- DEBUG --
-    gpio1_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(7 DOWNTO 0));
-    gpio2_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(15 DOWNTO 8));
-    gpio3_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(23 DOWNTO 16));
-    gpio4_o <= STD_ULOGIC_VECTOR(wb_master_o.adr(31 DOWNTO 24));
-
-    -- Wishbone DEBUG --
-    dbg(0) <= wb_master_o.we; -- read/write
-    dbg(1) <= wb_master_o.stb; -- strobe
-    dbg(2) <= wb_master_o.cyc; -- valid cycle
-    dbg(3) <= wb_master_i.ack; -- transfer acknowledge
+    gpio1_o <= wb_masters_o(0).adr(7 DOWNTO 0);
+    gpio2_o <= wb_masters_o(0).adr(15 DOWNTO 8);
+    gpio3_o <= wb_masters_o(0).adr(23 DOWNTO 16);
+    gpio4_o <= wb_masters_o(0).adr(31 DOWNTO 24);
 
 END ARCHITECTURE top_arch;

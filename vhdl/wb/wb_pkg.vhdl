@@ -53,6 +53,10 @@ PACKAGE wb_pkg IS
         dat : STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0); -- read data
     END RECORD wb_master_rx_sig_t;
 
+    -- Wishbone master interface array types
+    TYPE wb_master_tx_arr_t IS ARRAY (NATURAL RANGE <>) OF wb_master_tx_sig_t;
+    TYPE wb_master_rx_arr_t IS ARRAY (NATURAL RANGE <>) OF wb_master_rx_sig_t;
+
     -- Wishbone slave input and output interface type
     SUBTYPE wb_slave_rx_sig_t IS wb_master_tx_sig_t;
     SUBTYPE wb_slave_tx_sig_t IS wb_master_rx_sig_t;
@@ -138,6 +142,7 @@ PACKAGE BODY wb_pkg IS
         -- start transaction and wait for ack or err
         wb_master_tx.cyc <= '1';
         wb_master_tx.stb <= '1';
+        WAIT UNTIL rising_edge(clk); -- strobe for at least one clock
         WHILE wb_master_rx.ack = '0' AND wb_master_rx.err = '0' LOOP
             WAIT UNTIL rising_edge(clk);
         END LOOP;
@@ -182,6 +187,7 @@ PACKAGE BODY wb_pkg IS
         -- start transaction and wait for ack or err
         wb_master_tx.cyc <= '1';
         wb_master_tx.stb <= '1';
+        WAIT UNTIL rising_edge(clk); -- strobe for at least one clock
         WHILE wb_master_rx.ack = '0' AND wb_master_rx.err = '0' LOOP
             WAIT UNTIL rising_edge(clk);
         END LOOP;

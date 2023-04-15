@@ -12,7 +12,8 @@ set entities {
     "sdram"
 
     "wb_pkg"
-    "wb_intercon"
+    "wb_mux"
+    "wb_crossbar"
     
     "wb_sdram"
 
@@ -26,6 +27,8 @@ set entities {
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
     "gcd_tb"
+
+    "wb_crossbar_tb"
     "wb_gcd_tb"
 
     "top_tb"

@@ -1,17 +1,21 @@
 -- =============================================================================
--- File:                    wb_intercon.vhdl
+-- File:                    wb_mux.vhdl
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.3
 --
--- Entity:                  wb_intercon
+-- Entity:                  wb_mux
 --
 -- Description:             Wishbone interconnect for single master multi slave
 --                          bus topology. One to many, implemented with muxes.
 --
 -- Changes:                 0.1, 2023-02-26, leuen4
 --                              initial version
+--                          0.2, 2023-03-19, leuen4
+--                              simplify coarse decoding (unchanged behaviour)
+--                          0.3, 2023-04-14, leuen4
+--                              rename from wb_intercon to wb_mux
 -- =============================================================================
 
 LIBRARY ieee;
@@ -21,7 +25,7 @@ USE ieee.math_real.ALL;
 
 USE work.wb_pkg.ALL;
 
-ENTITY wb_intercon IS
+ENTITY wb_mux IS
     GENERIC (
         -- General --
         N_SLAVES   : NATURAL; -- number of connected slaves
@@ -35,9 +39,9 @@ ENTITY wb_intercon IS
         wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
         wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0)
     );
-END ENTITY wb_intercon;
+END ENTITY wb_mux;
 
-ARCHITECTURE no_target_specific OF wb_intercon IS
+ARCHITECTURE no_target_specific OF wb_mux IS
     CONSTANT coarse_decode_msb_bit_nums : natural_arr_t := wb_calc_coarse_decode_msb_bit_nums(MEMORY_MAP);
     -- Number of the slave selected according to the address. Valid range
     -- 0 ... N_SLAVES - 1, a value of N_SLAVE indicates an invalid bus address
@@ -53,11 +57,13 @@ BEGIN
     REPORT "Wishbone config error: Width of data bus needs to be a multiple of 8."
         SEVERITY error;
     ASSERT N_SLAVES = MEMORY_MAP'length
-    REPORT "Wishbone config error: Number of slaves does not match with memoery map definition."
+    REPORT "Wishbone config error: Number of slaves does not match with memory map definition."
         SEVERITY error;
 
     -- Coarse decode address of slaves.
     coarse_decode : PROCESS (wb_master_i) IS
+        CONSTANT msb_adr : NATURAL := WB_ADDRESS_WIDTH - 1; -- upper bound of address
+        VARIABLE lsb_adr : NATURAL := 0; -- lower bound of address, depends on slave
     BEGIN
         -- Default to an invalid index, this allows to auto terminate if no
         -- slave could be selected based on the address.
@@ -65,7 +71,8 @@ BEGIN
         -- Loop over all slaves and check the MSB of the address with their
         -- entry in the memory map.
         FOR i IN N_SLAVES - 1 DOWNTO 0 LOOP
-            IF wb_master_i.adr(WB_ADDRESS_WIDTH - 1 DOWNTO coarse_decode_msb_bit_nums(i)) = MEMORY_MAP(i).BASE_ADDRESS(WB_ADDRESS_WIDTH - 1 DOWNTO coarse_decode_msb_bit_nums(i)) THEN
+            lsb_adr := coarse_decode_msb_bit_nums(i); -- lower bound of address
+            IF wb_master_i.adr(msb_adr DOWNTO lsb_adr) = MEMORY_MAP(i).BASE_ADDRESS(msb_adr DOWNTO lsb_adr) THEN
                 slave_select <= i;
             END IF;
         END LOOP;
