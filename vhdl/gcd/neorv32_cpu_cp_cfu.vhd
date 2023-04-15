@@ -45,9 +45,6 @@ LIBRARY neorv32;
 USE neorv32.neorv32_package.ALL;
 
 ENTITY neorv32_cpu_cp_cfu IS
-  GENERIC (
-    XLEN : NATURAL -- data path width
-  );
   PORT (
     -- global control --
     clk_i   : IN STD_ULOGIC; -- global clock, rising edge

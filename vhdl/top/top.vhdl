@@ -185,9 +185,7 @@ BEGIN
         ON_CHIP_DEBUGGER_EN => IMPLEMENT_JTAG, -- implement on-chip debugger
         -- RISC-V CPU Extensions --
         CPU_EXTENSION_RISCV_B        => true, -- implement bit-manipulation extension?
-        CPU_EXTENSION_RISCV_C        => true, -- implement compressed extension?
         CPU_EXTENSION_RISCV_M        => true, -- implement mul/div extension?
-        CPU_EXTENSION_RISCV_Zicsr    => true, -- implement CSR system?
         CPU_EXTENSION_RISCV_Zicntr   => true, -- implement base counters?
         CPU_EXTENSION_RISCV_Zihpm    => true, -- implement hardware performance monitors?
         CPU_EXTENSION_RISCV_Zifencei => true, -- implement instruction stream sync.? (required for the on-chip debugger)
@@ -204,6 +202,10 @@ BEGIN
         -- Internal Data memory --
         MEM_INT_DMEM_EN   => IMPLEMENT_DMEM, -- implement processor-internal data memory
         MEM_INT_DMEM_SIZE => 8 * 1024,       -- size of processor-internal data memory in bytes
+        -- Internal Data Cache (dCACHE) --
+        DCACHE_EN         => true,   -- implement data cache
+        DCACHE_NUM_BLOCKS => 64,     -- d-cache: number of blocks (min 1), has to be a power of 2
+        DCACHE_BLOCK_SIZE => 16 * 4, -- d-cache: block size in bytes (min 4), has to be a power of 2
         -- External memory interface --
         MEM_EXT_EN => true, -- implement external memory bus interface?
         -- average delay of SDRAM is about 4096 cycles, double it to be safe

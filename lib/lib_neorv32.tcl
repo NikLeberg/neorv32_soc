@@ -43,6 +43,7 @@ set lib_entities {
     "neorv32_neoled"
     "neorv32_mtime"
     "neorv32_icache"
+    "neorv32_dcache"
     "neorv32_gptmr"
     "neorv32_gpio"
     "neorv32_fifo"
