@@ -17,7 +17,7 @@
 #define BAUD_RATE 19200
 #define N_SAMPLES 100000
 
-#define GCD_WB_BASE_ADDRESS 0x82000000
+#define GCD_WB_BASE_ADDRESS 0xf0000000
 
 uint32_t get_random_uint32(void);
 
@@ -43,7 +43,7 @@ int main() {
     // clear GPIO output (set all bits to 0)
     neorv32_gpio_port_set(0);
 
-    // init UART at default baud rate, no parity bits, ho hw flow control
+    // init UART at default baud rate, no parity bits, no hw flow control
     neorv32_uart_setup(NEORV32_UART0, BAUD_RATE, 0);
 
     // check available hardware extensions and compare with compiler flags

@@ -165,7 +165,7 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
-    (x"8200_0000", 3 * 4) -- GCD Accelerator
+    (x"f000_0000", 3 * 4) -- GCD Accelerator
     );
     SIGNAL wb_masters_o : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
