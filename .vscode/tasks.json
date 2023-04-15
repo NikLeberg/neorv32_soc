@@ -112,7 +112,7 @@
         {
             "label": "sim-open",
             // Gui Mode (no -c flag)
-            "command": "vsim -do ../scripts/sim_open.tcl ${fileBasenameNoExtension}",
+            "command": "vsim -debugdb -voptargs=+acc=rn+*. -do ../scripts/sim_open.tcl ${fileBasenameNoExtension}",
             "options": {
                 "cwd": "${workspaceFolder}/sim"
             },
@@ -177,7 +177,8 @@
             "command": "make exe",
             "options": {
                 "cwd": "${workspaceFolder}/sw"
-            }
+            },
+            "problemMatcher": "$gcc"
         },
         {
             "label": "sw-clean",
