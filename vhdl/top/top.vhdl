@@ -161,7 +161,7 @@ ARCHITECTURE top_arch OF top IS
 
     -- Wishbone interface signals
     CONSTANT WB_N_MASTERS : NATURAL := 1;
-    CONSTANT WB_N_SLAVES : NATURAL := 3;
+    CONSTANT WB_N_SLAVES : NATURAL := 2;
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
