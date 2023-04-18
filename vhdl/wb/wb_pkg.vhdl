@@ -68,15 +68,12 @@ PACKAGE wb_pkg IS
     -- Array of natural type
     TYPE natural_arr_t IS ARRAY (NATURAL RANGE <>) OF NATURAL;
 
-    -- Function to calculate the number of MSB bits in the address that are
-    -- uniquely owned by the slave based on the memory map with the base address
-    -- of each slave and its data space size.
-    FUNCTION wb_calc_coarse_decode_bit_nums (memory_map : wb_map_t) RETURN natural_arr_t;
-
-    -- Function to calculate the MSB bit numbers of the address that are
-    -- uniquely owned by the slave based on the memory map with the base address
-    -- of each slave and its data space size.
-    FUNCTION wb_calc_coarse_decode_msb_bit_nums (memory_map : wb_map_t) RETURN natural_arr_t;
+    -- Function to calculate the MSB bit position of the address that addresses
+    -- the data inside the slave based on the data space given in the memory
+    -- map. E.g. slave with 4 * 32 bits of data uses 16 addresses and as such
+    -- func returns 4 LSB bits. Address WB_ADDRESS_WIDTH downto 4 addresses the
+    -- slave itself and 3 downto 0 addresses individual memory in the slave. 
+    FUNCTION wb_get_slave_address_ranges (memory_map : wb_map_t) RETURN natural_arr_t;
 
     -- Procedure to simulate read transaction on Wishbone bus. 
     PROCEDURE wb_sim_read32 (
@@ -99,22 +96,13 @@ PACKAGE wb_pkg IS
 END PACKAGE wb_pkg;
 
 PACKAGE BODY wb_pkg IS
-    FUNCTION wb_calc_coarse_decode_bit_nums (memory_map : wb_map_t) RETURN natural_arr_t IS
-        VARIABLE coarse_decode_bit_nums : natural_arr_t(memory_map'length - 1 DOWNTO 0);
+    FUNCTION wb_get_slave_address_ranges (memory_map : wb_map_t) RETURN natural_arr_t IS
+        VARIABLE address_ranges : natural_arr_t(memory_map'length - 1 DOWNTO 0);
     BEGIN
         FOR i IN memory_map'length - 1 DOWNTO 0 LOOP
-            coarse_decode_bit_nums(i) := WB_ADDRESS_WIDTH - INTEGER(ceil(log2(real(memory_map(i).SIZE))));
+            address_ranges(i) := INTEGER(ceil(log2(real(memory_map(i).SIZE))));
         END LOOP;
-        RETURN coarse_decode_bit_nums;
-    END FUNCTION;
-
-    FUNCTION wb_calc_coarse_decode_msb_bit_nums (memory_map : wb_map_t) RETURN natural_arr_t IS
-        VARIABLE coarse_decode_msb_bit_nums : natural_arr_t(memory_map'length - 1 DOWNTO 0);
-    BEGIN
-        FOR i IN memory_map'length - 1 DOWNTO 0 LOOP
-            coarse_decode_msb_bit_nums(i) := INTEGER(ceil(log2(real(memory_map(i).SIZE))));
-        END LOOP;
-        RETURN coarse_decode_msb_bit_nums;
+        RETURN address_ranges;
     END FUNCTION;
 
     PROCEDURE wb_sim_read32 (

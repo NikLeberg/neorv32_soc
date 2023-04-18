@@ -42,7 +42,7 @@ ENTITY wb_mux IS
 END ENTITY wb_mux;
 
 ARCHITECTURE no_target_specific OF wb_mux IS
-    CONSTANT coarse_decode_msb_bit_nums : natural_arr_t := wb_calc_coarse_decode_msb_bit_nums(MEMORY_MAP);
+    CONSTANT address_ranges : natural_arr_t := wb_get_slave_address_ranges(MEMORY_MAP);
     -- Number of the slave selected according to the address. Valid range
     -- 0 ... N_SLAVES - 1, a value of N_SLAVE indicates an invalid bus address
     -- and will auto terminate with error.
@@ -71,7 +71,7 @@ BEGIN
         -- Loop over all slaves and check the MSB of the address with their
         -- entry in the memory map.
         FOR i IN N_SLAVES - 1 DOWNTO 0 LOOP
-            lsb_adr := coarse_decode_msb_bit_nums(i); -- lower bound of address
+            lsb_adr := address_ranges(i); -- lower bound of address
             IF wb_master_i.adr(msb_adr DOWNTO lsb_adr) = MEMORY_MAP(i).BASE_ADDRESS(msb_adr DOWNTO lsb_adr) THEN
                 slave_select <= i;
             END IF;

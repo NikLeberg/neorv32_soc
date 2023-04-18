@@ -54,7 +54,7 @@ ENTITY wb_crossbar IS
 END ENTITY wb_crossbar;
 
 ARCHITECTURE no_target_specific OF wb_crossbar IS
-    CONSTANT coarse_decode_msb_bit_nums : natural_arr_t := wb_calc_coarse_decode_msb_bit_nums(MEMORY_MAP);
+    CONSTANT address_ranges : natural_arr_t := wb_get_slave_address_ranges(MEMORY_MAP);
 
     -- Vector types for common signal needs.
     SUBTYPE slave_vector_t IS STD_ULOGIC_VECTOR(N_SLAVES - 1 DOWNTO 0);
@@ -104,7 +104,7 @@ BEGIN
                 -- Loop over all slaves and check the MSB of the address with
                 -- their entry in the memory map.
                 FOR s IN N_SLAVES - 1 DOWNTO 0 LOOP
-                    lsb_adr := coarse_decode_msb_bit_nums(s); -- lower bound
+                    lsb_adr := address_ranges(s); -- lower bound
                     IF wb_masters_i(m).adr(msb_adr DOWNTO lsb_adr) = MEMORY_MAP(s).BASE_ADDRESS(msb_adr DOWNTO lsb_adr) THEN
                         -- Slave matches the address. Mark it as possible slave
                         -- to fulfill request from master.
