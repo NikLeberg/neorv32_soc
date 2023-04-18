@@ -14,8 +14,12 @@ set entities {
     "wb_pkg"
     "wb_mux"
     "wb_crossbar"
-    
     "wb_sdram"
+    "wb_imem"
+
+    "neorv32_wb_gateway"
+    "neorv32_cpu_smp"
+    "neorv32_wb_gpio"
 
     "gcd"
     "wb_gcd"
