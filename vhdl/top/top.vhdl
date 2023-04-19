@@ -73,6 +73,7 @@ ENTITY top IS
 END ENTITY top;
 
 ARCHITECTURE top_arch OF top IS
+
     COMPONENT cycloneive_jtag
         GENERIC (
             lpm_type : STRING := "cycloneive_jtag"
@@ -98,9 +99,10 @@ ARCHITECTURE top_arch OF top IS
     COMPONENT wb_crossbar IS
         GENERIC (
             -- General --
-            N_MASTERS  : NATURAL; -- number of connected masters
-            N_SLAVES   : NATURAL; -- number of connected slaves
-            MEMORY_MAP : wb_map_t -- memory map of address space
+            N_MASTERS  : POSITIVE; -- number of connected masters
+            N_SLAVES   : POSITIVE; -- number of connected slaves
+            N_OTHERS   : POSITIVE; -- number of interfaces for other slaves not in memory map
+            MEMORY_MAP : wb_map_t  -- memory map of address space
         );
         PORT (
             -- Global control --
@@ -111,7 +113,10 @@ ARCHITECTURE top_arch OF top IS
             wb_masters_o : OUT wb_master_rx_arr_t(N_MASTERS - 1 DOWNTO 0);
             -- Wishbone slave interface(s) --
             wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
-            wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0)
+            wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0);
+            -- Other unmapped Wishbone slave interface(s) --
+            wb_other_slaves_o : OUT wb_slave_rx_arr_t(N_OTHERS - 1 DOWNTO 0);
+            wb_other_slaves_i : IN wb_slave_tx_arr_t(N_OTHERS - 1 DOWNTO 0)
         );
     END COMPONENT wb_crossbar;
 
@@ -171,6 +176,8 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_slaves_i : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    -- Error slave to terminate accesses that have no associated slave.
+    CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
 
     -- Change behaviour when simulating:
     --  > do not implement external sdram and replace with neorv32 internal dmem
@@ -297,6 +304,7 @@ BEGIN
         -- General --
         N_MASTERS  => WB_N_MASTERS, -- number of connected masters
         N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
+        N_OTHERS   => 1,            -- number of interfaces for other slaves not in memory map
         MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
     )
     PORT MAP(
@@ -308,7 +316,11 @@ BEGIN
         wb_masters_o => wb_masters_i,
         -- Wishbone slave interface(s) --
         wb_slaves_o => wb_slaves_i,
-        wb_slaves_i => wb_slaves_o
+        wb_slaves_i => wb_slaves_o,
+        -- Other unmapped Wishbone slave interface(s) --
+        wb_other_slaves_o    => OPEN,
+        wb_other_slaves_i(0) => wb_slave_err_o
+    );
     );
 
     -- SDRAM Controller --
