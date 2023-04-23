@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  neorv32_cpu_smp
 --
@@ -27,9 +27,13 @@
 --                          - [ ] add software support i.e. FreeRTOS
 --                                > see https://github.com/raspberrypi/pico-sdk
 --                          - [ ] where is (shall be) the stack of the smp cpus?
+--                          - [ ] A extension support
+--                                > emulation over traps with lr sc possible
 --
 -- Changes:                 0.1, 2023-04-16, leuen4
 --                              initial version
+--                          0.2, 2023-04-23, leuen4
+--                              combine d and i Wishbone bus into single array
 -- =============================================================================
 
 LIBRARY ieee;
@@ -59,13 +63,10 @@ ENTITY neorv32_cpu_smp IS
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
 
-        -- Wishbone instruction bus interface(s) per hart --
-        wb_master_i_o : OUT wb_master_tx_arr_t(NUM_HARTS - 1 DOWNTO 0); -- control and data from master to slave
-        wb_master_i_i : IN wb_master_rx_arr_t(NUM_HARTS - 1 DOWNTO 0);  -- status and data from slave to master
-
-        -- Wishbone data bus interface(s) per hart --
-        wb_master_d_o : OUT wb_master_tx_arr_t(NUM_HARTS - 1 DOWNTO 0); -- control and data from master to slave
-        wb_master_d_i : IN wb_master_rx_arr_t(NUM_HARTS - 1 DOWNTO 0);  -- status and data from slave to master
+        -- Wishbone bus interfaces, two per hart --
+        -- for two harts the ordering is 0: d_bus(0), 1: i_bus(0), 2: d_bus(1), 3: i_bus(1)
+        wb_master_o : OUT wb_master_tx_arr_t(2 * NUM_HARTS - 1 DOWNTO 0); -- control and data from master to slave
+        wb_master_i : IN wb_master_rx_arr_t(2 * NUM_HARTS - 1 DOWNTO 0);  -- status and data from slave to master
 
         -- Advanced memory control signals --
         fence_o  : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- indicates an executed FENCE operation
@@ -283,8 +284,8 @@ BEGIN
             ack_o  => cpu_d(i).ack,   -- transfer acknowledge
             err_o  => cpu_d(i).err,   -- transfer error
             -- Wishbone master interface --
-            wb_master_o => wb_master_d_o(i), -- control and data from master to slave
-            wb_master_i => wb_master_d_i(i)  -- status and data from slave to master
+            wb_master_o => wb_master_o(2 * i), -- control and data from master to slave
+            wb_master_i => wb_master_i(2 * i)  -- status and data from slave to master
         );
     END GENERATE;
 
@@ -349,8 +350,8 @@ BEGIN
             ack_o  => i_cache(i).ack,   -- transfer acknowledge
             err_o  => i_cache(i).err,   -- transfer error
             -- Wishbone master interface --
-            wb_master_o => wb_master_i_o(i), -- control and data from master to slave
-            wb_master_i => wb_master_i_i(i)  -- status and data from slave to master
+            wb_master_o => wb_master_o(2 * i + 1), -- control and data from master to slave
+            wb_master_i => wb_master_i(2 * i + 1)  -- status and data from slave to master
         );
     END GENERATE;
 
