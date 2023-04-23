@@ -16,6 +16,7 @@ set entities {
     "wb_crossbar"
     "wb_sdram"
     "wb_imem"
+    "wb_dmem"
 
     "neorv32_wb_gateway"
     "neorv32_cpu_smp"
