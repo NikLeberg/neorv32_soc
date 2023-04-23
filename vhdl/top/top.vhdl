@@ -122,6 +122,7 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     -- Error slave to terminate accesses that have no associated slave.
     CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    SIGNAL wb_slave_dummy : wb_master_rx_sig_t;
 
     -- Change behaviour when simulating:
     --  > do not implement external sdram and replace with internal dmem
@@ -280,7 +281,7 @@ BEGIN
                 wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
                 wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
                 wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
-                wb_slaves_o(1) => OPEN            -- status and data from slave to master
+                wb_slaves_o(1) => wb_slave_dummy
             );
     END GENERATE;
 
