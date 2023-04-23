@@ -150,27 +150,24 @@
             "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;top.sof'",
             "options": {
                 "cwd": "${workspaceFolder}/quartus/output_files"
-            },
-            // "dependsOn": [
-            //     "quartus-compile"
-            // ]
+            }
         },
         {
             "label": "quartus-flash",
             "command": "quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartus_flash.cdf",
             "options": {
                 "cwd": "${workspaceFolder}/quartus/output_files",
-            },
-            "dependsOn": [
-                "quartus-compile"
-            ]
+            }
         },
         {
             "label": "clean",
             "command": "rm -rf quartus/* sim/* && touch quartus/.gitkeep && touch sim/.gitkeep",
             "presentation": {
                 "reveal": "silent"
-            }
+            },
+            "dependsOn": [
+                "sw-clean"
+            ]
         },
         {
             "label": "sw-build",
@@ -203,6 +200,10 @@
             "options": {
                 "cwd": "${workspaceFolder}/sw"
             }
+        },
+        {
+            "label": "submodule update",
+            "command": "git submodule update --remote",
         }
     ]
 }

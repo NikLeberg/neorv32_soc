@@ -77,8 +77,15 @@
             "pro"
         ],
         "body": [
-            "${1:pro_1} : PROCESS (${2:clock}) IS",
-            "BEGIN\n\t$0",
+            "${1:proc} : PROCESS (${2:clk_i}) IS",
+            "BEGIN",
+            "\tIF rising_edge(${2:clk_i}) THEN",
+            "\t\tIF ${3:rstn_i = '0'} THEN",
+            "\t\t\t$0",
+            "\t\tELSE",
+            "\t\t\t",
+            "\t\tEND IF;",
+            "\tEND IF;",
             "END PROCESS $1;"
         ]
     },

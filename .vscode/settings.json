@@ -49,6 +49,7 @@
         }
     },
     "taskExplorer.exclude": [
-        "/workspaces/neorv32_soc/lib/neorv32/**"
+        "/workspaces/neorv32_soc/lib/neorv32/**",
+        "/workspaces/neorv32_soc/sw/makefile"
     ]
 }
