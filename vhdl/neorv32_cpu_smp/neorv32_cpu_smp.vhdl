@@ -73,9 +73,9 @@ ENTITY neorv32_cpu_smp IS
         fencei_o : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- indicates an executed FENCEI operation
 
         -- CPU interrupts --
-        mtime_irq_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- machine timer interrupt, available if IO_MTIME_EN = false
         msw_irq_i   : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- machine software interrupt
-        mext_irq_i  : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- machine external interrupt
+        mext_irq_i  : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- machine external interrupt
+        mtime_irq_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- machine timer interrupt, available if IO_MTIME_EN = false
     );
 END ENTITY neorv32_cpu_smp;
 
@@ -119,23 +119,8 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
     TYPE cpu_status_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF cpu_status_t;
     SIGNAL cpu_s : cpu_status_arr_t;
 
-    -- bus interface - instruction fetch --
-    TYPE bus_i_interface_t IS RECORD
-        addr : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus access address
-        rdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus read data
-        re : STD_ULOGIC; -- read request
-        ack : STD_ULOGIC; -- bus transfer acknowledge
-        err : STD_ULOGIC; -- bus transfer error
-        fence : STD_ULOGIC; -- fence.i instruction executed
-        src : STD_ULOGIC; -- access source (1=instruction fetch, 0=data access)
-        cached : STD_ULOGIC; -- cached transfer
-        priv : STD_ULOGIC; -- set when in privileged machine mode
-    END RECORD;
-    TYPE bus_i_interface_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_i_interface_t;
-    SIGNAL cpu_i, i_cache : bus_i_interface_arr_t;
-
-    -- bus interface - data access --
-    TYPE bus_d_interface_t IS RECORD
+    -- bus interface --
+    TYPE bus_interface_t IS RECORD
         addr : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus access address
         rdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus read data
         wdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus write data
@@ -144,13 +129,13 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
         re : STD_ULOGIC; -- read request
         ack : STD_ULOGIC; -- bus transfer acknowledge
         err : STD_ULOGIC; -- bus transfer error
-        fence : STD_ULOGIC; -- fence instruction executed
         src : STD_ULOGIC; -- access source (1=instruction fetch, 0=data access)
         cached : STD_ULOGIC; -- cached transfer
         priv : STD_ULOGIC; -- set when in privileged machine mode
     END RECORD;
-    TYPE bus_d_interface_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_d_interface_t;
-    SIGNAL cpu_d : bus_d_interface_arr_t;
+    TYPE bus_interface_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_interface_t;
+    SIGNAL cpu_i, i_cache, cpu_d : bus_interface_arr_t;
+    SIGNAL d_fence, i_fence : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
 
     -- Wishbone bus gateway FSM --
     TYPE wb_bus_state_t IS RECORD
@@ -235,7 +220,7 @@ BEGIN
             i_bus_re_o    => cpu_i(i).re,    -- read request
             i_bus_ack_i   => cpu_i(i).ack,   -- bus transfer acknowledge
             i_bus_err_i   => cpu_i(i).err,   -- bus transfer error
-            i_bus_fence_o => cpu_i(i).fence, -- executed FENCEI operation
+            i_bus_fence_o => i_fence(i),     -- executed FENCEI operation
             i_bus_priv_o  => cpu_i(i).priv,  -- current effective privilege level
             -- data bus interface --
             d_bus_addr_o  => cpu_d(i).addr,  -- bus access address
@@ -246,27 +231,28 @@ BEGIN
             d_bus_re_o    => cpu_d(i).re,    -- read request
             d_bus_ack_i   => cpu_d(i).ack,   -- bus transfer acknowledge
             d_bus_err_i   => cpu_d(i).err,   -- bus transfer error
-            d_bus_fence_o => cpu_d(i).fence, -- executed FENCE operation
+            d_bus_fence_o => d_fence(i),     -- executed FENCE operation
             d_bus_priv_o  => cpu_d(i).priv,  -- current effective privilege level
-            -- non-maskable interrupt --
-            msw_irq_i   => msw_irq_i(i),   -- machine software interrupt
-            mext_irq_i  => mext_irq_i(i),  -- machine external interrupt request
-            mtime_irq_i => mtime_irq_i(i), -- machine timer interrupt
-            -- fast interrupts (custom) --
-            firq_i => (OTHERS => '0'), -- fast interrupt trigger
-            -- debug mode (halt) request --
-            db_halt_req_i => '0'
+            -- interrupts --
+            msw_irq_i     => msw_irq_i(i),   -- risc-v: machine software interrupt
+            mext_irq_i    => mext_irq_i(i),  -- risc-v: machine external interrupt
+            mtime_irq_i   => mtime_irq_i(i), -- risc-v: machine timer interrupt
+            firq_i => (OTHERS => '0'),       -- custom: fast interrupts
+            db_halt_req_i => '0'             -- risc-v: halt request (debug mode)
         );
 
         -- initialized but unused --
-        cpu_i(i).src <= '1';
-        cpu_d(i).src <= '0';
+        cpu_i(i).wdata <= (OTHERS => '0');
+        cpu_i(i).ben <= (OTHERS => '0');
+        cpu_i(i).we <= '0'; -- read-only
+        cpu_i(i).src <= '1'; -- 1 = instruction fetch
         cpu_i(i).cached <= '0';
+        cpu_d(i).src <= '0'; -- 0 = data access
         cpu_d(i).cached <= '0';
 
         -- advanced memory control --
-        fence_o(i) <= cpu_d(i).fence; -- indicates an executed FENCE operation
-        fencei_o(i) <= cpu_i(i).fence; -- indicates an executed FENCE.I operation
+        fence_o(i) <= d_fence(i); -- indicates an executed FENCE operation
+        fencei_o(i) <= i_fence(i); -- indicates an executed FENCE.I operation
 
         -- convert cpu internal data bus to external Wishbone bus
         neorv32_wb_gateway_dbus : neorv32_wb_gateway
@@ -301,9 +287,9 @@ BEGIN
             )
             PORT MAP(
                 -- global control --
-                clk_i   => clk_i,          -- global clock, rising edge
-                rstn_i  => rstn_int,       -- global reset, low-active, async
-                clear_i => cpu_i(i).fence, -- cache clear
+                clk_i   => clk_i,      -- global clock, rising edge
+                rstn_i  => rstn_int,   -- global reset, low-active, async
+                clear_i => i_fence(i), -- cache clear
                 -- host controller interface --
                 host_addr_i  => cpu_i(i).addr,  -- bus access address
                 host_rdata_o => cpu_i(i).rdata, -- bus read data
@@ -330,8 +316,10 @@ BEGIN
             cpu_i(i).err <= i_cache(i).err;
         END GENERATE;
 
+        i_cache(i).wdata <= (OTHERS => '0');
+        i_cache(i).ben <= (OTHERS => '0');
+        i_cache(i).we <= '0';
         i_cache(i).priv <= cpu_i(i).priv;
-        i_cache(i).fence <= '0'; -- not used
         i_cache(i).src <= '0'; -- not used
 
         -- convert cpu internal instruction bus to external Wishbone bus
