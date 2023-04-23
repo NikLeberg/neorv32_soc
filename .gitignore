@@ -11,3 +11,4 @@ quartus/*
 sw/*.bin
 sw/*.elf
 sw/*.o
+sw/*.vhd

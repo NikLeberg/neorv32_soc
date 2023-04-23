@@ -97,7 +97,10 @@
             "command": "vsim -c -do ../scripts/sim_compile.tcl",
             "options": {
                 "cwd": "${workspaceFolder}/sim"
-            }
+            },
+            "dependsOn": [
+                "sw-install-sim"
+            ]
         },
         {
             "label": "sim-test",
@@ -132,7 +135,8 @@
                 "cwd": "${workspaceFolder}/quartus"
             },
             "dependsOn": [
-                "quartus-project"
+                "quartus-project",
+                "sw-install"
             ]
         },
         {
@@ -172,6 +176,22 @@
         {
             "label": "sw-build",
             "command": "make exe",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "sw-install-sim",
+            "command": "make USER_FLAGS+='-DSIMULATION=1' clean_all install",
+            "options": {
+                "cwd": "${workspaceFolder}/sw"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "sw-install",
+            "command": "make clean_all install",
             "options": {
                 "cwd": "${workspaceFolder}/sw"
             },

@@ -18,6 +18,11 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Build Software
+      run: |
+        cd sw
+        make USER_FLAGS+='-DSIMULATION=1' exe install
+
     - name: Run Simulation
       run: |
         cd sim
@@ -30,13 +35,11 @@ jobs:
         quartus_sh -t ../scripts/quartus_project.tcl
         quartus_sh -t ../scripts/quartus_compile.tcl
 
-    - name: Build Software
-      run: |
-        cd sw
-        make exe
-
-    - name: Archive Synthesis Artifacts
+    - name: Archive CI Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: quartus_sof
-        path: quartus/output_files/*.sof
+        name: ci_artifacts
+        path: |
+          sw/main.elf
+          sw/neorv32_exe.bin
+          quartus/output_files/*.sof
