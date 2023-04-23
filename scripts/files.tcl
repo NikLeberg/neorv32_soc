@@ -15,6 +15,7 @@ set entities {
     "wb_mux"
     "wb_crossbar"
     "wb_sdram"
+    "wb_riscv_clint"
     "wb_imem"
     "wb_dmem"
 
@@ -22,19 +23,13 @@ set entities {
     "neorv32_cpu_smp"
     "neorv32_wb_gpio"
 
-    "gcd"
-    "wb_gcd"
-
     "top"
 }
 
 # List the testbenches in the order that they should be compiled and executed.
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
-    "gcd_tb"
-
     "wb_crossbar_tb"
-    "wb_gcd_tb"
 
     "top_tb"
 }

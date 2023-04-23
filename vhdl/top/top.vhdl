@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.4
+-- Version:                 0.5
 --
 -- Entity:                  top
 --
@@ -17,6 +17,8 @@
 --                              disable SDRAM and JTAG if simulating
 --                          0.4, 2023-04-16, leuen4
 --                              replace simple bus mux with crossbar
+--                          0.5, 2023-04-23, leuen4
+--                              remove GCD parts and build SMP system
 -- =============================================================================
 
 LIBRARY ieee;
@@ -96,68 +98,8 @@ ARCHITECTURE top_arch OF top IS
         );
     END COMPONENT;
 
-    COMPONENT wb_crossbar IS
-        GENERIC (
-            -- General --
-            N_MASTERS  : POSITIVE; -- number of connected masters
-            N_SLAVES   : POSITIVE; -- number of connected slaves
-            N_OTHERS   : POSITIVE; -- number of interfaces for other slaves not in memory map
-            MEMORY_MAP : wb_map_t  -- memory map of address space
-        );
-        PORT (
-            -- Global control --
-            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
-            -- Wishbone master interface(s) --
-            wb_masters_i : IN wb_master_tx_arr_t(N_MASTERS - 1 DOWNTO 0);
-            wb_masters_o : OUT wb_master_rx_arr_t(N_MASTERS - 1 DOWNTO 0);
-            -- Wishbone slave interface(s) --
-            wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
-            wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0);
-            -- Other unmapped Wishbone slave interface(s) --
-            wb_other_slaves_o : OUT wb_slave_rx_arr_t(N_OTHERS - 1 DOWNTO 0);
-            wb_other_slaves_i : IN wb_slave_tx_arr_t(N_OTHERS - 1 DOWNTO 0)
-        );
-    END COMPONENT wb_crossbar;
-
-    COMPONENT wb_sdram IS
-        GENERIC (
-            -- General --
-            CLOCK_FREQUENCY : NATURAL -- clock frequency of clk_i in Hz
-        );
-        PORT (
-            -- Global control --
-            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
-            -- Wishbone slave interface --
-            wb_slave_i : IN wb_slave_rx_sig_t;
-            wb_slave_o : OUT wb_slave_tx_sig_t;
-            -- SDRAM --
-            sdram_addr  : OUT UNSIGNED(12 DOWNTO 0);                               -- addr
-            sdram_ba    : OUT UNSIGNED(1 DOWNTO 0);                                -- ba
-            sdram_n_cas : OUT STD_ULOGIC;                                          -- cas_n
-            sdram_cke   : OUT STD_ULOGIC;                                          -- cke
-            sdram_n_cs  : OUT STD_ULOGIC;                                          -- cs_n
-            sdram_d     : INOUT STD_ULOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => 'X'); -- dq
-            sdram_dqm   : OUT STD_ULOGIC_VECTOR(1 DOWNTO 0);                       -- dqm
-            sdram_n_ras : OUT STD_ULOGIC;                                          -- ras_n
-            sdram_n_we  : OUT STD_ULOGIC;                                          -- we_n
-            sdram_clk   : OUT STD_ULOGIC                                           -- clk
-        );
-    END COMPONENT wb_sdram;
-
-    COMPONENT wb_gcd IS
-        PORT (
-            -- Global control --
-            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
-            -- Wishbone slave interface --
-            wb_slave_i : IN wb_slave_rx_sig_t;
-            wb_slave_o : OUT wb_slave_tx_sig_t
-        );
-    END COMPONENT wb_gcd;
-
     CONSTANT CLOCK_FREQUENCY : POSITIVE := 50000000; -- clock frequency of clk_i in Hz
+    CONSTANT NUM_HARTS : POSITIVE := 5; -- number of implemented harts i.e. CPUs
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
 
@@ -165,12 +107,15 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_dummy_spi_csn : STD_ULOGIC_VECTOR(6 DOWNTO 0);
 
     -- Wishbone interface signals
-    CONSTANT WB_N_MASTERS : NATURAL := 1;
-    CONSTANT WB_N_SLAVES : NATURAL := 2;
+    CONSTANT WB_N_MASTERS : NATURAL := 2 * NUM_HARTS;
+    CONSTANT WB_N_SLAVES : NATURAL := 5;
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
+    (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
+    (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port b)
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
-    (x"f000_0000", 3 * 4) -- GCD Accelerator
+    (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
+    (gpio_base_c, gpio_size_c) -- NEORV32 GPIO, 4 words
     );
     SIGNAL wb_masters_o : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
@@ -180,100 +125,58 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
 
     -- Change behaviour when simulating:
-    --  > do not implement external sdram and replace with neorv32 internal dmem
+    --  > do not implement external sdram and replace with internal dmem
     --  > do not implement altera specific jtag atom
     CONSTANT IMPLEMENT_SDRAM : BOOLEAN := NOT SIMULATION;
     CONSTANT IMPLEMENT_DMEM : BOOLEAN := SIMULATION;
     CONSTANT IMPLEMENT_JTAG : BOOLEAN := NOT SIMULATION;
+
 BEGIN
+
     -- The Core Of The Problem ----------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
-    neorv32_top_inst : neorv32_top
-    GENERIC MAP(
-        -- General --
-        CLOCK_FREQUENCY   => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
-        INT_BOOTLOADER_EN => true,            -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
-        -- On-Chip Debugger (OCD) --
-        ON_CHIP_DEBUGGER_EN => IMPLEMENT_JTAG, -- implement on-chip debugger
-        -- RISC-V CPU Extensions --
-        CPU_EXTENSION_RISCV_B        => true, -- implement bit-manipulation extension?
-        CPU_EXTENSION_RISCV_M        => true, -- implement mul/div extension?
-        CPU_EXTENSION_RISCV_Zicntr   => true, -- implement base counters?
-        CPU_EXTENSION_RISCV_Zihpm    => true, -- implement hardware performance monitors?
-        CPU_EXTENSION_RISCV_Zifencei => true, -- implement instruction stream sync.? (required for the on-chip debugger)
-        CPU_EXTENSION_RISCV_Zxcfu    => true, -- implement custom (instr.) functions unit?
-        -- Tuning Options --
-        FAST_MUL_EN     => true, -- use DSPs for M extension's multiplier
-        FAST_SHIFT_EN   => true, -- use barrel shifter for shift operations
-        CPU_IPB_ENTRIES => 2,    -- entries in instruction prefetch buffer, has to be a power of 2, min 1
-        -- Hardware Performance Monitors (HPM) --
-        HPM_NUM_CNTS  => 5,  -- number of implemented HPM counters (0..29)
-        HPM_CNT_WIDTH => 64, -- total size of HPM counters (0..64)
-        -- Internal Instruction memory --
-        MEM_INT_IMEM_EN   => true,      -- implement processor-internal instruction memory
-        MEM_INT_IMEM_SIZE => 32 * 1024, -- size of processor-internal instruction memory in bytes
-        -- Internal Data memory --
-        MEM_INT_DMEM_EN   => IMPLEMENT_DMEM, -- implement processor-internal data memory
-        MEM_INT_DMEM_SIZE => 8 * 1024,       -- size of processor-internal data memory in bytes
-        -- Internal Data Cache (dCACHE) --
-        DCACHE_EN         => true,   -- implement data cache
-        DCACHE_NUM_BLOCKS => 64,     -- d-cache: number of blocks (min 1), has to be a power of 2
-        DCACHE_BLOCK_SIZE => 16 * 4, -- d-cache: block size in bytes (min 4), has to be a power of 2
-        -- External memory interface --
-        MEM_EXT_EN => true, -- implement external memory bus interface?
-        -- average delay of SDRAM is about 4096 cycles, double it to be safe
-        MEM_EXT_TIMEOUT  => 8191, -- cycles after a pending bus access auto-terminates (0 = disabled)
-        MEM_EXT_ASYNC_RX => true, -- use register buffer for RX data when false
-        MEM_EXT_ASYNC_TX => true, -- use register buffer for TX data when false
-        -- Processor peripherals --
-        IO_GPIO_NUM      => 64,   -- number of GPIO input/output pairs (0..64)
-        IO_MTIME_EN      => true, -- implement machine system timer (MTIME)?
-        IO_UART0_EN      => true, -- implement primary universal asynchronous receiver/transmitter (UART0)?
-        IO_UART0_RX_FIFO => 32,   -- RX fifo depth, has to be a power of two, min 1
-        IO_UART0_TX_FIFO => 32,   -- TX fifo depth, has to be a power of two, min 1
-        IO_SPI_EN        => true, -- implement serial peripheral interface (SPI)?
-        IO_TRNG_EN       => true, -- implement true random number generator (TRNG)?
-        IO_TRNG_FIFO     => 32,   -- TRNG fifo depth, has to be a power of two, min 1
-        IO_XIP_EN        => false -- implement execute in place module (XIP)?
-    )
-    PORT MAP(
-        -- Global control --
-        clk_i  => clk_i,  -- global clock, rising edge
-        rstn_i => rstn_i, -- global reset, low-active, async
-        -- JTAG on-chip debugger interface (available if ON_CHIP_DEBUGGER_EN = true) --
-        jtag_trst_i => '1',          -- low-active TAP reset (optional)
-        jtag_tck_i  => con_jtag_tck, -- serial clock
-        jtag_tdi_i  => con_jtag_tdi, -- serial data input
-        jtag_tdo_o  => con_jtag_tdo, -- serial data output
-        jtag_tms_i  => con_jtag_tms, -- mode select
-        -- Wishbone bus interface (available if MEM_EXT_EN = true) --
-        wb_tag_o => OPEN,                -- request tag (unused)
-        wb_adr_o => wb_masters_o(0).adr, -- address
-        wb_dat_i => wb_masters_i(0).dat, -- read data
-        wb_dat_o => wb_masters_o(0).dat, -- write data
-        wb_we_o  => wb_masters_o(0).we,  -- read/write
-        wb_sel_o => wb_masters_o(0).sel, -- byte enable
-        wb_stb_o => wb_masters_o(0).stb, -- strobe
-        wb_cyc_o => wb_masters_o(0).cyc, -- valid cycle
-        wb_ack_i => wb_masters_i(0).ack, -- transfer acknowledge
-        wb_err_i => wb_masters_i(0).err, -- transfer error
-        -- XIP (execute in place via SPI) signals (available if IO_XIP_EN = true) --
-        -- xip_csn_o => flash_csn_o, -- chip-select, low-active
-        -- xip_clk_o => flash_clk_o, -- serial clock
-        -- xip_dat_i => flash_sdo_i, -- device data input
-        -- xip_dat_o => flash_sdi_o, -- controller data output
-        -- GPIO (available if IO_GPIO_EN = true) --
-        gpio_o => con_gpio_o, -- parallel output
-        -- primary UART0 (available if IO_UART0_EN = true) --
-        uart0_txd_o => uart0_txd_o, -- UART0 send data
-        uart0_rxd_i => uart0_rxd_i, -- UART0 receive data
-        -- SPI (available if IO_SPI_EN = true) --
-        spi_clk_o             => flash_clk_o,      -- SPI serial clock
-        spi_dat_o             => flash_sdi_o,      -- controller data out, peripheral data in
-        spi_dat_i             => flash_sdo_i,      -- controller data in, peripheral data out
-        spi_csn_o(0)          => flash_csn_o,      -- SPI CS
-        spi_csn_o(7 DOWNTO 1) => con_dummy_spi_csn -- dummy chip selects
-    );
+    neorv32_cpu_smp_inst : ENTITY work.neorv32_cpu_smp
+        GENERIC MAP(
+            -- General --
+            CLOCK_FREQUENCY   => CLOCK_FREQUENCY, -- clock frequency of clk_i in Hz
+            NUM_HARTS         => NUM_HARTS,       -- number of implemented harts i.e. CPUs
+            INT_BOOTLOADER_EN => false,           -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
+            -- Internal Instruction Cache (iCACHE) --
+            ICACHE_EN => true -- implement instruction cache
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, async
+            -- Wishbone instruction bus interface(s), two per hart --
+            wb_master_o => wb_masters_o(2 * NUM_HARTS - 1 DOWNTO 0), -- control and data from master to slave
+            wb_master_i => wb_masters_i(2 * NUM_HARTS - 1 DOWNTO 0), -- status and data from slave to master
+            -- Advanced memory control signals --
+            fence_o  => OPEN, -- indicates an executed FENCE operation
+            fencei_o => OPEN, -- indicates an executed FENCEI operation
+            -- CPU interrupts --
+            mtime_irq_i => (OTHERS => '0'), -- machine timer interrupt, available if IO_MTIME_EN = false
+            msw_irq_i => (OTHERS => '0'),   -- machine software interrupt
+            mext_irq_i => (OTHERS => '0')   -- machine external interrupt
+        );
+
+    -- NEORV32 IO Modules ---------------------------------------------------------------------
+    -- -------------------------------------------------------------------------------------------
+    neorv32_wb_gpio_inst : ENTITY work.neorv32_wb_gpio
+        GENERIC MAP(
+            GPIO_NUM => 8 -- number of GPIO input/output pairs (0..64)
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, async
+            -- Wishbone slave interface --
+            wb_slave_i => wb_slaves_i(4), -- control and data from master to slave
+            wb_slave_o => wb_slaves_o(4), -- status and data from slave to master
+            -- parallel io --
+            gpio_o => con_gpio_o,
+            gpio_i => (OTHERS => '0')
+        );
 
     -- GPIO output --
     gpio0_o <= con_gpio_o(7 DOWNTO 0);
@@ -299,73 +202,85 @@ BEGIN
     END GENERATE;
 
     -- Wishbone interconnect --
-    wb_crossbar_inst : wb_crossbar
-    GENERIC MAP(
-        -- General --
-        N_MASTERS  => WB_N_MASTERS, -- number of connected masters
-        N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
-        N_OTHERS   => 1,            -- number of interfaces for other slaves not in memory map
-        MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
-    )
-    PORT MAP(
-        -- Global control --
-        clk_i  => clk_i,  -- global clock, rising edge
-        rstn_i => rstn_i, -- global reset, low-active, asyn
-        -- Wishbone master interface --
-        wb_masters_i => wb_masters_o,
-        wb_masters_o => wb_masters_i,
-        -- Wishbone slave interface(s) --
-        wb_slaves_o => wb_slaves_i,
-        wb_slaves_i => wb_slaves_o,
-        -- Other unmapped Wishbone slave interface(s) --
-        wb_other_slaves_o    => OPEN,
-        wb_other_slaves_i(0) => wb_slave_err_o
-    );
-    );
-
-    -- SDRAM Controller --
-    gen_sdram : IF IMPLEMENT_SDRAM = TRUE GENERATE
-        wb_sdram_inst : wb_sdram
+    wb_crossbar_inst : ENTITY work.wb_crossbar
         GENERIC MAP(
             -- General --
-            CLOCK_FREQUENCY => CLOCK_FREQUENCY -- clock frequency of clk_i in Hz
+            N_MASTERS  => WB_N_MASTERS, -- number of connected masters
+            N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
+            N_OTHERS   => 1,            -- number of interfaces for other slaves not in memory map
+            MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
         )
         PORT MAP(
             -- Global control --
             clk_i  => clk_i,  -- global clock, rising edge
             rstn_i => rstn_i, -- global reset, low-active, asyn
-            -- Wishbone slave interface --
-            wb_slave_i => wb_slaves_i(0),
-            wb_slave_o => wb_slaves_o(0),
-            -- SDRAM --
-            sdram_addr  => sdram_addr,  -- addr
-            sdram_ba    => sdram_ba,    -- ba
-            sdram_n_cas => sdram_n_cas, -- cas_n
-            sdram_cke   => sdram_cke,   -- cke
-            sdram_n_cs  => sdram_n_cs,  -- cs_n
-            sdram_d     => sdram_d,     -- dq
-            sdram_dqm   => sdram_dqm,   -- dqm
-            sdram_n_ras => sdram_n_ras, -- ras_n
-            sdram_n_we  => sdram_n_we,  -- we_n
-            sdram_clk   => sdram_clk    -- clk
+            -- Wishbone master interface --
+            wb_masters_i => wb_masters_o,
+            wb_masters_o => wb_masters_i,
+            -- Wishbone slave interface(s) --
+            wb_slaves_o => wb_slaves_i,
+            wb_slaves_i => wb_slaves_o,
+            -- Other unmapped Wishbone slave interface(s) --
+            wb_other_slaves_o    => OPEN,
+            wb_other_slaves_i(0) => wb_slave_err_o
         );
+
+    -- IMEM dual-port ROM --
+    wb_imem_inst : ENTITY work.wb_imem
+        GENERIC MAP(
+            IMEM_SIZE => 1 * 1024 -- size of instruction memory in bytes
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, asyn
+            -- Wishbone slave interfaces --
+            wb_slaves_i => wb_slaves_i(1 DOWNTO 0), -- control and data from master to slave
+            wb_slaves_o => wb_slaves_o(1 DOWNTO 0)  -- status and data from slave to master
+        );
+
+    -- SDRAM Controller --
+    gen_sdram : IF IMPLEMENT_SDRAM = TRUE GENERATE
+        wb_sdram_inst : ENTITY work.wb_sdram
+            GENERIC MAP(
+                -- General --
+                CLOCK_FREQUENCY => CLOCK_FREQUENCY -- clock frequency of clk_i in Hz
+            )
+            PORT MAP(
+                -- Global control --
+                clk_i  => clk_i,  -- global clock, rising edge
+                rstn_i => rstn_i, -- global reset, low-active, asyn
+                -- Wishbone slave interface --
+                wb_slave_i => wb_slaves_i(2),
+                wb_slave_o => wb_slaves_o(2),
+                -- SDRAM --
+                sdram_addr  => sdram_addr,  -- addr
+                sdram_ba    => sdram_ba,    -- ba
+                sdram_n_cas => sdram_n_cas, -- cas_n
+                sdram_cke   => sdram_cke,   -- cke
+                sdram_n_cs  => sdram_n_cs,  -- cs_n
+                sdram_d     => sdram_d,     -- dq
+                sdram_dqm   => sdram_dqm,   -- dqm
+                sdram_n_ras => sdram_n_ras, -- ras_n
+                sdram_n_we  => sdram_n_we,  -- we_n
+                sdram_clk   => sdram_clk    -- clk
+            );
     END GENERATE;
 
-    -- GCD Accelerator --
-    wb_gcd_inst : wb_gcd
-    PORT MAP(
-        -- Global control --
-        clk_i  => clk_i,  -- global clock, rising edge
-        rstn_i => rstn_i, -- global reset, low-active, asyn
-        -- Wishbone slave interface --
-        wb_slave_i => wb_slaves_i(1),
-        wb_slave_o => wb_slaves_o(1)
-    );
-
-    -- DEBUG --
-    gpio1_o <= wb_masters_o(0).adr(7 DOWNTO 0);
-    gpio2_o <= wb_masters_o(0).adr(15 DOWNTO 8);
-    gpio3_o <= wb_masters_o(0).adr(23 DOWNTO 16);
-    gpio4_o <= wb_masters_o(0).adr(31 DOWNTO 24);
+    -- DRAM --cc
+    gen_dmem : IF IMPLEMENT_DMEM = TRUE GENERATE
+        wb_dmem_inst : ENTITY work.wb_dmem
+            GENERIC MAP(
+                DMEM_SIZE => 32 * 1024 -- size of data memory in bytes
+            )
+            PORT MAP(
+                -- Global control --
+                clk_i  => clk_i,  -- global clock, rising edge
+                rstn_i => rstn_i, -- global reset, low-active, asyn
+                -- Wishbone slave interfaces --
+                wb_slaves_i => wb_slaves_i(3 DOWNTO 2), -- control and data from master to slave
+                wb_slaves_o => wb_slaves_o(3 DOWNTO 2)  -- status and data from slave to master
+            );
+    END GENERATE;
 
 END ARCHITECTURE top_arch;

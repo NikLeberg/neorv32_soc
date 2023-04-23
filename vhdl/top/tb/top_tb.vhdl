@@ -107,23 +107,22 @@ BEGIN
         -- Wait for power on reset to finish.
         WAIT UNTIL rising_edge(s_clock);
 
-        -- Wait for LSB gpio bit to be high, default bootloader assumes a LED
-        -- connected there and tries to blink it.
-        WAIT UNTIL s_gpio0_o(0) = '1' FOR 1 ms;
-        ASSERT s_gpio0_o(0) = '1'
-        REPORT "LED0 was not observed to go high, did bootloader run?"
-            SEVERITY failure;
+        -- Each hart tries to blink its respecive LED on gpio0.
+        -- Check that hart0 is able to blink it a few times.
 
-        -- Wait for some chatter on the uart, default booloader prints debug
-        -- information there.
-        WAIT UNTIL s_uart_tx_o = '0' FOR 1 ms;
-        ASSERT s_uart_tx_o = '0'
-        REPORT "UART0 was not observed to go low, did bootloader run?"
-            SEVERITY failure;
-        WAIT UNTIL s_uart_tx_o = '1' FOR 1 ms;
-        ASSERT s_uart_tx_o = '1'
-        REPORT "UART0 was not observed to go high, did bootloader run?"
-            SEVERITY failure;
+        FOR i IN 0 TO 3 LOOP
+            -- Wait for LSB gpio bit to go high.
+            WAIT UNTIL s_gpio0_o(0) = '1' FOR 1 ms;
+            ASSERT s_gpio0_o(0) = '1'
+            REPORT "LED0 was not observed to go high, did hart0 run?"
+                SEVERITY failure;
+
+            -- Wait for LSB gpio bit to go low.
+            WAIT UNTIL s_gpio0_o(0) = '0' FOR 1 ms;
+            ASSERT s_gpio0_o(0) = '0'
+            REPORT "LED0 was not observed to go low, did hart0 run?"
+                SEVERITY failure;
+        END LOOP;
 
         -- Report successful test.
         REPORT "Test OK";
