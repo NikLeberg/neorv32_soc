@@ -15,7 +15,6 @@ set entities {
     "wb_mux"
     "wb_crossbar"
     "wb_sdram"
-    "wb_riscv_clint"
     "wb_imem"
     "wb_dmem"
 
