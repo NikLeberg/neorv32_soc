@@ -108,12 +108,11 @@ ARCHITECTURE top_arch OF top IS
 
     -- Wishbone interface signals
     CONSTANT WB_N_MASTERS : NATURAL := 2 * NUM_HARTS;
-    CONSTANT WB_N_SLAVES : NATURAL := 5;
+    CONSTANT WB_N_SLAVES : NATURAL := 4;
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port b)
-    (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (gpio_base_c, gpio_size_c) -- NEORV32 GPIO, 4 words
     );
@@ -171,8 +170,8 @@ BEGIN
             clk_i  => clk_i,  -- global clock, rising edge
             rstn_i => rstn_i, -- global reset, low-active, async
             -- Wishbone slave interface --
-            wb_slave_i => wb_slaves_i(4), -- control and data from master to slave
-            wb_slave_o => wb_slaves_o(4), -- status and data from slave to master
+            wb_slave_i => wb_slaves_i(3), -- control and data from master to slave
+            wb_slave_o => wb_slaves_o(3), -- status and data from slave to master
             -- parallel io --
             gpio_o => con_gpio_o,
             gpio_i => (OTHERS => '0')
@@ -267,7 +266,7 @@ BEGIN
             );
     END GENERATE;
 
-    -- DRAM --cc
+    -- DRAM --
     gen_dmem : IF IMPLEMENT_DMEM = TRUE GENERATE
         wb_dmem_inst : ENTITY work.wb_dmem
             GENERIC MAP(
@@ -278,8 +277,10 @@ BEGIN
                 clk_i  => clk_i,  -- global clock, rising edge
                 rstn_i => rstn_i, -- global reset, low-active, asyn
                 -- Wishbone slave interfaces --
-                wb_slaves_i => wb_slaves_i(3 DOWNTO 2), -- control and data from master to slave
-                wb_slaves_o => wb_slaves_o(3 DOWNTO 2)  -- status and data from slave to master
+                wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
+                wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
+                wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
+                wb_slaves_o(1) => OPEN            -- status and data from slave to master
             );
     END GENERATE;
 
