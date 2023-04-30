@@ -107,7 +107,7 @@ BEGIN
         -- Wait for power on reset to finish.
         WAIT UNTIL rising_edge(s_clock);
 
-        -- Each hart tries to blink its respecive LED on gpio0.
+        -- Each hart tries to blink its respective LED on gpio0.
         -- Check that hart0 is able to blink it a few times.
 
         FOR i IN 0 TO 3 LOOP

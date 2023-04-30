@@ -269,20 +269,38 @@ BEGIN
 
     -- DRAM --
     gen_dmem : IF IMPLEMENT_DMEM = TRUE GENERATE
-        wb_dmem_inst : ENTITY work.wb_dmem
-            GENERIC MAP(
-                DMEM_SIZE => 32 * 1024 -- size of data memory in bytes
-            )
-            PORT MAP(
-                -- Global control --
-                clk_i  => clk_i,  -- global clock, rising edge
-                rstn_i => rstn_i, -- global reset, low-active, asyn
-                -- Wishbone slave interfaces --
-                wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
-                wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
-                wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
-                wb_slaves_o(1) => wb_slave_dummy
-            );
+        gen_syn : IF SIMULATION = FALSE GENERATE
+            wb_dmem_inst : ENTITY work.wb_dmem(synthesis)
+                GENERIC MAP(
+                    DMEM_SIZE => 32 * 1024 -- size of data memory in bytes
+                )
+                PORT MAP(
+                    -- Global control --
+                    clk_i  => clk_i,  -- global clock, rising edge
+                    rstn_i => rstn_i, -- global reset, low-active, asyn
+                    -- Wishbone slave interfaces --
+                    wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
+                    wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
+                    wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
+                    wb_slaves_o(1) => wb_slave_dummy
+                );
+        END GENERATE;
+        gen_sim : IF SIMULATION = TRUE GENERATE
+            wb_dmem_inst : ENTITY work.wb_dmem(simulation)
+                GENERIC MAP(
+                    DMEM_SIZE => 32 * 1024 -- size of data memory in bytes
+                )
+                PORT MAP(
+                    -- Global control --
+                    clk_i  => clk_i,  -- global clock, rising edge
+                    rstn_i => rstn_i, -- global reset, low-active, asyn
+                    -- Wishbone slave interfaces --
+                    wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
+                    wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
+                    wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
+                    wb_slaves_o(1) => wb_slave_dummy
+                );
+        END GENERATE;
     END GENERATE;
 
 END ARCHITECTURE top_arch;
