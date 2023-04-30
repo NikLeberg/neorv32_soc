@@ -2,10 +2,10 @@
 NEORV32_HOME = ../lib/neorv32
 
 # Compiler toolchain
-RISCV_PREFIX = riscv64-unknown-elf-
+RISCV_PREFIX = riscv32-unknown-elf-
 
 # CPU architecture
-MARCH = rv32im_zicsr
+MARCH = rv32ima_zicsr
 
 # User flags for additional configuration (will be added to compiler flags)
 USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=8k
