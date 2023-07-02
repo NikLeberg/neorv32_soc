@@ -31,14 +31,8 @@ ENTITY neorv32_wb_gateway IS
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
 
         -- host access --
-        addr_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- address
-        rden_i : IN STD_ULOGIC;                      -- read enable
-        wren_i : IN STD_ULOGIC;                      -- write enable
-        ben_i  : IN STD_ULOGIC_VECTOR(03 DOWNTO 0);  -- byte write enable
-        data_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- data in
-        data_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- data out
-        ack_o  : OUT STD_ULOGIC;                     -- transfer acknowledge
-        err_o  : OUT STD_ULOGIC;                     -- transfer error
+        req_i : IN bus_req_t;  -- request bus
+        rsp_o : OUT bus_rsp_t; -- response bus
 
         -- Wishbone master interface --
         wb_master_o : OUT wb_master_tx_sig_t; -- control and data from master to slave
@@ -64,9 +58,9 @@ BEGIN
                 pending_request <= '0';
                 pending_write <= '0';
             ELSE
-                IF pending_request = '0' AND (rden_i OR wren_i) = '1' THEN
+                IF pending_request = '0' AND (req_i.re OR req_i.we) = '1' THEN
                     pending_request <= '1';
-                    pending_write <= wren_i;
+                    pending_write <= req_i.we;
                 ELSIF pending_request = '1' AND (wb_master_i.ack OR wb_master_i.err) = '1' THEN
                     pending_request <= '0';
                     pending_write <= '0';
@@ -79,13 +73,13 @@ BEGIN
     wb_master_o.cyc <= pending_request;
     wb_master_o.stb <= pending_request;
     wb_master_o.we <= pending_write;
-    wb_master_o.sel <= ben_i;
-    wb_master_o.adr <= addr_i;
-    wb_master_o.dat <= data_i;
+    wb_master_o.sel <= req_i.ben;
+    wb_master_o.adr <= req_i.addr;
+    wb_master_o.dat <= req_i.data;
 
     -- Map Wishbone to CPU bus.
-    ack_o <= wb_master_i.ack;
-    err_o <= wb_master_i.err;
-    data_o <= wb_master_i.dat;
+    rsp_o.ack <= wb_master_i.ack;
+    rsp_o.err <= wb_master_i.err;
+    rsp_o.data <= wb_master_i.dat;
 
 END ARCHITECTURE no_target_specific;

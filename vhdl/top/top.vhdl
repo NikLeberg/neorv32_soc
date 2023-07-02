@@ -155,9 +155,9 @@ BEGIN
             fence_o  => OPEN, -- indicates an executed FENCE operation
             fencei_o => OPEN, -- indicates an executed FENCEI operation
             -- CPU interrupts --
-            mtime_irq_i => (OTHERS => '0'), -- machine timer interrupt, available if IO_MTIME_EN = false
-            msw_irq_i => (OTHERS => '0'),   -- machine software interrupt
-            mext_irq_i => (OTHERS => '0')   -- machine external interrupt
+            mti_i => (OTHERS => '0'), -- machine timer interrupt, available if IO_MTIME_EN = false
+            msi_i => (OTHERS => '0'), -- machine software interrupt
+            mei_i => (OTHERS => '0')  -- machine external interrupt
         );
 
     -- NEORV32 IO Modules ---------------------------------------------------------------------

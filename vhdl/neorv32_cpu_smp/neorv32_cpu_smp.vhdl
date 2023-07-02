@@ -73,36 +73,13 @@ ENTITY neorv32_cpu_smp IS
         fencei_o : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- indicates an executed FENCEI operation
 
         -- CPU interrupts --
-        msw_irq_i   : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- machine software interrupt
-        mext_irq_i  : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- machine external interrupt
-        mtime_irq_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- machine timer interrupt, available if IO_MTIME_EN = false
+        msi_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine software interrupt
+        mei_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine external interrupt
+        mti_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- risc-v machine timer interrupt
     );
 END ENTITY neorv32_cpu_smp;
 
 ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
-
-    -- Gateway from the neorv32 specific CPU bus to Wishbone.
-    COMPONENT neorv32_wb_gateway IS
-        PORT (
-            -- Global control --
-            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-            rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
-
-            -- host access --
-            addr_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- address
-            rden_i : IN STD_ULOGIC;                      -- read enable
-            wren_i : IN STD_ULOGIC;                      -- write enable
-            ben_i  : IN STD_ULOGIC_VECTOR(03 DOWNTO 0);  -- byte write enable
-            data_i : IN STD_ULOGIC_VECTOR(31 DOWNTO 0);  -- data in
-            data_o : OUT STD_ULOGIC_VECTOR(31 DOWNTO 0); -- data out
-            ack_o  : OUT STD_ULOGIC;                     -- transfer acknowledge
-            err_o  : OUT STD_ULOGIC;                     -- transfer error
-
-            -- Wishbone master interface --
-            wb_master_o : OUT wb_master_tx_sig_t; -- control and data from master to slave
-            wb_master_i : IN wb_master_rx_sig_t   -- status and data from slave to master
-        );
-    END COMPONENT neorv32_wb_gateway;
 
     -- CPU boot configuration --
     CONSTANT cpu_boot_addr_c : STD_ULOGIC_VECTOR(31 DOWNTO 0) := cond_sel_stdulogicvector_f(INT_BOOTLOADER_EN, boot_rom_base_c, ispace_base_c);
@@ -120,21 +97,10 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
     SIGNAL cpu_s : cpu_status_arr_t;
 
     -- bus interface --
-    TYPE bus_interface_t IS RECORD
-        addr : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus access address
-        rdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus read data
-        wdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus write data
-        ben : STD_ULOGIC_VECTOR(03 DOWNTO 0); -- byte enable
-        we : STD_ULOGIC; -- write request
-        re : STD_ULOGIC; -- read request
-        ack : STD_ULOGIC; -- bus transfer acknowledge
-        err : STD_ULOGIC; -- bus transfer error
-        src : STD_ULOGIC; -- access source (1=instruction fetch, 0=data access)
-        cached : STD_ULOGIC; -- cached transfer
-        priv : STD_ULOGIC; -- set when in privileged machine mode
-    END RECORD;
-    TYPE bus_interface_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_interface_t;
-    SIGNAL cpu_i, i_cache, cpu_d : bus_interface_arr_t;
+    TYPE bus_req_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_req_t;
+    TYPE bus_rsp_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_rsp_t;
+    SIGNAL i_cpu_req, i_cache_req, d_cpu_req : bus_req_arr_t;
+    SIGNAL i_cpu_rsp, i_cache_rsp, d_cpu_rsp : bus_rsp_arr_t;
     SIGNAL d_fence, i_fence : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
 
     -- Wishbone bus gateway FSM --
@@ -215,64 +181,36 @@ BEGIN
             sleep_o => cpu_s(i).sleep, -- cpu is in sleep mode when set
             debug_o => cpu_s(i).debug, -- cpu is in debug mode when set
             -- instruction bus interface --
-            i_bus_addr_o  => cpu_i(i).addr,  -- bus access address
-            i_bus_rdata_i => cpu_i(i).rdata, -- bus read data
-            i_bus_re_o    => cpu_i(i).re,    -- read request
-            i_bus_ack_i   => cpu_i(i).ack,   -- bus transfer acknowledge
-            i_bus_err_i   => cpu_i(i).err,   -- bus transfer error
-            i_bus_fence_o => i_fence(i),     -- executed FENCEI operation
-            i_bus_priv_o  => cpu_i(i).priv,  -- current effective privilege level
+            ibus_req_o => i_cpu_req(i), -- request bus
+            ibus_rsp_i => i_cpu_rsp(i), -- response bus
             -- data bus interface --
-            d_bus_addr_o  => cpu_d(i).addr,  -- bus access address
-            d_bus_rdata_i => cpu_d(i).rdata, -- bus read data
-            d_bus_wdata_o => cpu_d(i).wdata, -- bus write data
-            d_bus_ben_o   => cpu_d(i).ben,   -- byte enable
-            d_bus_we_o    => cpu_d(i).we,    -- write request
-            d_bus_re_o    => cpu_d(i).re,    -- read request
-            d_bus_ack_i   => cpu_d(i).ack,   -- bus transfer acknowledge
-            d_bus_err_i   => cpu_d(i).err,   -- bus transfer error
-            d_bus_fence_o => d_fence(i),     -- executed FENCE operation
-            d_bus_priv_o  => cpu_d(i).priv,  -- current effective privilege level
+            dbus_req_o => d_cpu_req(i), -- request bus
+            dbus_rsp_i => d_cpu_rsp(i), -- response bus
             -- interrupts --
-            msw_irq_i     => msw_irq_i(i),   -- risc-v: machine software interrupt
-            mext_irq_i    => mext_irq_i(i),  -- risc-v: machine external interrupt
-            mtime_irq_i   => mtime_irq_i(i), -- risc-v: machine timer interrupt
-            firq_i => (OTHERS => '0'),       -- custom: fast interrupts
-            db_halt_req_i => '0'             -- risc-v: halt request (debug mode)
+            msi_i => msi_i(i),         -- risc-v: machine software interrupt
+            mei_i => mei_i(i),         -- risc-v: machine external interrupt
+            mti_i => mti_i(i),         -- risc-v: machine timer interrupt
+            firq_i => (OTHERS => '0'), -- custom: fast interrupts
+            dbi_i => '0'               -- risc-v debug halt request interrupt
         );
-
-        -- initialized but unused --
-        cpu_i(i).wdata <= (OTHERS => '0');
-        cpu_i(i).ben <= (OTHERS => '0');
-        cpu_i(i).we <= '0'; -- read-only
-        cpu_i(i).src <= '1'; -- 1 = instruction fetch
-        cpu_i(i).cached <= '0';
-        cpu_d(i).src <= '0'; -- 0 = data access
-        cpu_d(i).cached <= '0';
 
         -- advanced memory control --
         fence_o(i) <= d_fence(i); -- indicates an executed FENCE operation
         fencei_o(i) <= i_fence(i); -- indicates an executed FENCE.I operation
 
         -- convert cpu internal data bus to external Wishbone bus
-        neorv32_wb_gateway_dbus : neorv32_wb_gateway
-        PORT MAP(
-            -- Global control --
-            clk_i  => clk_i,    -- global clock, rising edge
-            rstn_i => rstn_int, -- global reset, low-active, async
-            -- host access --
-            addr_i => cpu_d(i).addr,  -- address
-            rden_i => cpu_d(i).re,    -- read enable
-            wren_i => cpu_d(i).we,    -- write enable
-            ben_i  => cpu_d(i).ben,   -- byte write enable
-            data_i => cpu_d(i).wdata, -- data in
-            data_o => cpu_d(i).rdata, -- data out
-            ack_o  => cpu_d(i).ack,   -- transfer acknowledge
-            err_o  => cpu_d(i).err,   -- transfer error
-            -- Wishbone master interface --
-            wb_master_o => wb_master_o(2 * i), -- control and data from master to slave
-            wb_master_i => wb_master_i(2 * i)  -- status and data from slave to master
-        );
+        neorv32_wb_gateway_dbus : ENTITY work.neorv32_wb_gateway
+            PORT MAP(
+                -- Global control --
+                clk_i  => clk_i,    -- global clock, rising edge
+                rstn_i => rstn_int, -- global reset, low-active, async
+                -- host access --
+                req_i => d_cpu_req(i), -- request bus
+                rsp_o => d_cpu_rsp(i), -- response bus
+                -- Wishbone master interface --
+                wb_master_o => wb_master_o(2 * i), -- control and data from master to slave
+                wb_master_i => wb_master_i(2 * i)  -- status and data from slave to master
+            );
     END GENERATE;
 
     -- CPU Instruction Cache(s) ---------------------------------------------------------------
@@ -291,56 +229,33 @@ BEGIN
                 rstn_i  => rstn_int,   -- global reset, low-active, async
                 clear_i => i_fence(i), -- cache clear
                 -- host controller interface --
-                host_addr_i  => cpu_i(i).addr,  -- bus access address
-                host_rdata_o => cpu_i(i).rdata, -- bus read data
-                host_re_i    => cpu_i(i).re,    -- read enable
-                host_ack_o   => cpu_i(i).ack,   -- bus transfer acknowledge
-                host_err_o   => cpu_i(i).err,   -- bus transfer error
+                cpu_req_i => i_cpu_req(i),
+                cpu_rsp_o => i_cpu_rsp(i),
                 -- peripheral bus interface --
-                bus_cached_o => i_cache(i).cached, -- set if cached (!) access in progress
-                bus_addr_o   => i_cache(i).addr,   -- bus access address
-                bus_rdata_i  => i_cache(i).rdata,  -- bus read data
-                bus_re_o     => i_cache(i).re,     -- read enable
-                bus_ack_i    => i_cache(i).ack,    -- bus transfer acknowledge
-                bus_err_i    => i_cache(i).err     -- bus transfer error
+                bus_req_o => i_cache_req(i),
+                bus_rsp_i => i_cache_rsp(i)
             );
         END GENERATE;
 
         neorv32_icache_ngen : IF ICACHE_EN = false GENERATE
             -- direct forward
-            i_cache(i).cached <= '0';
-            i_cache(i).addr <= cpu_i(i).addr;
-            i_cache(i).re <= cpu_i(i).re;
-            cpu_i(i).rdata <= i_cache(i).rdata;
-            cpu_i(i).ack <= i_cache(i).ack;
-            cpu_i(i).err <= i_cache(i).err;
+            i_cache_req <= i_cpu_req;
+            i_cpu_rsp <= i_cache_rsp;
         END GENERATE;
 
-        i_cache(i).wdata <= (OTHERS => '0');
-        i_cache(i).ben <= (OTHERS => '0');
-        i_cache(i).we <= '0';
-        i_cache(i).priv <= cpu_i(i).priv;
-        i_cache(i).src <= '0'; -- not used
-
         -- convert cpu internal instruction bus to external Wishbone bus
-        neorv32_wb_gateway_dbus : neorv32_wb_gateway
-        PORT MAP(
-            -- Global control --
-            clk_i  => clk_i,    -- global clock, rising edge
-            rstn_i => rstn_int, -- global reset, low-active, async
-            -- host access --
-            addr_i => i_cache(i).addr,  -- address
-            rden_i => i_cache(i).re,    -- read enable
-            wren_i => '0',              -- write enable
-            ben_i => (OTHERS => '0'),   -- byte write enable
-            data_i => (OTHERS => '0'),  -- data in
-            data_o => i_cache(i).rdata, -- data out
-            ack_o  => i_cache(i).ack,   -- transfer acknowledge
-            err_o  => i_cache(i).err,   -- transfer error
-            -- Wishbone master interface --
-            wb_master_o => wb_master_o(2 * i + 1), -- control and data from master to slave
-            wb_master_i => wb_master_i(2 * i + 1)  -- status and data from slave to master
-        );
+        neorv32_wb_gateway_dbus : ENTITY work.neorv32_wb_gateway
+            PORT MAP(
+                -- Global control --
+                clk_i  => clk_i,    -- global clock, rising edge
+                rstn_i => rstn_int, -- global reset, low-active, async
+                -- host access --
+                req_i => i_cache_req(i), -- request bus
+                rsp_o => i_cache_rsp(i), -- response bus
+                -- Wishbone master interface --
+                wb_master_o => wb_master_o(2 * i + 1), -- control and data from master to slave
+                wb_master_i => wb_master_i(2 * i + 1)  -- status and data from slave to master
+            );
     END GENERATE;
 
 END ARCHITECTURE no_target_specific;

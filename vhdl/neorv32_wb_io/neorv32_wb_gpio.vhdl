@@ -51,22 +51,18 @@ END ENTITY neorv32_wb_gpio;
 ARCHITECTURE no_target_specific OF neorv32_wb_gpio IS
 
     -- Signals of the neorv32 cpu internal bus.
-    SIGNAL we : STD_ULOGIC; -- write request
-    SIGNAL re : STD_ULOGIC; -- read request
-    SIGNAL addr : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus access address
-    SIGNAL wdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus write data
-    SIGNAL rdata : STD_ULOGIC_VECTOR(31 DOWNTO 0); -- bus read data
-    SIGNAL ack : STD_ULOGIC; -- bus transfer acknowledge
+    SIGNAL req : bus_req_t;
+    SIGNAL rsp : bus_rsp_t;
 
 BEGIN
 
     -- Map Wishbone signals to neorv32 internal bus.
-    we <= wb_slave_i.stb AND wb_slave_i.we;
-    re <= wb_slave_i.stb AND NOT wb_slave_i.we;
-    addr <= wb_slave_i.adr;
-    wdata <= wb_slave_i.dat;
-    wb_slave_o.dat <= rdata;
-    wb_slave_o.ack <= ack;
+    req.we <= wb_slave_i.stb AND wb_slave_i.we;
+    req.re <= wb_slave_i.stb AND NOT wb_slave_i.we;
+    req.addr <= wb_slave_i.adr;
+    req.data <= wb_slave_i.dat;
+    wb_slave_o.dat <= rsp.data;
+    wb_slave_o.ack <= rsp.ack;
     wb_slave_o.err <= '0'; -- no error possible
 
     -- NEORV32 GPIO instance ------------------------------------------------------------------
@@ -77,14 +73,10 @@ BEGIN
     )
     PORT MAP(
         -- host access --
-        clk_i  => clk_i,  -- global clock line
-        rstn_i => rstn_i, -- global reset line, low-active, async
-        addr_i => addr,   -- address
-        rden_i => re,     -- read enable
-        wren_i => we,     -- write enable
-        data_i => wdata,  -- data in
-        data_o => rdata,  -- data out
-        ack_o  => ack,    -- transfer acknowledge
+        clk_i     => clk_i,  -- global clock line
+        rstn_i    => rstn_i, -- global reset line, low-active, async
+        bus_req_i => req,    -- bus request
+        bus_rsp_o => rsp,    -- bus response
         -- parallel io --
         gpio_o => gpio_o,
         gpio_i => gpio_i
