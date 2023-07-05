@@ -27,11 +27,12 @@ set lib_entities {
     "neorv32_xip"
     "neorv32_wishbone"
     "neorv32_wdt"
+    "neorv32_fifo"
     "neorv32_uart"
     "neorv32_twi"
     "neorv32_trng"
-    "neorv32_top"
     "neorv32_sysinfo"
+    "neorv32_slink"
     "neorv32_spi"
     "neorv32_sdi"
     "neorv32_pwm"
@@ -42,9 +43,10 @@ set lib_entities {
     "neorv32_dcache"
     "neorv32_gptmr"
     "neorv32_gpio"
-    "neorv32_fifo"
+    "neorv32_dma"
     "neorv32_debug_dtm.intel"
     "neorv32_debug_dm"
+    "neorv32_crc"
     "neorv32_cpu_regfile"
     "neorv32_cpu_decompressor"
     "neorv32_cpu_cp_shifter"
@@ -63,6 +65,7 @@ set lib_entities {
     "neorv32_bootloader_image"
     "neorv32_boot_rom"
     "neorv32_application_image"
+    "neorv32_top"
 }
 
 # Add design files to quartus project.
