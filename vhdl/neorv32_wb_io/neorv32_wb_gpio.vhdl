@@ -67,7 +67,7 @@ BEGIN
 
     -- NEORV32 GPIO instance ------------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
-    neorv32_gpio_inst : neorv32_gpio
+    neorv32_gpio_inst : ENTITY neorv32.neorv32_gpio
     GENERIC MAP(
         GPIO_NUM => GPIO_NUM -- number of GPIO input/output pairs (0..64)
     )

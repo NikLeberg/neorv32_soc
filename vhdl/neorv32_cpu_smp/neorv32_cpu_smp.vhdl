@@ -140,7 +140,7 @@ BEGIN
     -- CPU Core(s) ----------------------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
     neorv32_cpu_gen : FOR i IN 0 TO NUM_HARTS - 1 GENERATE
-        neorv32_cpu_inst : neorv32_cpu
+        neorv32_cpu_inst : ENTITY neorv32.neorv32_cpu
         GENERIC MAP(
             -- General --
             HART_ID             => STD_ULOGIC_VECTOR(to_unsigned(i, 32)), -- hardware thread ID
@@ -217,7 +217,7 @@ BEGIN
     -- -------------------------------------------------------------------------------------------
     neorv32_icache_gen : FOR i IN 0 TO NUM_HARTS - 1 GENERATE
         neorv32_icache_true : IF ICACHE_EN = true GENERATE
-            neorv32_icache_inst : neorv32_icache
+            neorv32_icache_inst : ENTITY neorv32.neorv32_icache
             GENERIC MAP(
                 ICACHE_NUM_BLOCKS => ICACHE_NUM_BLOCKS,   -- number of blocks (min 2), has to be a power of 2
                 ICACHE_BLOCK_SIZE => ICACHE_BLOCK_SIZE,   -- block size in bytes (min 4), has to be a power of 2
