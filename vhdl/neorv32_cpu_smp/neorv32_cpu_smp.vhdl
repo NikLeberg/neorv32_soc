@@ -73,9 +73,9 @@ ENTITY neorv32_cpu_smp IS
         fencei_o : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- indicates an executed FENCEI operation
 
         -- CPU interrupts --
+        mti_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine timer interrupt
         msi_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine software interrupt
-        mei_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine external interrupt
-        mti_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- risc-v machine timer interrupt
+        mei_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- risc-v machine external interrupt
     );
 END ENTITY neorv32_cpu_smp;
 
@@ -90,8 +90,10 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
 
     -- CPU status --
     TYPE cpu_status_t IS RECORD
-        debug : STD_ULOGIC; -- set when in debug mode
-        sleep : STD_ULOGIC; -- set when in sleep mode
+        cpu_debug : STD_ULOGIC; -- cpu is in debug mode
+        cpu_sleep : STD_ULOGIC; -- cpu is in sleep mode
+        i_fence : STD_ULOGIC; -- instruction fence
+        d_fence : STD_ULOGIC; -- data fence
     END RECORD;
     TYPE cpu_status_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF cpu_status_t;
     SIGNAL cpu_s : cpu_status_arr_t;
@@ -101,7 +103,6 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
     TYPE bus_rsp_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_rsp_t;
     SIGNAL i_cpu_req, i_cache_req, d_cpu_req : bus_req_arr_t;
     SIGNAL i_cpu_rsp, i_cache_rsp, d_cpu_rsp : bus_rsp_arr_t;
-    SIGNAL d_fence, i_fence : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
 
     -- Wishbone bus gateway FSM --
     TYPE wb_bus_state_t IS RECORD
@@ -141,62 +142,62 @@ BEGIN
     -- -------------------------------------------------------------------------------------------
     neorv32_cpu_gen : FOR i IN 0 TO NUM_HARTS - 1 GENERATE
         neorv32_cpu_inst : ENTITY neorv32.neorv32_cpu
-        GENERIC MAP(
-            -- General --
-            HART_ID             => STD_ULOGIC_VECTOR(to_unsigned(i, 32)), -- hardware thread ID
-            VENDOR_ID           => x"0000_0000",                          -- vendor's JEDEC ID
-            CPU_BOOT_ADDR       => cpu_boot_addr_c,                       -- cpu boot address
-            CPU_DEBUG_PARK_ADDR => dm_park_entry_c,                       -- cpu debug mode parking loop entry address
-            CPU_DEBUG_EXC_ADDR  => dm_exc_entry_c,                        -- cpu debug mode exception entry address
-            -- RISC-V CPU Extensions --
-            CPU_EXTENSION_RISCV_B        => false, -- implement bit-manipulation extension?
-            CPU_EXTENSION_RISCV_C        => false, -- implement compressed extension?
-            CPU_EXTENSION_RISCV_E        => false, -- implement embedded RF extension?
-            CPU_EXTENSION_RISCV_M        => true,  -- implement mul/div extension?
-            CPU_EXTENSION_RISCV_U        => false, -- implement user mode extension?
-            CPU_EXTENSION_RISCV_Zfinx    => false, -- implement 32-bit floating-point extension (using INT reg!)
-            CPU_EXTENSION_RISCV_Zicntr   => true,  -- implement base counters?
-            CPU_EXTENSION_RISCV_Zicond   => false, -- implement conditional operations extension?
-            CPU_EXTENSION_RISCV_Zihpm    => false, -- implement hardware performance monitors?
-            CPU_EXTENSION_RISCV_Zifencei => true,  -- implement instruction stream sync.?
-            CPU_EXTENSION_RISCV_Zmmul    => false, -- implement multiply-only M sub-extension?
-            CPU_EXTENSION_RISCV_Zxcfu    => false, -- implement custom (instr.) functions unit?
-            CPU_EXTENSION_RISCV_Sdext    => false, -- implement external debug mode extension?
-            CPU_EXTENSION_RISCV_Sdtrig   => false, -- implement debug mode trigger module extension?
-            -- Extension Options --
-            FAST_MUL_EN     => true, -- use DSPs for M extension's multiplier
-            FAST_SHIFT_EN   => true, -- use barrel shifter for shift operations
-            CPU_IPB_ENTRIES => 2,    -- entries is instruction prefetch buffer, has to be a power of 1
-            -- Physical Memory Protection (PMP) --
-            PMP_NUM_REGIONS     => 0, -- number of regions (0..16)
-            PMP_MIN_GRANULARITY => 4, -- minimal region granularity in bytes, has to be a power of 2, min 4 bytes
-            -- Hardware Performance Monitors (HPM) --
-            HPM_NUM_CNTS  => 0, -- number of implemented HPM counters (0..29)
-            HPM_CNT_WIDTH => 0  -- total size of HPM counters (0..64)
-        )
-        PORT MAP(
-            -- global control --
-            clk_i   => clk_i,          -- global clock, rising edge
-            rstn_i  => rstn_int,       -- global reset, low-active, async
-            sleep_o => cpu_s(i).sleep, -- cpu is in sleep mode when set
-            debug_o => cpu_s(i).debug, -- cpu is in debug mode when set
-            -- instruction bus interface --
-            ibus_req_o => i_cpu_req(i), -- request bus
-            ibus_rsp_i => i_cpu_rsp(i), -- response bus
-            -- data bus interface --
-            dbus_req_o => d_cpu_req(i), -- request bus
-            dbus_rsp_i => d_cpu_rsp(i), -- response bus
-            -- interrupts --
-            msi_i => msi_i(i),         -- risc-v: machine software interrupt
-            mei_i => mei_i(i),         -- risc-v: machine external interrupt
-            mti_i => mti_i(i),         -- risc-v: machine timer interrupt
-            firq_i => (OTHERS => '0'), -- custom: fast interrupts
-            dbi_i => '0'               -- risc-v debug halt request interrupt
-        );
+            GENERIC MAP(
+                -- General --
+                HART_ID             => STD_ULOGIC_VECTOR(to_unsigned(i, 32)), -- hardware thread ID
+                VENDOR_ID           => x"0000_0000",                          -- vendor's JEDEC ID
+                CPU_BOOT_ADDR       => cpu_boot_addr_c,                       -- cpu boot address
+                CPU_DEBUG_PARK_ADDR => dm_park_entry_c,                       -- cpu debug mode parking loop entry address
+                CPU_DEBUG_EXC_ADDR  => dm_exc_entry_c,                        -- cpu debug mode exception entry address
+                -- RISC-V CPU Extensions --
+                CPU_EXTENSION_RISCV_B        => false, -- implement bit-manipulation extension?
+                CPU_EXTENSION_RISCV_C        => false, -- implement compressed extension?
+                CPU_EXTENSION_RISCV_E        => false, -- implement embedded RF extension?
+                CPU_EXTENSION_RISCV_M        => true,  -- implement mul/div extension?
+                CPU_EXTENSION_RISCV_U        => false, -- implement user mode extension?
+                CPU_EXTENSION_RISCV_Zfinx    => false, -- implement 32-bit floating-point extension (using INT reg!)
+                CPU_EXTENSION_RISCV_Zicntr   => true,  -- implement base counters?
+                CPU_EXTENSION_RISCV_Zicond   => false, -- implement conditional operations extension?
+                CPU_EXTENSION_RISCV_Zihpm    => false, -- implement hardware performance monitors?
+                CPU_EXTENSION_RISCV_Zifencei => true,  -- implement instruction stream sync.?
+                CPU_EXTENSION_RISCV_Zmmul    => false, -- implement multiply-only M sub-extension?
+                CPU_EXTENSION_RISCV_Zxcfu    => false, -- implement custom (instr.) functions unit?
+                CPU_EXTENSION_RISCV_Sdext    => false, -- implement external debug mode extension?
+                CPU_EXTENSION_RISCV_Sdtrig   => false, -- implement debug mode trigger module extension?
+                -- Extension Options --
+                FAST_MUL_EN     => true, -- use DSPs for M extension's multiplier
+                FAST_SHIFT_EN   => true, -- use barrel shifter for shift operations
+                CPU_IPB_ENTRIES => 2,    -- entries is instruction prefetch buffer, has to be a power of 1
+                -- Physical Memory Protection (PMP) --
+                PMP_NUM_REGIONS     => 0, -- number of regions (0..16)
+                PMP_MIN_GRANULARITY => 4, -- minimal region granularity in bytes, has to be a power of 2, min 4 bytes
+                -- Hardware Performance Monitors (HPM) --
+                HPM_NUM_CNTS  => 0, -- number of implemented HPM counters (0..29)
+                HPM_CNT_WIDTH => 0  -- total size of HPM counters (0..64)
+            )
+            PORT MAP(
+                -- global control --
+                clk_i   => clk_i,              -- global clock, rising edge
+                rstn_i  => rstn_int,           -- global reset, low-active, async
+                sleep_o => cpu_s(i).cpu_sleep, -- cpu is in sleep mode when set
+                debug_o => cpu_s(i).cpu_debug, -- cpu is in debug mode when set
+                -- instruction bus interface --
+                ibus_req_o => i_cpu_req(i), -- request bus
+                ibus_rsp_i => i_cpu_rsp(i), -- response bus
+                -- data bus interface --
+                dbus_req_o => d_cpu_req(i), -- request bus
+                dbus_rsp_i => d_cpu_rsp(i), -- response bus
+                -- interrupts --
+                msi_i => msi_i(i),         -- risc-v: machine software interrupt
+                mei_i => mei_i(i),         -- risc-v: machine external interrupt
+                mti_i => mti_i(i),         -- risc-v: machine timer interrupt
+                firq_i => (OTHERS => '0'), -- custom: fast interrupts
+                dbi_i => '0'               -- risc-v debug halt request interrupt
+            );
 
         -- advanced memory control --
-        fence_o(i) <= d_fence(i); -- indicates an executed FENCE operation
-        fencei_o(i) <= i_fence(i); -- indicates an executed FENCE.I operation
+        fence_o(i) <= cpu_s(i).d_fence; -- indicates an executed FENCE operation
+        fencei_o(i) <= cpu_s(i).i_fence; -- indicates an executed FENCE.I operation
 
         -- convert cpu internal data bus to external Wishbone bus
         neorv32_wb_gateway_dbus : ENTITY work.neorv32_wb_gateway
@@ -218,23 +219,23 @@ BEGIN
     neorv32_icache_gen : FOR i IN 0 TO NUM_HARTS - 1 GENERATE
         neorv32_icache_true : IF ICACHE_EN = true GENERATE
             neorv32_icache_inst : ENTITY neorv32.neorv32_icache
-            GENERIC MAP(
-                ICACHE_NUM_BLOCKS => ICACHE_NUM_BLOCKS,   -- number of blocks (min 2), has to be a power of 2
-                ICACHE_BLOCK_SIZE => ICACHE_BLOCK_SIZE,   -- block size in bytes (min 4), has to be a power of 2
-                ICACHE_NUM_SETS   => ICACHE_ASSOCIATIVITY -- associativity / number of sets (1=direct_mapped), has to be a power of 2
-            )
-            PORT MAP(
-                -- global control --
-                clk_i   => clk_i,      -- global clock, rising edge
-                rstn_i  => rstn_int,   -- global reset, low-active, async
-                clear_i => i_fence(i), -- cache clear
-                -- host controller interface --
-                cpu_req_i => i_cpu_req(i),
-                cpu_rsp_o => i_cpu_rsp(i),
-                -- peripheral bus interface --
-                bus_req_o => i_cache_req(i),
-                bus_rsp_i => i_cache_rsp(i)
-            );
+                GENERIC MAP(
+                    ICACHE_NUM_BLOCKS => ICACHE_NUM_BLOCKS,   -- number of blocks (min 2), has to be a power of 2
+                    ICACHE_BLOCK_SIZE => ICACHE_BLOCK_SIZE,   -- block size in bytes (min 4), has to be a power of 2
+                    ICACHE_NUM_SETS   => ICACHE_ASSOCIATIVITY -- associativity / number of sets (1=direct_mapped), has to be a power of 2
+                )
+                PORT MAP(
+                    -- global control --
+                    clk_i   => clk_i,            -- global clock, rising edge
+                    rstn_i  => rstn_int,         -- global reset, low-active, async
+                    clear_i => cpu_s(i).i_fence, -- cache clear
+                    -- host controller interface --
+                    cpu_req_i => i_cpu_req(i),
+                    cpu_rsp_o => i_cpu_rsp(i),
+                    -- peripheral bus interface --
+                    bus_req_o => i_cache_req(i),
+                    bus_rsp_i => i_cache_rsp(i)
+                );
         END GENERATE;
 
         neorv32_icache_ngen : IF ICACHE_EN = false GENERATE

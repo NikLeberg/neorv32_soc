@@ -68,18 +68,18 @@ BEGIN
     -- NEORV32 GPIO instance ------------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
     neorv32_gpio_inst : ENTITY neorv32.neorv32_gpio
-    GENERIC MAP(
-        GPIO_NUM => GPIO_NUM -- number of GPIO input/output pairs (0..64)
-    )
-    PORT MAP(
-        -- host access --
-        clk_i     => clk_i,  -- global clock line
-        rstn_i    => rstn_i, -- global reset line, low-active, async
-        bus_req_i => req,    -- bus request
-        bus_rsp_o => rsp,    -- bus response
-        -- parallel io --
-        gpio_o => gpio_o,
-        gpio_i => gpio_i
-    );
+        GENERIC MAP(
+            GPIO_NUM => GPIO_NUM -- number of GPIO input/output pairs (0..64)
+        )
+        PORT MAP(
+            -- host access --
+            clk_i     => clk_i,  -- global clock line
+            rstn_i    => rstn_i, -- global reset line, low-active, async
+            bus_req_i => req,    -- bus request
+            bus_rsp_o => rsp,    -- bus response
+            -- parallel io --
+            gpio_o => gpio_o,
+            gpio_i => gpio_i
+        );
 
 END ARCHITECTURE no_target_specific;
