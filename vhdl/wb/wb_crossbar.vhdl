@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  wb_crossbar
 --
@@ -38,6 +38,9 @@
 --                          0.2, 2023-04-19, leuen4
 --                              add `other` slaves interfaces to forward
 --                              unmapped slaves to other interconnects or error
+--                          0.3, 2023-08-02, leuen4
+--                              fixed `other` slave interface: was not connected
+--                              at all and could not be simulated
 -- =============================================================================
 
 LIBRARY ieee;
@@ -79,6 +82,10 @@ ARCHITECTURE no_target_specific OF wb_crossbar IS
     SUBTYPE slave_vector_t IS STD_ULOGIC_VECTOR(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
     TYPE master_vector_t IS ARRAY (N_MASTERS - 1 DOWNTO 0) OF slave_vector_t;
 
+    -- Combined slave connections from N_SLAVES and N_OTHERS slaves.
+    SIGNAL slaves_in : wb_slave_tx_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
+    SIGNAL slaves_out : wb_slave_rx_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
+
     -- Dummy master to idle the bus for unconnected slaves.
     CONSTANT master_idle : wb_master_tx_sig_t := (
         adr => (OTHERS => '0'), dat => (OTHERS => '0'), we => '0',
@@ -109,16 +116,16 @@ BEGIN
 
     -- Coarse decode address requests of masters.
     coarse_decode : PROCESS (wb_masters_i, master_request) IS
-        CONSTANT slave_none : slave_vector_t := (OTHERS => '0');
+        CONSTANT slave_none : STD_ULOGIC_VECTOR(N_SLAVES - 1 DOWNTO 0) := (OTHERS => '0');
         CONSTANT msb_adr : NATURAL := WB_ADDRESS_WIDTH - 1; -- upper bound of address
         VARIABLE lsb_adr : NATURAL := 0; -- lower bound of address, depends on slave
     BEGIN
         -- Loop over all masters to check each of their requested addresses.
         FOR m IN N_MASTERS - 1 DOWNTO 0 LOOP
-            -- Default to no request.
-            master_request(m) <= (OTHERS => '0');
             -- Is master even transmitting?
-            IF wb_masters_i(m).cyc = '1' THEN
+            IF wb_masters_i(m).cyc = '0' THEN
+                master_request(m) <= (OTHERS => '0'); -- no he is not
+            ELSE
                 -- Loop over all slaves and check the MSB of the address with
                 -- their entry in the memory map.
                 FOR s IN N_SLAVES - 1 DOWNTO 0 LOOP
@@ -127,12 +134,16 @@ BEGIN
                         -- Slave matches the address. Mark it as possible slave
                         -- to fulfill request from master.
                         master_request(m)(s) <= '1';
+                    ELSE
+                        master_request(m)(s) <= '0';
                     END IF;
                 END LOOP;
                 -- If master addressed no slave from the memory map, then
                 -- request an access to the unknown slave interfaces.
-                IF master_request(m) = slave_none THEN
+                IF master_request(m)(N_SLAVES - 1 DOWNTO 0) = slave_none THEN
                     master_request(m)(N_SLAVES + N_OTHERS - 1 DOWNTO N_SLAVES) <= (OTHERS => '1');
+                ELSE
+                    master_request(m)(N_SLAVES + N_OTHERS - 1 DOWNTO N_SLAVES) <= (OTHERS => '0');
                 END IF;
             END IF;
         END LOOP;
@@ -157,7 +168,7 @@ BEGIN
         END FUNCTION slave_locked;
     BEGIN
         FOR m IN 0 TO N_MASTERS - 1 LOOP
-            FOR s IN 0 TO N_SLAVES - 1 LOOP
+            FOR s IN 0 TO N_SLAVES + N_OTHERS - 1 LOOP
                 -- For first master row, all north connections are '1' except if
                 -- the master has a lock on a slave connection.
                 -- For other rows, north = south from previous row.
@@ -214,29 +225,26 @@ BEGIN
     END PROCESS lock_memory;
 
     -- Connect masters to the slaves.
-    mux : PROCESS (master_grant, wb_masters_i, wb_slaves_i, wb_other_slaves_i) IS
+    mux : PROCESS (master_grant, wb_masters_i, slaves_in) IS
     BEGIN
         -- Default to idle bus if master or slave is not connected.
         wb_masters_o <= (OTHERS => slave_idle);
-        wb_slaves_o <= (OTHERS => master_idle);
-        wb_other_slaves_o <= (OTHERS => master_idle);
+        slaves_out <= (OTHERS => master_idle);
 
         -- Connect the master and slave when the crossbar switch was granted.
         FOR m IN 0 TO N_MASTERS - 1 LOOP
             FOR s IN 0 TO N_SLAVES + N_OTHERS - 1 LOOP
                 IF master_grant(m)(s) = '1' THEN
-                    IF s < N_SLAVES THEN
-                        -- Normal slave, connect to mapped slaves.
-                        wb_slaves_o(s) <= wb_masters_i(m);
-                        wb_masters_o(m) <= wb_slaves_i(s);
-                    ELSE
-                        -- Other unmapped slave, forward connection.
-                        wb_other_slaves_o(s - N_SLAVES) <= wb_masters_i(m);
-                        wb_masters_o(m) <= wb_other_slaves_i(s - N_SLAVES);
-                    END IF;
+                    slaves_out(s) <= wb_masters_i(m);
+                    wb_masters_o(m) <= slaves_in(s);
                 END IF;
             END LOOP;
         END LOOP;
     END PROCESS mux;
+
+    -- Concatenate real slaves and "other" slaves into vector for easy handling.
+    wb_slaves_o <= slaves_out(N_SLAVES - 1 DOWNTO 0);
+    wb_other_slaves_o <= slaves_out(N_SLAVES + N_OTHERS - 1 DOWNTO N_SLAVES);
+    slaves_in <= (wb_other_slaves_i & wb_slaves_i);
 
 END ARCHITECTURE no_target_specific;

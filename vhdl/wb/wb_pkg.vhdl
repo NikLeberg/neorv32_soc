@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wb_pkg
 --
@@ -12,6 +12,9 @@
 --
 -- Changes:                 0.1, 2023-02-26, leuen4
 --                              initial version
+--                          0.2, 2023-08-03, leuen4
+--                              extended wb_sim_read32 procedure with expect_err
+--                              parameter to allow testing a failing read
 -- =============================================================================
 
 LIBRARY ieee;
@@ -81,7 +84,8 @@ PACKAGE wb_pkg IS
         SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
         SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
         CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to read from
-        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- expected data
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0);    -- expected data
+        CONSTANT expect_err : IN BOOLEAN := FALSE                                  -- true: expect read to fail
     );
 
     -- Procedure to simulate write transaction on Wishbone bus. 
@@ -110,7 +114,8 @@ PACKAGE BODY wb_pkg IS
         SIGNAL wb_master_tx : OUT wb_master_tx_sig_t;                              -- master out, slave in
         SIGNAL wb_master_rx : IN wb_master_rx_sig_t;                               -- slave out, master in
         CONSTANT address    : IN STD_ULOGIC_VECTOR(WB_ADDRESS_WIDTH - 1 DOWNTO 0); -- address to read from
-        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0)     -- expected data
+        CONSTANT data       : IN STD_ULOGIC_VECTOR(WB_DATA_WIDTH - 1 DOWNTO 0);    -- expected data
+        CONSTANT expect_err : IN BOOLEAN := FALSE                                  -- true: expect read to fail
     ) IS
     BEGIN
         ASSERT WB_DATA_WIDTH >= 32
@@ -138,13 +143,15 @@ PACKAGE BODY wb_pkg IS
         wb_master_tx.cyc <= '0';
         wb_master_tx.stb <= '0';
         -- check response
-        ASSERT wb_master_rx.err = '0'
+        ASSERT (wb_master_rx.err = '0' OR expect_err)
         REPORT "Wishbone sim read failure: Slave did respond with ERR."
             SEVERITY failure;
-        ASSERT wb_master_rx.ack = '1'
+        ASSERT (wb_master_rx.err = '1' OR NOT expect_err)
+        REPORT "Wishbone sim read failure: Slave did NOT respond with ERR."
+            SEVERITY failure;
+        ASSERT (wb_master_rx.ack = '1' OR expect_err)
         REPORT "Wishbone sim read failure: Slave did not ACK."
             SEVERITY failure;
-        REPORT INTEGER'image(to_integer(UNSIGNED(wb_master_rx.dat)));
         ASSERT wb_master_rx.dat = data
         REPORT "Wishbone sim read failure: Slave did send unexpected data."
             SEVERITY failure;

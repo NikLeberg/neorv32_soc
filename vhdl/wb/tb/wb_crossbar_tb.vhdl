@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wb_crossbar_tb
 --
@@ -11,6 +11,9 @@
 --
 -- Changes:                 0.1, 2023-04-14, leuen4
 --                              initial version
+--                          0.2, 2023-08-03, leuen4
+--                              added test for `others` interface
+--                              added test for address decoding
 -- =============================================================================
 
 LIBRARY ieee;
@@ -53,10 +56,10 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
     CONSTANT CLK_PERIOD : DELAY_LENGTH := 20 ns; -- 50 MHz
     SIGNAL clk : STD_LOGIC := '1';
     SIGNAL rstn : STD_LOGIC := '0';
-    SIGNAL tb_done, tb_done0, tb_done1, tb_done2 : STD_LOGIC := '0'; -- flag end of tests
+    SIGNAL tb_done, tb_done0, tb_done1, tb_done2, tb_done3 : STD_LOGIC := '0'; -- flag end of tests
 
     -- Signals for connecting to the DUT.
-    CONSTANT WB_N_MASTERS : NATURAL := 3;
+    CONSTANT WB_N_MASTERS : NATURAL := 4;
     CONSTANT WB_N_SLAVES : NATURAL := 5;
     CONSTANT WB_N_OTHERS : NATURAL := 1;
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
@@ -67,17 +70,17 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (x"8000_0000", 32 * 1024 * 1024) -- SDRAM, 32 MB
     );
-    SIGNAL wb_masters_tx : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_masters_tx : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0) := (
+        OTHERS => (cyc => '0', stb => '0', adr => x"XXXXXXXX", sel => x"f", we => '0', dat => x"XXXXXXXX")
+    );
     SIGNAL wb_masters_rx : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_slaves_rx : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     SIGNAL wb_slaves_tx : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     -- Error slave to terminate accesses on the others port of crossbar.
-    CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
 
-    -- State machine signals for the dummy slaves.
-    TYPE dummy_slave_state_t IS (IDLE, ACK, WAIT_CYC);
-    TYPE dummy_slave_states_arr_t IS ARRAY (WB_N_SLAVES - 1 DOWNTO 0) OF dummy_slave_state_t;
-    SIGNAL slave_states : dummy_slave_states_arr_t := (OTHERS => IDLE);
+    -- State signals for the dummy slaves.
+    signal slave_delayed_stb : std_ulogic_vector(WB_N_SLAVES - 1 DOWNTO 0) := (others => '0');
 
 BEGIN
     -- Instantiate the device under test.
@@ -112,7 +115,7 @@ BEGIN
     rstn <= '0', '1' AFTER 2 * CLK_PERIOD;
 
     -- Testbench is done after all master processes are done.
-    tb_done <= tb_done0 AND tb_done1 AND tb_done2;
+    tb_done <= tb_done0 AND tb_done1 AND tb_done2 AND tb_done3;
 
     master0 : PROCESS IS
     BEGIN
@@ -137,7 +140,7 @@ BEGIN
         WAIT;
     END PROCESS master0;
 
-    -- This is master1 with the second highest priority, writes are not- checked
+    -- This is master1 with the second highest priority, writes are not checked
     -- but reads are expected to come from a specific slave id. Accesses are
     -- delayed by one clock! The below defined process for the master2 (with
     -- less priority) accessed the same slaves as this one, but one clock
@@ -180,12 +183,16 @@ BEGIN
         -- Read from IMEM over slave1 channel. The IMEM is also accessed by the
         -- other two masters. As it only has two channels and the first one is
         -- already used by master0, this master read will read through the
-        -- second channel. This read clocks master1 that will try to read the
+        -- second channel. This read blocks master1 that will try to read the
         -- IMEM as well but one clock later.
         wb_sim_read32(clk, wb_masters_tx(2), wb_masters_rx(2), x"0000_0000", x"0000_0001");
         -- Read from SDRAM. Same as with the IMEM, second channel used and will
         -- block master1 to access.
         wb_sim_read32(clk, wb_masters_tx(2), wb_masters_rx(2), x"8000_0000", x"0000_0003");
+        -- Read from an invalid address. Expect to be forwarded to "others"
+        -- channel. This is hooked up to a constant error slave and we expect to
+        -- fail. Read is right at the end of SDRAM size.
+        wb_sim_read32(clk, wb_masters_tx(2), wb_masters_rx(2), x"8200_0000", x"dead_beef", true);
 
         -- Report successful test.
         REPORT "Test Master2 OK";
@@ -193,37 +200,46 @@ BEGIN
         WAIT;
     END PROCESS master2;
 
+    -- This is master3 and would have the lowest priority of all. But it only
+    -- runs after the other masters have finished theirs tests. Its purpose it
+    -- so check the address decoding. The two slaves have specific addresses and
+    -- an associated address range that should work correctly, this is tested.
+    master3 : PROCESS IS
+    BEGIN
+        -- Wait for test of other masters to finish.
+        WAIT UNTIL tb_done0 = '1' AND tb_done1 = '1' AND tb_done2 = '1';
+
+        -- Check IMEM address decoding from address 0x0000_0000, size 1 KB
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"0000_0000", x"0000_0000"); -- start
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"0000_03fc", x"0000_0000"); -- end
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"0000_0400", x"dead_beef", true); -- end+1
+        
+        -- Check SDRAM address decoding from address 0x8000_0000, size 32 MB
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"7fff_fffc", x"dead_beef", true); -- start-1
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"8000_0000", x"0000_0002"); -- start
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"81ff_fffc", x"0000_0002"); -- end
+        wb_sim_read32(clk, wb_masters_tx(3), wb_masters_rx(3), x"8200_0000", x"dead_beef", true); -- end+1
+
+        -- Report successful test.
+        REPORT "Test Master3 OK";
+        tb_done3 <= '1';
+        WAIT;
+    END PROCESS master3;
+
     -- Let each slave respond with an ack for one clock after is has seen a stb
     -- from a master. On read accesses it will return the id of the slave.
-    dummy_slaves : PROCESS (clk) IS
+    dummy_slaves : PROCESS (clk, wb_slaves_rx, slave_delayed_stb) IS
     BEGIN
         -- respond with an ack one cycle after stb
-        IF rising_edge(clk) THEN
-            IF rstn = '0' THEN
-                slave_states <= (OTHERS => IDLE);
-            ELSE
-                FOR s IN WB_N_SLAVES - 1 DOWNTO 0 LOOP
-                    -- FSM
-                    CASE slave_states(s) IS
-                        WHEN IDLE =>
-                            IF wb_slaves_rx(s).stb = '1' THEN
-                                slave_states(s) <= ACK;
-                            END IF;
-                        WHEN ACK =>
-                            slave_states(s) <= WAIT_CYC;
-                        WHEN WAIT_CYC =>
-                            IF wb_slaves_rx(s).cyc = '0' THEN
-                                slave_states(s) <= IDLE;
-                            END IF;
-                    END CASE;
-                    -- Output logic
-                    wb_slaves_tx(s).ack <= '1' WHEN slave_states(s) = ACK ELSE
-                    '0';
-                    wb_slaves_tx(s).err <= '0'; -- never any error
-                    wb_slaves_tx(s).dat <= STD_ULOGIC_VECTOR(to_unsigned(s, WB_DATA_WIDTH)); -- slave number
-                END LOOP;
+        FOR s IN WB_N_SLAVES - 1 DOWNTO 0 LOOP
+            IF rising_edge(clk) THEN
+                slave_delayed_stb(s) <= wb_slaves_rx(s).stb;
             END IF;
-        END IF;
+            wb_slaves_tx(s).ack <= '1' WHEN (slave_delayed_stb(s) = '1' and wb_slaves_rx(s).stb = '1') ELSE
+            '0';
+            wb_slaves_tx(s).err <= '0'; -- never any error
+            wb_slaves_tx(s).dat <= STD_ULOGIC_VECTOR(to_unsigned(s, WB_DATA_WIDTH)); -- slave number
+        END LOOP;
     END PROCESS dummy_slaves;
 
 END ARCHITECTURE simulation;
