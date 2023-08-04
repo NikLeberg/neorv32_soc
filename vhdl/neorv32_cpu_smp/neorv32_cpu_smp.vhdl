@@ -82,7 +82,7 @@ END ENTITY neorv32_cpu_smp;
 ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
 
     -- CPU boot configuration --
-    CONSTANT cpu_boot_addr_c : STD_ULOGIC_VECTOR(31 DOWNTO 0) := cond_sel_stdulogicvector_f(INT_BOOTLOADER_EN, boot_rom_base_c, ispace_base_c);
+    CONSTANT cpu_boot_addr_c : STD_ULOGIC_VECTOR(31 DOWNTO 0) := cond_sel_suv_f(INT_BOOTLOADER_EN, mem_boot_base_c, mem_ispace_base_c);
 
     -- reset generator --
     SIGNAL rstn_int_sreg : STD_ULOGIC_VECTOR(3 DOWNTO 0);
@@ -150,6 +150,7 @@ BEGIN
                 CPU_DEBUG_PARK_ADDR => dm_park_entry_c,                       -- cpu debug mode parking loop entry address
                 CPU_DEBUG_EXC_ADDR  => dm_exc_entry_c,                        -- cpu debug mode exception entry address
                 -- RISC-V CPU Extensions --
+                CPU_EXTENSION_RISCV_A        => true,  -- implement atomic memory operations extension?
                 CPU_EXTENSION_RISCV_B        => false, -- implement bit-manipulation extension?
                 CPU_EXTENSION_RISCV_C        => false, -- implement compressed extension?
                 CPU_EXTENSION_RISCV_E        => false, -- implement embedded RF extension?
@@ -177,10 +178,12 @@ BEGIN
             )
             PORT MAP(
                 -- global control --
-                clk_i   => clk_i,              -- global clock, rising edge
-                rstn_i  => rstn_int,           -- global reset, low-active, async
-                sleep_o => cpu_s(i).cpu_sleep, -- cpu is in sleep mode when set
-                debug_o => cpu_s(i).cpu_debug, -- cpu is in debug mode when set
+                clk_i    => clk_i,              -- global clock, rising edge
+                rstn_i   => rstn_int,           -- global reset, low-active, async
+                sleep_o  => cpu_s(i).cpu_sleep, -- cpu is in sleep mode when set
+                debug_o  => cpu_s(i).cpu_debug, -- cpu is in debug mode when set
+                ifence_o => cpu_s(i).i_fence,   -- instruction fence
+                dfence_o => cpu_s(i).d_fence,   -- data fence
                 -- instruction bus interface --
                 ibus_req_o => i_cpu_req(i), -- request bus
                 ibus_rsp_i => i_cpu_rsp(i), -- response bus
@@ -220,9 +223,10 @@ BEGIN
         neorv32_icache_true : IF ICACHE_EN = true GENERATE
             neorv32_icache_inst : ENTITY neorv32.neorv32_icache
                 GENERIC MAP(
-                    ICACHE_NUM_BLOCKS => ICACHE_NUM_BLOCKS,   -- number of blocks (min 2), has to be a power of 2
-                    ICACHE_BLOCK_SIZE => ICACHE_BLOCK_SIZE,   -- block size in bytes (min 4), has to be a power of 2
-                    ICACHE_NUM_SETS   => ICACHE_ASSOCIATIVITY -- associativity / number of sets (1=direct_mapped), has to be a power of 2
+                    ICACHE_NUM_BLOCKS => ICACHE_NUM_BLOCKS,             -- number of blocks (min 2), has to be a power of 2
+                    ICACHE_BLOCK_SIZE => ICACHE_BLOCK_SIZE,             -- block size in bytes (min 4), has to be a power of 2
+                    ICACHE_NUM_SETS   => ICACHE_ASSOCIATIVITY,          -- associativity / number of sets (1=direct_mapped), has to be a power of 2
+                    ICACHE_UC_PBEGIN  => uncached_begin_c(31 DOWNTO 28) -- begin of uncached address space (page number)
                 )
                 PORT MAP(
                     -- global control --
@@ -240,12 +244,12 @@ BEGIN
 
         neorv32_icache_ngen : IF ICACHE_EN = false GENERATE
             -- direct forward
-            i_cache_req <= i_cpu_req;
-            i_cpu_rsp <= i_cache_rsp;
+            i_cache_req(i) <= i_cpu_req(i);
+            i_cpu_rsp(i) <= i_cache_rsp(i);
         END GENERATE;
 
         -- convert cpu internal instruction bus to external Wishbone bus
-        neorv32_wb_gateway_dbus : ENTITY work.neorv32_wb_gateway
+        neorv32_wb_gateway_inst : ENTITY work.neorv32_wb_gateway
             PORT MAP(
                 -- Global control --
                 clk_i  => clk_i,    -- global clock, rising edge

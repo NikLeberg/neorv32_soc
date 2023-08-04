@@ -114,7 +114,7 @@ ARCHITECTURE top_arch OF top IS
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port b)
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
-    (gpio_base_c, gpio_size_c) -- NEORV32 GPIO, 4 words
+    (base_io_gpio_c, iodev_size_c) -- NEORV32 GPIO, 4 words
     );
     SIGNAL wb_masters_o : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
     SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
@@ -130,6 +130,7 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT IMPLEMENT_SDRAM : BOOLEAN := NOT SIMULATION;
     CONSTANT IMPLEMENT_DMEM : BOOLEAN := SIMULATION;
     CONSTANT IMPLEMENT_JTAG : BOOLEAN := NOT SIMULATION;
+    CONSTANT IMPLEMENT_ICACHE : BOOLEAN := (NUM_HARTS > 2);
 
 BEGIN
 
@@ -142,7 +143,7 @@ BEGIN
             NUM_HARTS         => NUM_HARTS,       -- number of implemented harts i.e. CPUs
             INT_BOOTLOADER_EN => false,           -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
             -- Internal Instruction Cache (iCACHE) --
-            ICACHE_EN => true -- implement instruction cache
+            ICACHE_EN => IMPLEMENT_ICACHE -- implement instruction cache
         )
         PORT MAP(
             -- Global control --
