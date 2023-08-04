@@ -38,6 +38,24 @@ void delay_ms(uint32_t time_ms) {
                  : [cnt_r] "r"(iterations));
 }
 
+static uint32_t lock_val = 0; // 0 = unlocked, 1 = locked
+void lock(void) {
+    uint32_t val, status;
+    do {
+        val = neorv32_cpu_load_reservate_word((uint32_t)&lock_val);
+        if (val == 1) { // stil locked, store same value back
+            status = neorv32_cpu_store_conditional_word((uint32_t)&lock_val, val);
+        } else { // unlocked, set lock
+            status = neorv32_cpu_store_conditional_word((uint32_t)&lock_val, 1);
+        }
+    } while (val == 1 || status == 1);
+}
+void unlock(void) {
+    // We could write directly to lock_val but then the dcache could interfere.
+    // Here we choose to use lr/sc again as it always bypasses the dcache.
+    (void)neorv32_cpu_load_reservate_word((uint32_t)&lock_val);
+    (void)neorv32_cpu_store_conditional_word((uint32_t)&lock_val, 0);
+}
 
 /**
  * @brief Main function
@@ -48,9 +66,12 @@ int main() {
 
     // let each hart blink its own led
     uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
+    uint32_t delay = (128 << hart_id);
     for (;;) {
+        lock();
         neorv32_gpio_pin_toggle(hart_id);
-        delay_ms((hart_id + 1) * 100);
+        unlock();
+        delay_ms(delay);
     }
 
     // this should never be reached
