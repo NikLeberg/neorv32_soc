@@ -92,6 +92,9 @@ if {[string equal $::lib_target "sim"]} {
     foreach lib_ent $lib_entities {
         quietly set lib_file [lsearch -inline -glob $lib_files "*$lib_ent.vhd"]
         echo "Compiling entity $lib_ent from file $lib_file"
-        vcom -quiet $lib_file
+        vcom -nowarn 5 -suppress 1937 -quiet $lib_file
+        # Suppressed warnings:
+        # "-nowarn 5" suppresses warning about multiple signal drivers
+        # (vcom-1937) Choice in CASE statement alternative must be locally static.
     }
 }

@@ -21,14 +21,16 @@ quietly source ../scripts/files.tcl
 foreach ent $entities {
     quietly set file [lsearch -inline -glob $files "*/$ent.vhd*"]
     echo "Compiling entity $ent from file $file"
-    vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint $file
+    vcom -quiet -pedanticerrors -check_synthesis -fsmverbose w -lint -suppress 1320 $file
+    # Suppressed warnings:
+    # (vcom-1320) Type of expression "<expr>" is ambiguous; using element type <elm>, not aggregate type <arr>.
 }
 
 # Compile the testbench files.
 foreach testbench $testbenches {
     quietly set file [lsearch -inline -glob $files "*/tb/$testbench.vhd*"]
     echo "Compiling testbench $testbench from file $file"
-    vcom -quiet -2008 -pedanticerrors -check_synthesis -lint $file
+    vcom -quiet -2008 -pedanticerrors -check_synthesis -lint -suppress 1320 $file
 }
 
 quit -f
