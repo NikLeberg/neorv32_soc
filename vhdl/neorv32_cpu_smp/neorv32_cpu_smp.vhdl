@@ -82,7 +82,7 @@ END ENTITY neorv32_cpu_smp;
 ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
 
     -- CPU boot configuration --
-    CONSTANT cpu_boot_addr_c : STD_ULOGIC_VECTOR(31 DOWNTO 0) := cond_sel_suv_f(INT_BOOTLOADER_EN, mem_boot_base_c, mem_ispace_base_c);
+    CONSTANT cpu_boot_addr_c : STD_ULOGIC_VECTOR(31 DOWNTO 0) := cond_sel_suv_f(INT_BOOTLOADER_EN, mem_boot_base_c, mem_imem_base_c);
 
     -- reset generator --
     SIGNAL rstn_int_sreg : STD_ULOGIC_VECTOR(3 DOWNTO 0);
@@ -166,9 +166,8 @@ BEGIN
                 CPU_EXTENSION_RISCV_Sdext    => false, -- implement external debug mode extension?
                 CPU_EXTENSION_RISCV_Sdtrig   => false, -- implement debug mode trigger module extension?
                 -- Extension Options --
-                FAST_MUL_EN     => true, -- use DSPs for M extension's multiplier
-                FAST_SHIFT_EN   => true, -- use barrel shifter for shift operations
-                CPU_IPB_ENTRIES => 2,    -- entries is instruction prefetch buffer, has to be a power of 1
+                FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
+                FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
                 -- Physical Memory Protection (PMP) --
                 PMP_NUM_REGIONS     => 0, -- number of regions (0..16)
                 PMP_MIN_GRANULARITY => 4, -- minimal region granularity in bytes, has to be a power of 2, min 4 bytes
