@@ -17,6 +17,7 @@ set entities {
     "wb_sdram"
     "wb_imem"
     "wb_dmem"
+    "wb_riscv_clint"
 
     "neorv32_wb_gateway"
     "neorv32_cpu_smp"
@@ -29,6 +30,7 @@ set entities {
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
     "wb_crossbar_tb"
+    "wb_riscv_clint_tb"
 
     "top_tb"
 }
