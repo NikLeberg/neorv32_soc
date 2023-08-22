@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.4
+-- Version:                 0.3
 --
 -- Entity:                  wb_pkg
 --
@@ -18,8 +18,6 @@
 --                          0.3, 2023-08-22, leuen4
 --                              change from master and slave types to simple
 --                              request and response types
---                          0.4, 2023-08-22, leuen4
---                              print read response and write request as note
 -- =============================================================================
 
 LIBRARY ieee;
@@ -139,9 +137,6 @@ PACKAGE BODY wb_pkg IS
         -- end transaction
         wb_req.cyc <= '0';
         wb_req.stb <= '0';
-        -- print response
-        REPORT "wb read: [0x" & to_hstring(wb_req.adr) & "] => 0x" & to_hstring(wb_resp.dat)
-            SEVERITY note;
         -- check response
         ASSERT (wb_resp.err = '0' OR expect_err)
         REPORT "Wishbone sim read failure: Slave did respond with ERR."
@@ -189,9 +184,6 @@ PACKAGE BODY wb_pkg IS
         -- end transaction
         wb_req.cyc <= '0';
         wb_req.stb <= '0';
-        -- print request
-        REPORT "wb write: [0x" & to_hstring(wb_req.adr) & "] <= 0x" & to_hstring(wb_req.dat)
-            SEVERITY note;
         -- check response
         ASSERT wb_resp.err = '0'
         REPORT "Wishbone sim write failure: Slave did respond with ERR."
