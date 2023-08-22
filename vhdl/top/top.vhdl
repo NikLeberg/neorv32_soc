@@ -102,9 +102,8 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT NUM_HARTS : POSITIVE := 5; -- number of implemented harts i.e. CPUs
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
-
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
-    SIGNAL con_dummy_spi_csn : STD_ULOGIC_VECTOR(6 DOWNTO 0);
+    SIGNAL con_mti, con_msi : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
 
     -- Wishbone interface signals
     -- The frequently accessed slaves go through the high speed crossbar which
@@ -112,7 +111,7 @@ ARCHITECTURE top_arch OF top IS
     -- through a single and simple low speed mux.
     CONSTANT WB_N_MASTERS : NATURAL := 2 * NUM_HARTS;
     CONSTANT WB_N_SLAVES_CROSSBAR : NATURAL := 3;
-    CONSTANT WB_N_SLAVES_MUX : NATURAL := 1;
+    CONSTANT WB_N_SLAVES_MUX : NATURAL := 2;
     CONSTANT WB_MEMORY_MAP_CROSSBAR : wb_map_t :=
     (
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
@@ -121,6 +120,7 @@ ARCHITECTURE top_arch OF top IS
     );
     CONSTANT WB_MEMORY_MAP_MUX : wb_map_t :=
     (
+    (x"f000_0000", 48 * 1024), -- CLINT, 48 KB (largely unused)
     (base_io_gpio_c, iodev_size_c) -- NEORV32 GPIO, 4 words
     );
     SIGNAL wb_masters_req : wb_req_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
@@ -167,9 +167,9 @@ BEGIN
             fence_o  => OPEN, -- indicates an executed FENCE operation
             fencei_o => OPEN, -- indicates an executed FENCEI operation
             -- CPU interrupts --
-            mti_i => (OTHERS => '0'), -- machine timer interrupt, available if IO_MTIME_EN = false
-            msi_i => (OTHERS => '0'), -- machine software interrupt
-            mei_i => (OTHERS => '0')  -- machine external interrupt
+            mti_i => con_mti,        -- risc-v machine timer interrupt
+            msi_i => con_msi,        -- risc-v machine software interrupt
+            mei_i => (OTHERS => '0') -- risc-v machine external interrupt
         );
 
     -- Wishbone Interconnect (Crossbar + Mux) -------------------------------------------------
@@ -290,6 +290,22 @@ BEGIN
         END GENERATE;
     END GENERATE;
 
+    -- Core Local Interruptor (CLINT) --
+    wb_riscv_clint_inst : ENTITY work.wb_riscv_clint
+        GENERIC MAP(
+            N_HARTS => NUM_HARTS -- number of HARTs
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, asyn
+            -- Wishbone slave interface --
+            wb_slave_i => wb_slaves_mux_req(0),
+            wb_slave_o => wb_slaves_mux_resp(0),
+            -- IRQs --
+            mtime_irq_o => con_mti, -- machine timer interrupt
+            msw_irq_o   => con_msi  -- machine software interrupt
+        );
 
     -- NEORV32 IO Modules ---------------------------------------------------------------------
     -- -------------------------------------------------------------------------------------------
