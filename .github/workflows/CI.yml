@@ -18,7 +18,7 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Build Software
+    - name: Build Software (for Sim)
       run: |
         cd sw
         make USER_FLAGS+='-DSIMULATION=1' exe install
@@ -28,6 +28,11 @@ jobs:
         cd sim
         vsim -c -do ../scripts/sim_compile.tcl
         vsim -c -do ../scripts/sim_test.tcl
+
+    - name: Build Software (for Syn)
+      run: |
+        cd sw
+        make clean exe install
 
     - name: Run Synthesis
       run: |
