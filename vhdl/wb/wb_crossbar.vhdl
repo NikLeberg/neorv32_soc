@@ -63,14 +63,14 @@ ENTITY wb_crossbar IS
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
         -- Wishbone master interface(s) --
-        wb_masters_i : IN wb_master_tx_arr_t(N_MASTERS - 1 DOWNTO 0);
-        wb_masters_o : OUT wb_master_rx_arr_t(N_MASTERS - 1 DOWNTO 0);
+        wb_masters_i : IN wb_req_arr_t(N_MASTERS - 1 DOWNTO 0);
+        wb_masters_o : OUT wb_resp_arr_t(N_MASTERS - 1 DOWNTO 0);
         -- Wishbone slave interface(s) --
-        wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
-        wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0);
+        wb_slaves_o : OUT wb_req_arr_t(N_SLAVES - 1 DOWNTO 0);
+        wb_slaves_i : IN wb_resp_arr_t(N_SLAVES - 1 DOWNTO 0);
         -- Other unmapped Wishbone slave interface(s) --
-        wb_other_slaves_o : OUT wb_slave_rx_arr_t(N_OTHERS - 1 DOWNTO 0);
-        wb_other_slaves_i : IN wb_slave_tx_arr_t(N_OTHERS - 1 DOWNTO 0)
+        wb_other_slaves_o : OUT wb_req_arr_t(N_OTHERS - 1 DOWNTO 0);
+        wb_other_slaves_i : IN wb_resp_arr_t(N_OTHERS - 1 DOWNTO 0)
     );
 END ENTITY wb_crossbar;
 
@@ -83,15 +83,15 @@ ARCHITECTURE no_target_specific OF wb_crossbar IS
     TYPE master_vector_t IS ARRAY (N_MASTERS - 1 DOWNTO 0) OF slave_vector_t;
 
     -- Combined slave connections from N_SLAVES and N_OTHERS slaves.
-    SIGNAL slaves_in : wb_slave_tx_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
-    SIGNAL slaves_out : wb_slave_rx_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
+    SIGNAL slaves_in : wb_resp_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
+    SIGNAL slaves_out : wb_req_arr_t(N_SLAVES + N_OTHERS - 1 DOWNTO 0);
 
     -- Dummy master to idle the bus for unconnected slaves.
-    CONSTANT master_idle : wb_master_tx_sig_t := (
+    CONSTANT master_idle : wb_req_sig_t := (
         adr => (OTHERS => '0'), dat => (OTHERS => '0'), we => '0',
         sel => (OTHERS => '0'), stb => '0', cyc => '0');
     -- Dummy slave to idle the bus for unconnected masters.
-    CONSTANT slave_idle : wb_master_rx_sig_t := (ack => '0', err => '0', dat => (OTHERS => '0'));
+    CONSTANT slave_idle : wb_resp_sig_t := (ack => '0', err => '0', dat => (OTHERS => '0'));
 
     -- Mapping of which slave can fulfill which request from master.
     SIGNAL master_request : master_vector_t := (OTHERS => (OTHERS => '0'));

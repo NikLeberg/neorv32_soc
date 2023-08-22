@@ -33,11 +33,11 @@ ENTITY wb_mux IS
     );
     PORT (
         -- Wishbone master interface --
-        wb_master_i : IN wb_master_tx_sig_t;
-        wb_master_o : OUT wb_master_rx_sig_t;
+        wb_master_i : IN wb_req_sig_t;
+        wb_master_o : OUT wb_resp_sig_t;
         -- Wishbone slave interface(s) --
-        wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
-        wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0)
+        wb_slaves_o : OUT wb_req_arr_t(N_SLAVES - 1 DOWNTO 0);
+        wb_slaves_i : IN wb_resp_arr_t(N_SLAVES - 1 DOWNTO 0)
     );
 END ENTITY wb_mux;
 
@@ -47,7 +47,7 @@ ARCHITECTURE no_target_specific OF wb_mux IS
     -- 0 ... N_SLAVES - 1, a value of N_SLAVE indicates an invalid bus address
     -- and will auto terminate with error.
     SIGNAL slave_select : NATURAL RANGE N_SLAVES DOWNTO 0 := N_SLAVES;
-    CONSTANT auto_terminate : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    CONSTANT auto_terminate : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
 BEGIN
     -- Check wishbone configuration.
     ASSERT WB_ADDRESS_WIDTH MOD 8 = 0

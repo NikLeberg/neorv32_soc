@@ -39,8 +39,8 @@ ENTITY neorv32_wb_gpio IS
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
 
         -- Wishbone slave interface --
-        wb_slave_i : IN wb_slave_rx_sig_t;  -- control and data from master to slave
-        wb_slave_o : OUT wb_slave_tx_sig_t; -- status and data from slave to master
+        wb_slave_i : IN wb_req_sig_t;   -- control and data from master to slave
+        wb_slave_o : OUT wb_resp_sig_t; -- status and data from slave to master
 
         -- parallel io --
         gpio_o : OUT STD_ULOGIC_VECTOR(63 DOWNTO 0);

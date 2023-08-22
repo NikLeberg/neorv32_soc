@@ -36,8 +36,8 @@ ENTITY wb_gcd IS
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
         -- Wishbone slave interface --
-        wb_slave_i : IN wb_slave_rx_sig_t;
-        wb_slave_o : OUT wb_slave_tx_sig_t
+        wb_slave_i : IN wb_req_sig_t;
+        wb_slave_o : OUT wb_resp_sig_t
     );
 END ENTITY wb_gcd;
 

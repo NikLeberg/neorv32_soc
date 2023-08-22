@@ -37,8 +37,8 @@ ENTITY neorv32_wb_gateway IS
         rsp_o : OUT bus_rsp_t; -- response bus
 
         -- Wishbone master interface --
-        wb_master_o : OUT wb_master_tx_sig_t; -- control and data from master to slave
-        wb_master_i : IN wb_master_rx_sig_t   -- status and data from slave to master
+        wb_master_o : OUT wb_req_sig_t; -- control and data from master to slave
+        wb_master_i : IN wb_resp_sig_t  -- status and data from slave to master
     );
 END ENTITY neorv32_wb_gateway;
 

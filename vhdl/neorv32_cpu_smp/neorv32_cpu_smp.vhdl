@@ -65,8 +65,8 @@ ENTITY neorv32_cpu_smp IS
 
         -- Wishbone bus interfaces, two per hart --
         -- for two harts the ordering is 0: d_bus(0), 1: i_bus(0), 2: d_bus(1), 3: i_bus(1)
-        wb_master_o : OUT wb_master_tx_arr_t(2 * NUM_HARTS - 1 DOWNTO 0); -- control and data from master to slave
-        wb_master_i : IN wb_master_rx_arr_t(2 * NUM_HARTS - 1 DOWNTO 0);  -- status and data from slave to master
+        wb_master_o : OUT wb_req_arr_t(2 * NUM_HARTS - 1 DOWNTO 0); -- control and data from master to slave
+        wb_master_i : IN wb_resp_arr_t(2 * NUM_HARTS - 1 DOWNTO 0); -- status and data from slave to master
 
         -- Advanced memory control signals --
         fence_o  : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- indicates an executed FENCE operation

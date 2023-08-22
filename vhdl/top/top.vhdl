@@ -116,13 +116,13 @@ ARCHITECTURE top_arch OF top IS
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (base_io_gpio_c, iodev_size_c) -- NEORV32 GPIO, 4 words
     );
-    SIGNAL wb_masters_o : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
-    SIGNAL wb_masters_i : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
-    SIGNAL wb_slaves_i : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
-    SIGNAL wb_slaves_o : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_masters_o : wb_req_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_masters_i : wb_resp_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_slaves_i : wb_req_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_slaves_o : wb_resp_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     -- Error slave to terminate accesses that have no associated slave.
-    CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
-    SIGNAL wb_slave_dummy : wb_master_rx_sig_t;
+    CONSTANT wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    SIGNAL wb_slave_dummy : wb_resp_sig_t;
 
     -- Change behaviour when simulating:
     --  > do not implement external sdram and replace with internal dmem

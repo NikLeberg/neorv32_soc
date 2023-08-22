@@ -32,8 +32,8 @@ ARCHITECTURE simulation OF wb_gcd_tb IS
             clk_i  : IN STD_ULOGIC; -- global clock, rising edge
             rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
             -- Wishbone slave interface --
-            wb_slave_i : IN wb_slave_rx_sig_t;
-            wb_slave_o : OUT wb_slave_tx_sig_t
+            wb_slave_i : IN wb_req_sig_t;
+            wb_slave_o : OUT wb_resp_sig_t
         );
     END COMPONENT wb_gcd;
 
@@ -44,8 +44,8 @@ ARCHITECTURE simulation OF wb_gcd_tb IS
     SIGNAL tb_done : STD_LOGIC := '0'; -- flag end of tests
 
     -- Signals for connecting to the DUT.
-    SIGNAL wb_slave_rx : wb_slave_rx_sig_t;
-    SIGNAL wb_slave_tx : wb_slave_tx_sig_t;
+    SIGNAL wb_slave_rx : wb_req_sig_t;
+    SIGNAL wb_slave_tx : wb_resp_sig_t;
 
 BEGIN
     -- Instantiate the device under test.

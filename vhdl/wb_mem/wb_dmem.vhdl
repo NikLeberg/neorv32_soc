@@ -57,8 +57,8 @@ ENTITY wb_dmem IS
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
 
         -- Wishbone slave interfaces --
-        wb_slaves_i : IN wb_slave_rx_arr_t(1 DOWNTO 0); -- control and data from master to slave
-        wb_slaves_o : OUT wb_slave_tx_arr_t(1 DOWNTO 0) -- status and data from slave to master
+        wb_slaves_i : IN wb_req_arr_t(1 DOWNTO 0);  -- control and data from master to slave
+        wb_slaves_o : OUT wb_resp_arr_t(1 DOWNTO 0) -- status and data from slave to master
     );
 END ENTITY wb_dmem;
 

@@ -41,14 +41,14 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
             clk_i  : IN STD_ULOGIC; -- global clock, rising edge
             rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
             -- Wishbone master interface(s) --
-            wb_masters_i : IN wb_master_tx_arr_t(N_MASTERS - 1 DOWNTO 0);
-            wb_masters_o : OUT wb_master_rx_arr_t(N_MASTERS - 1 DOWNTO 0);
+            wb_masters_i : IN wb_req_arr_t(N_MASTERS - 1 DOWNTO 0);
+            wb_masters_o : OUT wb_resp_arr_t(N_MASTERS - 1 DOWNTO 0);
             -- Wishbone slave interface(s) --
-            wb_slaves_o : OUT wb_slave_rx_arr_t(N_SLAVES - 1 DOWNTO 0);
-            wb_slaves_i : IN wb_slave_tx_arr_t(N_SLAVES - 1 DOWNTO 0);
+            wb_slaves_o : OUT wb_req_arr_t(N_SLAVES - 1 DOWNTO 0);
+            wb_slaves_i : IN wb_resp_arr_t(N_SLAVES - 1 DOWNTO 0);
             -- Other unmapped Wishbone slave interface(s) --
-            wb_other_slaves_o : OUT wb_slave_rx_arr_t(N_OTHERS - 1 DOWNTO 0);
-            wb_other_slaves_i : IN wb_slave_tx_arr_t(N_OTHERS - 1 DOWNTO 0)
+            wb_other_slaves_o : OUT wb_req_arr_t(N_OTHERS - 1 DOWNTO 0);
+            wb_other_slaves_i : IN wb_resp_arr_t(N_OTHERS - 1 DOWNTO 0)
         );
     END COMPONENT wb_crossbar;
 
@@ -70,14 +70,14 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
     (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
     (x"8000_0000", 32 * 1024 * 1024) -- SDRAM, 32 MB
     );
-    SIGNAL wb_masters_tx : wb_master_tx_arr_t(WB_N_MASTERS - 1 DOWNTO 0) := (
+    SIGNAL wb_masters_tx : wb_req_arr_t(WB_N_MASTERS - 1 DOWNTO 0) := (
         OTHERS => (cyc => '0', stb => '0', adr => x"XXXXXXXX", sel => x"f", we => '0', dat => x"XXXXXXXX")
     );
-    SIGNAL wb_masters_rx : wb_master_rx_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
-    SIGNAL wb_slaves_rx : wb_slave_rx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
-    SIGNAL wb_slaves_tx : wb_slave_tx_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_masters_rx : wb_resp_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_slaves_rx : wb_req_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_slaves_tx : wb_resp_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     -- Error slave to terminate accesses on the others port of crossbar.
-    CONSTANT wb_slave_err_o : wb_master_rx_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
+    CONSTANT wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
 
     -- State signals for the dummy slaves.
     signal slave_delayed_stb : std_ulogic_vector(WB_N_SLAVES - 1 DOWNTO 0) := (others => '0');
