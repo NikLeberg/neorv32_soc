@@ -107,22 +107,33 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_dummy_spi_csn : STD_ULOGIC_VECTOR(6 DOWNTO 0);
 
     -- Wishbone interface signals
+    -- The frequently accessed slaves go through the high speed crossbar which
+    -- enables simultaneous connections. The less frequently ones are connected
+    -- through a single and simple low speed mux.
     CONSTANT WB_N_MASTERS : NATURAL := 2 * NUM_HARTS;
-    CONSTANT WB_N_SLAVES : NATURAL := 4;
-    CONSTANT WB_MEMORY_MAP : wb_map_t :=
+    CONSTANT WB_N_SLAVES_CROSSBAR : NATURAL := 3;
+    CONSTANT WB_N_SLAVES_MUX : NATURAL := 1;
+    CONSTANT WB_MEMORY_MAP_CROSSBAR : wb_map_t :=
     (
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
     (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port b)
-    (x"8000_0000", 32 * 1024 * 1024), -- SDRAM, 32 MB
+    (x"8000_0000", 32 * 1024 * 1024) -- SDRAM, 32 MB
+    );
+    CONSTANT WB_MEMORY_MAP_MUX : wb_map_t :=
+    (
     (base_io_gpio_c, iodev_size_c) -- NEORV32 GPIO, 4 words
     );
-    SIGNAL wb_masters_o : wb_req_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
-    SIGNAL wb_masters_i : wb_resp_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
-    SIGNAL wb_slaves_i : wb_req_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
-    SIGNAL wb_slaves_o : wb_resp_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
+    SIGNAL wb_masters_req : wb_req_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_masters_resp : wb_resp_arr_t(WB_N_MASTERS - 1 DOWNTO 0);
+    SIGNAL wb_slaves_cross_req : wb_req_arr_t(WB_N_SLAVES_CROSSBAR - 1 DOWNTO 0);
+    SIGNAL wb_slaves_cross_resp : wb_resp_arr_t(WB_N_SLAVES_CROSSBAR - 1 DOWNTO 0);
+    SIGNAL wb_master_cross_req : wb_req_arr_t(0 DOWNTO 0);
+    SIGNAL wb_master_cross_resp : wb_resp_arr_t(0 DOWNTO 0);
+    SIGNAL wb_slaves_mux_req : wb_req_arr_t(WB_N_SLAVES_MUX - 1 DOWNTO 0);
+    SIGNAL wb_slaves_mux_resp : wb_resp_arr_t(WB_N_SLAVES_MUX - 1 DOWNTO 0);
     -- Error slave to terminate accesses that have no associated slave.
-    CONSTANT wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
-    SIGNAL wb_slave_dummy : wb_resp_sig_t;
+    CONSTANT wb_slave_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    SIGNAL wb_slave_dummy_resp : wb_resp_sig_t;
 
     -- Change behaviour when simulating:
     --  > do not implement external sdram and replace with internal dmem
@@ -150,8 +161,8 @@ BEGIN
             clk_i  => clk_i,  -- global clock, rising edge
             rstn_i => rstn_i, -- global reset, low-active, async
             -- Wishbone instruction bus interface(s), two per hart --
-            wb_master_o => wb_masters_o(2 * NUM_HARTS - 1 DOWNTO 0), -- control and data from master to slave
-            wb_master_i => wb_masters_i(2 * NUM_HARTS - 1 DOWNTO 0), -- status and data from slave to master
+            wb_master_o => wb_masters_req(2 * NUM_HARTS - 1 DOWNTO 0),  -- control and data from master to slave
+            wb_master_i => wb_masters_resp(2 * NUM_HARTS - 1 DOWNTO 0), -- status and data from slave to master
             -- Advanced memory control signals --
             fence_o  => OPEN, -- indicates an executed FENCE operation
             fencei_o => OPEN, -- indicates an executed FENCEI operation
@@ -161,69 +172,44 @@ BEGIN
             mei_i => (OTHERS => '0')  -- machine external interrupt
         );
 
-    -- NEORV32 IO Modules ---------------------------------------------------------------------
+    -- Wishbone Interconnect (Crossbar + Mux) -------------------------------------------------
     -- -------------------------------------------------------------------------------------------
-    neorv32_wb_gpio_inst : ENTITY work.neorv32_wb_gpio
-        GENERIC MAP(
-            GPIO_NUM => 8 -- number of GPIO input/output pairs (0..64)
-        )
-        PORT MAP(
-            -- Global control --
-            clk_i  => clk_i,  -- global clock, rising edge
-            rstn_i => rstn_i, -- global reset, low-active, async
-            -- Wishbone slave interface --
-            wb_slave_i => wb_slaves_i(3), -- control and data from master to slave
-            wb_slave_o => wb_slaves_o(3), -- status and data from slave to master
-            -- parallel io --
-            gpio_o => con_gpio_o,
-            gpio_i => (OTHERS => '0')
-        );
-
-    -- GPIO output --
-    gpio0_o <= con_gpio_o(7 DOWNTO 0);
-
-    -- JTAG atom --
-    gen_jtag : IF IMPLEMENT_JTAG = TRUE GENERATE
-        jtag_inst : cycloneive_jtag
-        PORT MAP(
-            tms         => altera_reserved_tms,
-            tck         => altera_reserved_tck,
-            tdi         => altera_reserved_tdi,
-            tdo         => altera_reserved_tdo,
-            tdouser     => con_jtag_tdo,
-            tmsutap     => con_jtag_tms,
-            tckutap     => con_jtag_tck,
-            tdiutap     => con_jtag_tdi,
-            shiftuser   => OPEN, -- don't care, dtm has it's own JTAG FSM
-            clkdruser   => OPEN,
-            updateuser  => OPEN,
-            runidleuser => OPEN,
-            usr1user    => OPEN
-        );
-    END GENERATE;
-
-    -- Wishbone interconnect --
     wb_crossbar_inst : ENTITY work.wb_crossbar
         GENERIC MAP(
             -- General --
-            N_MASTERS  => WB_N_MASTERS, -- number of connected masters
-            N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
-            N_OTHERS   => 1,            -- number of interfaces for other slaves not in memory map
-            MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
+            N_MASTERS  => WB_N_MASTERS,          -- number of connected masters
+            N_SLAVES   => WB_N_SLAVES_CROSSBAR,  -- number of connected slaves
+            N_OTHERS   => 1,                     -- number of interfaces for other slaves not in memory map
+            MEMORY_MAP => WB_MEMORY_MAP_CROSSBAR -- memory map of address space
         )
         PORT MAP(
             -- Global control --
             clk_i  => clk_i,  -- global clock, rising edge
             rstn_i => rstn_i, -- global reset, low-active, asyn
             -- Wishbone master interface --
-            wb_masters_i => wb_masters_o,
-            wb_masters_o => wb_masters_i,
+            wb_masters_i => wb_masters_req,
+            wb_masters_o => wb_masters_resp,
             -- Wishbone slave interface(s) --
-            wb_slaves_o => wb_slaves_i,
-            wb_slaves_i => wb_slaves_o,
+            wb_slaves_o => wb_slaves_cross_req,
+            wb_slaves_i => wb_slaves_cross_resp,
             -- Other unmapped Wishbone slave interface(s) --
-            wb_other_slaves_o    => OPEN,
-            wb_other_slaves_i(0) => wb_slave_err_o
+            wb_other_slaves_o => wb_master_cross_req,
+            wb_other_slaves_i => wb_master_cross_resp
+        );
+
+    wb_mux_inst : ENTITY work.wb_mux
+        GENERIC MAP(
+            -- General --
+            N_SLAVES   => WB_N_SLAVES_MUX,  -- number of connected slaves
+            MEMORY_MAP => WB_MEMORY_MAP_MUX -- memory map of address space
+        )
+        PORT MAP(
+            -- Wishbone master interface --
+            wb_master_i => wb_master_cross_req(0),
+            wb_master_o => wb_master_cross_resp(0),
+            -- Wishbone slave interface(s) --
+            wb_slaves_o => wb_slaves_mux_req,
+            wb_slaves_i => wb_slaves_mux_resp
         );
 
     -- IMEM dual-port ROM --
@@ -236,8 +222,8 @@ BEGIN
             clk_i  => clk_i,  -- global clock, rising edge
             rstn_i => rstn_i, -- global reset, low-active, asyn
             -- Wishbone slave interfaces --
-            wb_slaves_i => wb_slaves_i(1 DOWNTO 0), -- control and data from master to slave
-            wb_slaves_o => wb_slaves_o(1 DOWNTO 0)  -- status and data from slave to master
+            wb_slaves_i => wb_slaves_cross_req(1 DOWNTO 0), -- control and data from master to slave
+            wb_slaves_o => wb_slaves_cross_resp(1 DOWNTO 0) -- status and data from slave to master
         );
 
     -- SDRAM Controller --
@@ -252,8 +238,8 @@ BEGIN
                 clk_i  => clk_i,  -- global clock, rising edge
                 rstn_i => rstn_i, -- global reset, low-active, asyn
                 -- Wishbone slave interface --
-                wb_slave_i => wb_slaves_i(2),
-                wb_slave_o => wb_slaves_o(2),
+                wb_slave_i => wb_slaves_cross_req(2),
+                wb_slave_o => wb_slaves_cross_resp(2),
                 -- SDRAM --
                 sdram_addr  => sdram_addr,  -- addr
                 sdram_ba    => sdram_ba,    -- ba
@@ -280,10 +266,10 @@ BEGIN
                     clk_i  => clk_i,  -- global clock, rising edge
                     rstn_i => rstn_i, -- global reset, low-active, asyn
                     -- Wishbone slave interfaces --
-                    wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
+                    wb_slaves_i(0) => wb_slaves_cross_req(2), -- control and data from master to slave
                     wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
-                    wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
-                    wb_slaves_o(1) => wb_slave_dummy
+                    wb_slaves_o(0) => wb_slaves_cross_resp(2), -- status and data from slave to master
+                    wb_slaves_o(1) => wb_slave_dummy_resp
                 );
         END GENERATE;
         gen_sim : IF SIMULATION = TRUE GENERATE
@@ -296,12 +282,54 @@ BEGIN
                     clk_i  => clk_i,  -- global clock, rising edge
                     rstn_i => rstn_i, -- global reset, low-active, asyn
                     -- Wishbone slave interfaces --
-                    wb_slaves_i(0) => wb_slaves_i(2), -- control and data from master to slave
+                    wb_slaves_i(0) => wb_slaves_cross_req(2), -- control and data from master to slave
                     wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
-                    wb_slaves_o(0) => wb_slaves_o(2), -- status and data from slave to master
-                    wb_slaves_o(1) => wb_slave_dummy
+                    wb_slaves_o(0) => wb_slaves_cross_resp(2), -- status and data from slave to master
+                    wb_slaves_o(1) => wb_slave_dummy_resp
                 );
         END GENERATE;
+    END GENERATE;
+
+
+    -- NEORV32 IO Modules ---------------------------------------------------------------------
+    -- -------------------------------------------------------------------------------------------
+    neorv32_wb_gpio_inst : ENTITY work.neorv32_wb_gpio
+        GENERIC MAP(
+            GPIO_NUM => 8 -- number of GPIO input/output pairs (0..64)
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk_i,  -- global clock, rising edge
+            rstn_i => rstn_i, -- global reset, low-active, async
+            -- Wishbone slave interface --
+            wb_slave_i => wb_slaves_mux_req(1),  -- control and data from master to slave
+            wb_slave_o => wb_slaves_mux_resp(1), -- status and data from slave to master
+            -- parallel io --
+            gpio_o => con_gpio_o,
+            gpio_i => (OTHERS => '0')
+        );
+
+    -- GPIO output --
+    gpio0_o <= con_gpio_o(7 DOWNTO 0);
+
+    -- JTAG atom --
+    gen_jtag : IF IMPLEMENT_JTAG = TRUE GENERATE
+        jtag_inst : cycloneive_jtag
+        PORT MAP(
+            tms         => altera_reserved_tms,
+            tck         => altera_reserved_tck,
+            tdi         => altera_reserved_tdi,
+            tdo         => altera_reserved_tdo,
+            tdouser     => con_jtag_tdo,
+            tmsutap     => con_jtag_tms,
+            tckutap     => con_jtag_tck,
+            tdiutap     => con_jtag_tdi,
+            shiftuser   => OPEN, -- don't care, dtm has it's own JTAG FSM
+            clkdruser   => OPEN,
+            updateuser  => OPEN,
+            runidleuser => OPEN,
+            usr1user    => OPEN
+        );
     END GENERATE;
 
 END ARCHITECTURE top_arch;
