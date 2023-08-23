@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wb_riscv_clint_tb
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2023-08-22, leuen4
 --                              initial version
+--                          0.2, 2023-08-24, leuen4
+--                              test writing to MTIME register
 -- =============================================================================
 
 LIBRARY ieee;
@@ -161,10 +163,17 @@ BEGIN
             SEVERITY failure;
 
         -- MTIME (hi + lo) should be some empirically found value.
-        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"0000_009a");
+        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"0000_008a");
         wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bffc", x"0000_0000");
         -- MTIME should have been incremented, value empirically found.
-        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"0000_00a0");
+        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"0000_008e");
+        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bffc", x"0000_0000");
+        -- MTIME.lo can be written and overflows afterwards.
+        wb_sim_write32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"ffff_ffff");
+        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bff8", x"0000_0000");
+        -- MTIME.hi did increment and can be reset.
+        wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bffc", x"0000_0001");
+        wb_sim_write32(clk, wb_slave_rx, wb_slave_tx, x"0000_bffc", x"0000_0000");
         wb_sim_read32(clk, wb_slave_rx, wb_slave_tx, x"0000_bffc", x"0000_0000");
 
         -- Report successful test.

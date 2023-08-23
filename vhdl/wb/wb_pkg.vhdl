@@ -66,6 +66,9 @@ PACKAGE wb_pkg IS
     -- Array of natural type
     TYPE natural_arr_t IS ARRAY (NATURAL RANGE <>) OF NATURAL;
 
+    -- Return ceiled log2 of integer numbers i.e. log2(32) = 5, log2(33) = 6.
+    FUNCTION log2(CONSTANT n : NATURAL) RETURN NATURAL;
+
     -- Function to calculate the MSB bit position of the address that addresses
     -- the data inside the slave based on the data space given in the memory
     -- map. E.g. slave with 4 * 32 bits of data uses 16 addresses and as such
@@ -95,11 +98,16 @@ PACKAGE wb_pkg IS
 END PACKAGE wb_pkg;
 
 PACKAGE BODY wb_pkg IS
+    FUNCTION log2(CONSTANT n : NATURAL) RETURN NATURAL IS
+    BEGIN
+        RETURN NATURAL(ceil(log2(real(n))));
+    END log2;
+
     FUNCTION wb_get_slave_address_ranges (memory_map : wb_map_t) RETURN natural_arr_t IS
         VARIABLE address_ranges : natural_arr_t(memory_map'length - 1 DOWNTO 0);
     BEGIN
         FOR i IN memory_map'length - 1 DOWNTO 0 LOOP
-            address_ranges(i) := INTEGER(ceil(log2(real(memory_map(i).SIZE))));
+            address_ranges(i) := log2(memory_map(i).SIZE);
         END LOOP;
         RETURN address_ranges;
     END FUNCTION;

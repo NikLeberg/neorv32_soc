@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wb_riscv_clint
 --
@@ -34,6 +34,8 @@
 --
 -- Changes:                 0.1, 2023-08-21, leuen4
 --                              initial version
+--                          0.2, 2023-08-24, leuen4
+--                              reduce LUT usage, implement mtime write
 -- =============================================================================
 
 LIBRARY ieee;
@@ -62,83 +64,98 @@ END ENTITY wb_riscv_clint;
 
 ARCHITECTURE no_target_specific OF wb_riscv_clint IS
 
+    CONSTANT HART_BITS : NATURAL := log2(N_HARTS); -- how many bits to represent
+
     -- memory mapped registers
     SIGNAL msip_regs : STD_ULOGIC_VECTOR(N_HARTS - 1 DOWNTO 0) := (OTHERS => '0'); -- software interrupt
     TYPE mtimecmp_regs_t IS ARRAY (NATURAL RANGE <>) OF UNSIGNED(63 DOWNTO 0);
     SIGNAL mtimecmp_regs : mtimecmp_regs_t(N_HARTS - 1 DOWNTO 0); -- timer compare
     SIGNAL mtime_reg : UNSIGNED(63 DOWNTO 0) := (OTHERS => '0'); -- hardware timer
 
+    -- helper signals
+    SIGNAL access_msip, access_mtimecmp_lo, access_mtimecmp_hi, access_mtime_lo, access_mtime_hi : STD_ULOGIC;
+    SIGNAL read_access_selector : STD_ULOGIC_VECTOR(4 DOWNTO 0);
+    SIGNAL msip_hart_id, mtimecmp_hart_id : INTEGER RANGE 0 TO N_HARTS - 1;
+
 BEGIN
 
-    -- Access to registers.
-    reg_access : PROCESS (clk_i) IS
-        VARIABLE msip_hart_id : INTEGER RANGE 0 TO N_HARTS - 1;
-        VARIABLE mtimecmp_hart_id : INTEGER RANGE 0 TO N_HARTS - 1;
+    -- Decode wishbone access request:
+    --  > access to msip registers, offset 0x0000 - 0x3ffc
+    access_msip <= '1' WHEN (wb_slave_i.stb = '1') AND (wb_slave_i.adr(15 DOWNTO 14) = "00") ELSE
+        '0';
+    --  > access to mtimecmp registers, offset 0x4000 - 0xbff0
+    access_mtimecmp_lo <= (NOT (access_msip OR access_mtime_lo OR access_mtime_hi)) AND (NOT wb_slave_i.adr(2));
+    access_mtimecmp_hi <= (NOT (access_msip OR access_mtime_lo OR access_mtime_hi)) AND wb_slave_i.adr(2);
+    --  > access to mtime register, offset 0xbff8
+    access_mtime_lo <= '1' WHEN (wb_slave_i.stb = '1') AND (wb_slave_i.adr(15 DOWNTO 3) = "1011111111111") AND (wb_slave_i.adr(2) = '0') ELSE
+        '0';
+    access_mtime_hi <= '1' WHEN (wb_slave_i.stb = '1') AND (wb_slave_i.adr(15 DOWNTO 3) = "1011111111111") AND (wb_slave_i.adr(2) = '1') ELSE
+        '0';
+
+    -- Convert accessed address to hart number.
+    msip_hart_id <= to_integer(UNSIGNED(wb_slave_i.adr(HART_BITS + 1 DOWNTO 2)));
+    mtimecmp_hart_id <= to_integer(UNSIGNED(wb_slave_i.adr(HART_BITS + 2 DOWNTO 3)));
+
+    -- Access to MSIP registers.
+    msip_access : PROCESS (clk_i) IS
     BEGIN
         IF rising_edge(clk_i) THEN
             IF rstn_i = '0' THEN
                 msip_regs <= (OTHERS => '0');
-                mtimecmp_regs <= (OTHERS => (OTHERS => '0'));
-                wb_slave_o.ack <= '0';
-                wb_slave_o.err <= '0';
-            ELSIF wb_slave_i.stb = '1' THEN
-                IF wb_slave_i.adr(15 DOWNTO 14) = "00" THEN
-                    -- Access to msip registers, offset 0x0000 - 0x3ffc.
-                    msip_hart_id := to_integer(UNSIGNED(wb_slave_i.adr(13 DOWNTO 2)));
-                    IF wb_slave_i.we = '1' THEN
-                        msip_regs(msip_hart_id) <= wb_slave_i.dat(0);
-                    ELSE
-                        wb_slave_o.dat <= x"0000000" & "000" & msip_regs(msip_hart_id);
-                    END IF;
-                ELSIF wb_slave_i.adr(15 DOWNTO 3) = "1011111111111" THEN
-                    -- Access to mtime register, offset 0xbff8.
-                    IF wb_slave_i.we = '1' THEN
-                        -- ToDo: write access
-                    ELSE
-                        IF wb_slave_i.adr(2) = '0' THEN -- lower word
-                            wb_slave_o.dat <= STD_ULOGIC_VECTOR(mtime_reg(31 DOWNTO 0));
-                        ELSE -- upper word
-                            wb_slave_o.dat <= STD_ULOGIC_VECTOR(mtime_reg(63 DOWNTO 32));
-                        END IF;
-                    END IF;
-                ELSE
-                    -- Access to mtimecmp registers, offset 0x4000 - 0xbff0.
-                    mtimecmp_hart_id := to_integer(UNSIGNED(wb_slave_i.adr(13 DOWNTO 3)));
-                    IF wb_slave_i.we = '1' THEN
-                        IF wb_slave_i.adr(2) = '0' THEN -- lower word
-                            mtimecmp_regs(mtimecmp_hart_id)(31 DOWNTO 0) <= UNSIGNED(wb_slave_i.dat);
-                        ELSE -- upper word
-                            mtimecmp_regs(mtimecmp_hart_id)(63 DOWNTO 32) <= UNSIGNED(wb_slave_i.dat);
-                        END IF;
-                    ELSE
-                        IF wb_slave_i.adr(2) = '0' THEN -- lower word
-                            wb_slave_o.dat <= STD_ULOGIC_VECTOR(mtimecmp_regs(mtimecmp_hart_id)(31 DOWNTO 0));
-                        ELSE -- upper word
-                            wb_slave_o.dat <= STD_ULOGIC_VECTOR(mtimecmp_regs(mtimecmp_hart_id)(63 DOWNTO 32));
-                        END IF;
-                    END IF;
-                END IF;
+            ELSIF (access_msip = '1' AND wb_slave_i.we = '1') THEN
+                msip_regs(msip_hart_id) <= wb_slave_i.dat(0);
             END IF;
-            -- Acknowledge every slave access and generate no errors.
-            -- ToDo: Generate error for non implemented harts.
-            wb_slave_o.ack <= wb_slave_i.stb;
-            wb_slave_o.err <= '0';
         END IF;
-    END PROCESS reg_access;
+    END PROCESS msip_access;
 
-    -- Machine Timer, monotonically increasing with each clock tick.
-    mtime_proc : PROCESS (clk_i) IS
+    -- Access to MTIMECMP registers.
+    mtimecmp_access : PROCESS (clk_i) IS
+    BEGIN
+        IF rising_edge(clk_i) THEN
+            IF rstn_i = '0' THEN
+                mtimecmp_regs <= (OTHERS => (OTHERS => '0'));
+            ELSIF (access_mtimecmp_lo = '1' AND wb_slave_i.we = '1') THEN
+                mtimecmp_regs(mtimecmp_hart_id)(31 DOWNTO 0) <= UNSIGNED(wb_slave_i.dat);
+            ELSIF (access_mtimecmp_hi = '1' AND wb_slave_i.we = '1') THEN
+                mtimecmp_regs(mtimecmp_hart_id)(63 DOWNTO 32) <= UNSIGNED(wb_slave_i.dat);
+            END IF;
+        END IF;
+    END PROCESS mtimecmp_access;
+
+    -- Access to MTIME register.
+    mtime_access : PROCESS (clk_i) IS
     BEGIN
         IF rising_edge(clk_i) THEN
             IF rstn_i = '0' THEN
                 mtime_reg <= (OTHERS => '0');
+            ELSIF (access_mtime_lo = '1' AND wb_slave_i.we = '1') THEN
+                mtime_reg(31 DOWNTO 0) <= UNSIGNED(wb_slave_i.dat);
+            ELSIF (access_mtime_hi = '1' AND wb_slave_i.we = '1') THEN
+                mtime_reg(63 DOWNTO 32) <= UNSIGNED(wb_slave_i.dat);
             ELSE
+                -- if no access: count time up
                 mtime_reg <= mtime_reg + 1;
             END IF;
         END IF;
-    END PROCESS mtime_proc;
+    END PROCESS mtime_access;
 
-    -- interrupt outputs
+    -- Return read register.
+    read_access_selector <= (access_msip & access_mtimecmp_lo & access_mtimecmp_hi & access_mtime_lo & access_mtime_hi);
+    -- use a with * select to prevent tools from inferring priority encoder
+    WITH read_access_selector SELECT
+        wb_slave_o.dat <= (x"0000000" & "000" & msip_regs(msip_hart_id)) WHEN "10000",
+        STD_ULOGIC_VECTOR(mtimecmp_regs(mtimecmp_hart_id)(31 DOWNTO 0)) WHEN "01000",
+        STD_ULOGIC_VECTOR(mtimecmp_regs(mtimecmp_hart_id)(63 DOWNTO 32)) WHEN "00100",
+        STD_ULOGIC_VECTOR(mtime_reg(31 DOWNTO 0)) WHEN "00010",
+        STD_ULOGIC_VECTOR(mtime_reg(63 DOWNTO 32)) WHEN "00001",
+        (OTHERS => '0') WHEN OTHERS;
+
+    -- Acknowledge every slave access and generate no errors.
+    -- ToDo: Generate error for non implemented harts.
+    wb_slave_o.ack <= wb_slave_i.stb;
+    wb_slave_o.err <= '0';
+
+    -- Interrupt outputs
     msw_irq_o <= msip_regs;
     time_comparator : FOR i IN N_HARTS - 1 DOWNTO 0 GENERATE
         mtime_irq_o(i) <= '1' WHEN mtime_reg >= mtimecmp_regs(i) ELSE
