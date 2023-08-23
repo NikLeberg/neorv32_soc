@@ -183,7 +183,7 @@
         },
         {
             "label": "sw-install-sim",
-            "command": "make USER_FLAGS+='-DSIMULATION=1' clean_all install",
+            "command": "make CLI_FLAGS+='-DSIMULATION=1' clean_all install",
             "options": {
                 "cwd": "${workspaceFolder}/sw"
             },

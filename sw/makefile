@@ -8,8 +8,15 @@ RISCV_PREFIX = riscv32-unknown-elf-
 MARCH = rv32ima_zicsr
 
 # User flags for additional configuration (will be added to compiler flags)
+USER_FLAGS := $(CLI_FLAGS)
 USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=8k
 USER_FLAGS += -Og
+
+# Change flags if we are building for the sumulation.
+ifneq (,$(findstring SIMULATION,$(USER_FLAGS)))
+USER_FLAGS += -DUART0_SIM_MODE
+USER_FLAGS += -DUART1_SIM_MODE
+endif
 
 # Include the common neorv32 buildsystem. Provides targets like exe, bin etc.
 include $(NEORV32_HOME)/sw/common/common.mk

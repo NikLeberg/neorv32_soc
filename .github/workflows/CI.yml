@@ -21,7 +21,7 @@ jobs:
     - name: Build Software (for Sim)
       run: |
         cd sw
-        make USER_FLAGS+='-DSIMULATION=1' exe install
+        make CLI_FLAGS+='-DSIMULATION=1' exe install
 
     - name: Run Simulation
       run: |
