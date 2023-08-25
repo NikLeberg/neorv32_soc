@@ -1,6 +1,7 @@
 [submodule "lib/neorv32"]
 	path = lib/neorv32
 	url = https://github.com/NikLeberg/neorv32.git
+	branch = smp
 [submodule "lib/FreeRTOS"]
 	path = lib/FreeRTOS
 	url = https://github.com/NikLeberg/FreeRTOS.git
