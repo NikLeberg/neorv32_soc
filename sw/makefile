@@ -18,6 +18,10 @@ USER_FLAGS += -DUART0_SIM_MODE
 USER_FLAGS += -DUART1_SIM_MODE
 endif
 
+# Add application sources
+APP_SRC += $(wildcard ./src/*.c) $(wildcard ./src/*.s) $(wildcard ./src/*.cpp) $(wildcard ./src/*.S)
+APP_INC += -I ./include
+
 # Include the common neorv32 buildsystem. Provides targets like exe, bin etc.
 include $(NEORV32_HOME)/sw/common/common.mk
 

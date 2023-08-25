@@ -11,6 +11,7 @@
 
 
 #include <neorv32.h>
+#include "smp.h"
 
 void delay_ms(uint32_t time_ms) {
 
@@ -38,24 +39,12 @@ void delay_ms(uint32_t time_ms) {
                  : [cnt_r] "r"(iterations));
 }
 
-static uint32_t lock_val = 0; // 0 = unlocked, 1 = locked
-void lock(void) {
-    uint32_t val, status;
-    do {
-        val = neorv32_cpu_load_reservate_word((uint32_t)&lock_val);
-        if (val == 1) { // stil locked, store same value back
-            status = neorv32_cpu_store_conditional_word((uint32_t)&lock_val, val);
-        } else { // unlocked, set lock
-            status = neorv32_cpu_store_conditional_word((uint32_t)&lock_val, 1);
-        }
-    } while (val == 1 || status == 1);
+void msi_handler(void) {
+    uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
+    neorv32_cpu_store_unsigned_word(0xf0000000 + 4 * hart_id, 0);
 }
-void unlock(void) {
-    // We could write directly to lock_val but then the dcache could interfere.
-    // Here we choose to use lr/sc again as it always bypasses the dcache.
-    (void)neorv32_cpu_load_reservate_word((uint32_t)&lock_val);
-    (void)neorv32_cpu_store_conditional_word((uint32_t)&lock_val, 0);
-}
+
+static smp_spinlock_t lock = SMP_SPINLOCK_INIT;
 
 /**
  * @brief Main function
@@ -67,10 +56,20 @@ int main() {
     // let each hart blink its own led
     uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
     uint32_t delay = (128 << hart_id);
+
+    if (hart_id == 0) {
+        delay_ms(32);
+        // enable other cores with msi interrupt aka ipi
+        neorv32_cpu_store_unsigned_word(0xf0000004, 1);
+        // neorv32_cpu_store_unsigned_word(0xf0000008, 1);
+        // neorv32_cpu_store_unsigned_word(0xf000000c, 1);
+        // neorv32_cpu_store_unsigned_word(0xf0000010, 1);
+    }
+
     for (;;) {
-        lock();
+        smp_spinlock_lock(&lock);
         neorv32_gpio_pin_toggle(hart_id);
-        unlock();
+        smp_spinlock_unlock(&lock);
         delay_ms(delay);
     }
 

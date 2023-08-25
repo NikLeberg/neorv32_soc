@@ -99,7 +99,7 @@ ARCHITECTURE top_arch OF top IS
     END COMPONENT;
 
     CONSTANT CLOCK_FREQUENCY : POSITIVE := 50000000; -- clock frequency of clk_i in Hz
-    CONSTANT NUM_HARTS : POSITIVE := 5; -- number of implemented harts i.e. CPUs
+    CONSTANT NUM_HARTS : POSITIVE := 2; -- number of implemented harts i.e. CPUs
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
@@ -114,8 +114,8 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT WB_N_SLAVES_MUX : NATURAL := 2;
     CONSTANT WB_MEMORY_MAP_CROSSBAR : wb_map_t :=
     (
-    (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port a)
-    (x"0000_0000", 32 * 1024), -- IMEM, 32 KB (port b)
+    (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port a)
+    (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port b)
     (x"8000_0000", 32 * 1024 * 1024) -- SDRAM, 32 MB
     );
     CONSTANT WB_MEMORY_MAP_MUX : wb_map_t :=
