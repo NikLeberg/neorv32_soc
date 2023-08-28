@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  neorv32_cpu_smp
 --
@@ -19,21 +19,23 @@
 -- Note 2:                  This is a work in progress! Many things need to be
 --                          fixed or implemented before this can be a even
 --                          remotely efficient and usable SMP system:
---                          - [ ] allow harts to reset eachother
+--                          - [x] allow harts to reset eachother
 --                          - [ ] add L2 cache with coherency
---                          - [ ] implement mailbox system for IPC?
+--                          - [-] implement mailbox system for IPC?
 --                          - [x] implement efficient crossbar switch
 --                          - [x] adapt default IMEM to be dual-port
 --                          - [ ] add software support i.e. FreeRTOS
 --                                > see https://github.com/raspberrypi/pico-sdk
 --                          - [ ] where is (shall be) the stack of the smp cpus?
---                          - [ ] A extension support
+--                          - [x] A extension support
 --                                > emulation over traps with lr sc possible
 --
 -- Changes:                 0.1, 2023-04-16, leuen4
 --                              initial version
 --                          0.2, 2023-04-23, leuen4
 --                              combine d and i Wishbone bus into single array
+--                          0.3, 2023-08-28, leuen4
+--                              add signals for on-chip debuggers core interface
 -- =============================================================================
 
 LIBRARY ieee;
@@ -51,6 +53,9 @@ ENTITY neorv32_cpu_smp IS
         CLOCK_FREQUENCY   : NATURAL;          -- clock frequency of clk_i in Hz
         NUM_HARTS         : NATURAL;          -- number of implemented harts i.e. CPUs
         INT_BOOTLOADER_EN : BOOLEAN := false; -- boot configuration: true = boot explicit bootloader; false = boot from int/ext (I)MEM
+
+        -- On-Chip Debugger (OCD) --
+        ON_CHIP_DEBUGGER_EN : BOOLEAN := false; -- implement on-chip debugger
 
         -- Internal Instruction Cache (iCACHE) --
         ICACHE_EN            : BOOLEAN := false; -- implement instruction cache
@@ -75,7 +80,12 @@ ENTITY neorv32_cpu_smp IS
         -- CPU interrupts --
         mti_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine timer interrupt
         msi_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine software interrupt
-        mei_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L')  -- risc-v machine external interrupt
+        mei_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => 'L'); -- risc-v machine external interrupt
+
+        -- debug core interface (DCI) --
+        dci_ndmrstn_i   : IN STD_ULOGIC;                                -- soc reset (all harts)
+        dci_halt_req_i  : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- request hart to halt (enter debug mode)
+        dci_cpu_debug_o : OUT STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) -- cpu is in debug mode
     );
 END ENTITY neorv32_cpu_smp;
 
@@ -88,30 +98,15 @@ ARCHITECTURE no_target_specific OF neorv32_cpu_smp IS
     SIGNAL rstn_int_sreg : STD_ULOGIC_VECTOR(3 DOWNTO 0);
     SIGNAL rstn_int : STD_ULOGIC;
 
-    -- CPU status --
-    TYPE cpu_status_t IS RECORD
-        cpu_debug : STD_ULOGIC; -- cpu is in debug mode
-        cpu_sleep : STD_ULOGIC; -- cpu is in sleep mode
-        i_fence : STD_ULOGIC; -- instruction fence
-        d_fence : STD_ULOGIC; -- data fence
-    END RECORD;
-    TYPE cpu_status_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF cpu_status_t;
-    SIGNAL cpu_s : cpu_status_arr_t;
+    -- advanced memory control --
+    SIGNAL i_fence : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- instruction fence
+    SIGNAL d_fence : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0); -- data fence
 
     -- bus interface --
     TYPE bus_req_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_req_t;
     TYPE bus_rsp_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF bus_rsp_t;
     SIGNAL i_cpu_req, i_cache_req, d_cpu_req : bus_req_arr_t;
     SIGNAL i_cpu_rsp, i_cache_rsp, d_cpu_rsp : bus_rsp_arr_t;
-
-    -- Wishbone bus gateway FSM --
-    TYPE wb_bus_state_t IS RECORD
-        cyc : STD_ULOGIC; -- cycle in progress
-        we : STD_ULOGIC; -- read = '0' / write = '1'
-        ack : STD_ULOGIC;
-    END RECORD;
-    TYPE wb_bus_state_arr_t IS ARRAY (NUM_HARTS - 1 DOWNTO 0) OF wb_bus_state_t;
-    SIGNAL wb_bus_i, wb_bus_d : wb_bus_state_arr_t;
 
 BEGIN
 
@@ -127,10 +122,9 @@ BEGIN
             rstn_int_sreg <= (OTHERS => '0');
             rstn_int <= '0';
         ELSIF falling_edge(clk_i) THEN -- inverted clock to release reset _before_ all FFs trigger (rising edge)
-            -- internal reset --
+            -- stabilize external reset input
             rstn_int_sreg <= rstn_int_sreg(rstn_int_sreg'left - 1 DOWNTO 0) & '1'; -- active for at least <rstn_int_sreg'size> clock cycles
-            -- reset nets --
-            rstn_int <= and_reduce_f(rstn_int_sreg); -- internal reset (via reset pin, WDT or OCD)
+            rstn_int <= and_reduce_f(rstn_int_sreg) AND dci_ndmrstn_i; -- internal reset (via reset pin or OCD)
         END IF;
     END PROCESS reset_generator;
 
@@ -150,23 +144,23 @@ BEGIN
                 CPU_DEBUG_PARK_ADDR => dm_park_entry_c,                       -- cpu debug mode parking loop entry address
                 CPU_DEBUG_EXC_ADDR  => dm_exc_entry_c,                        -- cpu debug mode exception entry address
                 -- RISC-V CPU Extensions --
-                CPU_EXTENSION_RISCV_A        => true,  -- implement atomic memory operations extension?
-                CPU_EXTENSION_RISCV_B        => false, -- implement bit-manipulation extension?
-                CPU_EXTENSION_RISCV_C        => false, -- implement compressed extension?
-                CPU_EXTENSION_RISCV_E        => false, -- implement embedded RF extension?
-                CPU_EXTENSION_RISCV_M        => true,  -- implement mul/div extension?
-                CPU_EXTENSION_RISCV_U        => false, -- implement user mode extension?
-                CPU_EXTENSION_RISCV_Zfinx    => false, -- implement 32-bit floating-point extension (using INT reg!)
-                CPU_EXTENSION_RISCV_Zicntr   => true,  -- implement base counters?
-                CPU_EXTENSION_RISCV_Zihpm    => false, -- implement hardware performance monitors?
-                CPU_EXTENSION_RISCV_Zifencei => true,  -- implement instruction stream sync.?
-                CPU_EXTENSION_RISCV_Zmmul    => false, -- implement multiply-only M sub-extension?
-                CPU_EXTENSION_RISCV_Zxcfu    => false, -- implement custom (instr.) functions unit?
-                CPU_EXTENSION_RISCV_Sdext    => false, -- implement external debug mode extension?
-                CPU_EXTENSION_RISCV_Sdtrig   => false, -- implement debug mode trigger module extension?
+                CPU_EXTENSION_RISCV_A        => true,                -- implement atomic memory operations extension?
+                CPU_EXTENSION_RISCV_B        => false,               -- implement bit-manipulation extension?
+                CPU_EXTENSION_RISCV_C        => false,               -- implement compressed extension?
+                CPU_EXTENSION_RISCV_E        => false,               -- implement embedded RF extension?
+                CPU_EXTENSION_RISCV_M        => true,                -- implement mul/div extension?
+                CPU_EXTENSION_RISCV_U        => false,               -- implement user mode extension?
+                CPU_EXTENSION_RISCV_Zfinx    => false,               -- implement 32-bit floating-point extension (using INT reg!)
+                CPU_EXTENSION_RISCV_Zicntr   => true,                -- implement base counters?
+                CPU_EXTENSION_RISCV_Zihpm    => false,               -- implement hardware performance monitors?
+                CPU_EXTENSION_RISCV_Zifencei => true,                -- implement instruction stream sync.?
+                CPU_EXTENSION_RISCV_Zmmul    => false,               -- implement multiply-only M sub-extension?
+                CPU_EXTENSION_RISCV_Zxcfu    => false,               -- implement custom (instr.) functions unit?
+                CPU_EXTENSION_RISCV_Sdext    => ON_CHIP_DEBUGGER_EN, -- implement external debug mode extension?
+                CPU_EXTENSION_RISCV_Sdtrig   => ON_CHIP_DEBUGGER_EN, -- implement debug mode trigger module extension?
                 -- Extension Options --
-                FAST_MUL_EN   => true, -- use DSPs for M extension's multiplier
-                FAST_SHIFT_EN => true, -- use barrel shifter for shift operations
+                FAST_MUL_EN   => true,  -- use DSPs for M extension's multiplier
+                FAST_SHIFT_EN => false, -- use barrel shifter for shift operations
                 -- Physical Memory Protection (PMP) --
                 PMP_NUM_REGIONS     => 0, -- number of regions (0..16)
                 PMP_MIN_GRANULARITY => 4, -- minimal region granularity in bytes, has to be a power of 2, min 4 bytes
@@ -177,11 +171,11 @@ BEGIN
             PORT MAP(
                 -- global control --
                 clk_i    => clk_i,              -- global clock, rising edge
-                rstn_i   => rstn_int,           -- global reset, low-active, async
-                sleep_o  => cpu_s(i).cpu_sleep, -- cpu is in sleep mode when set
-                debug_o  => cpu_s(i).cpu_debug, -- cpu is in debug mode when set
-                ifence_o => cpu_s(i).i_fence,   -- instruction fence
-                dfence_o => cpu_s(i).d_fence,   -- data fence
+                rstn_i   => rstn_int,           -- internal reset, low-active
+                sleep_o  => OPEN,               -- cpu is in sleep mode when set
+                debug_o  => dci_cpu_debug_o(i), -- cpu is in debug mode when set
+                ifence_o => i_fence(i),         -- instruction fence
+                dfence_o => d_fence(i),         -- data fence
                 -- instruction bus interface --
                 ibus_req_o => i_cpu_req(i), -- request bus
                 ibus_rsp_i => i_cpu_rsp(i), -- response bus
@@ -193,19 +187,15 @@ BEGIN
                 mei_i => mei_i(i),         -- risc-v: machine external interrupt
                 mti_i => mti_i(i),         -- risc-v: machine timer interrupt
                 firq_i => (OTHERS => '0'), -- custom: fast interrupts
-                dbi_i => '0'               -- risc-v debug halt request interrupt
+                dbi_i => dci_halt_req_i(i) -- risc-v: debug halt request interrupt
             );
-
-        -- advanced memory control --
-        fence_o(i) <= cpu_s(i).d_fence; -- indicates an executed FENCE operation
-        fencei_o(i) <= cpu_s(i).i_fence; -- indicates an executed FENCE.I operation
 
         -- convert cpu internal data bus to external Wishbone bus
         neorv32_wb_gateway_dbus : ENTITY work.neorv32_wb_gateway
             PORT MAP(
                 -- Global control --
                 clk_i  => clk_i,    -- global clock, rising edge
-                rstn_i => rstn_int, -- global reset, low-active, async
+                rstn_i => rstn_int, -- internal reset, low-active
                 -- host access --
                 req_i => d_cpu_req(i), -- request bus
                 rsp_o => d_cpu_rsp(i), -- response bus
@@ -228,9 +218,9 @@ BEGIN
                 )
                 PORT MAP(
                     -- global control --
-                    clk_i   => clk_i,            -- global clock, rising edge
-                    rstn_i  => rstn_int,         -- global reset, low-active, async
-                    clear_i => cpu_s(i).i_fence, -- cache clear
+                    clk_i   => clk_i,      -- global clock, rising edge
+                    rstn_i  => rstn_int,   -- internal reset, low-active
+                    clear_i => i_fence(i), -- cache clear
                     -- host controller interface --
                     cpu_req_i => i_cpu_req(i),
                     cpu_rsp_o => i_cpu_rsp(i),
@@ -251,7 +241,7 @@ BEGIN
             PORT MAP(
                 -- Global control --
                 clk_i  => clk_i,    -- global clock, rising edge
-                rstn_i => rstn_int, -- global reset, low-active, async
+                rstn_i => rstn_int, -- internal reset, low-active
                 -- host access --
                 req_i => i_cache_req(i), -- request bus
                 rsp_o => i_cache_rsp(i), -- response bus
@@ -260,5 +250,9 @@ BEGIN
                 wb_master_i => wb_master_i(2 * i + 1)  -- status and data from slave to master
             );
     END GENERATE;
+
+    -- output of internal signals --
+    fence_o <= d_fence; -- indicates an executed FENCE operation
+    fencei_o <= i_fence; -- indicates an executed FENCE.I operation
 
 END ARCHITECTURE no_target_specific;
