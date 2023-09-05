@@ -9,7 +9,7 @@ set lib_name "neorv32"
 set lib_files [glob                                                            \
     ../lib/neorv32/rtl/core/*.vhd                                              \
     ../lib/neorv32/rtl/core/**/*.vhd                                           \
-    ../vhdl/neorv32_debug_dtm_intel/*.vhd                                      \
+    ../vhdl/neorv32_debug/*.vhd                                                \
 ]
 
 # Filter out the default dtm, we use our own custom Intel specific dtm.
