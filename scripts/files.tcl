@@ -35,5 +35,7 @@ set testbenches {
     "wb_crossbar_tb"
     "wb_riscv_clint_tb"
 
+    "neorv32_debug_dm_smp_tb"
+
     "top_tb"
 }
