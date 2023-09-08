@@ -99,7 +99,7 @@ ARCHITECTURE top_arch OF top IS
     END COMPONENT;
 
     CONSTANT CLOCK_FREQUENCY : POSITIVE := 50000000; -- clock frequency of clk_i in Hz
-    CONSTANT NUM_HARTS : POSITIVE := 2; -- number of implemented harts i.e. CPUs
+    CONSTANT NUM_HARTS : POSITIVE := 4; -- number of implemented harts i.e. CPUs
 
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
