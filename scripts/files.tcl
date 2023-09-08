@@ -23,6 +23,9 @@ set entities {
     "neorv32_cpu_smp"
     "neorv32_wb_gpio"
 
+    "neorv32_debug_dm_smp"
+    "neorv32_debug"
+
     "top"
 }
 

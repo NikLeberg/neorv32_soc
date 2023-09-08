@@ -2,18 +2,18 @@
 -- # << NEORV32 - RISC-V-Compatible Debug Module (DM) >>                                           #
 -- # ********************************************************************************************* #
 -- # Compatible to the "Minimal RISC-V External Debug Spec. Version 1.0 [Sdext]" (or v0.13) using  #
--- # "execution-based" debugging scheme (via the program buffer). FOR A SINGLE HART ONLY!          #
+-- # "execution-based" debugging scheme (via the program buffer).                                  #
 -- # ********************************************************************************************* #
 -- # Key features:                                                                                 #
 -- # * register access commands only                                                               #
 -- # * auto-execution commands                                                                     #
--- # * for a single hart only                                                                      #
+-- # * up to 32 harts supported (only one hart may be running program buffer at once)              #
 -- # * 2 general purpose program buffer entries                                                    #
 -- # * 1 general purpose data buffer entry                                                         #
 -- # ********************************************************************************************* #
 -- # BSD 3-Clause License                                                                          #
 -- #                                                                                               #
--- # Copyright (c) 2023, Stephan Nolting. All rights reserved.                                     #
+-- # Copyright (c) 2023, Stephan Nolting and Niklaus Leuenberger. All rights reserved.             #
 -- #                                                                                               #
 -- # Redistribution and use in source and binary forms, with or without modification, are          #
 -- # permitted provided that the following conditions are met:                                     #
@@ -39,6 +39,9 @@
 -- # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED  #
 -- # OF THE POSSIBILITY OF SUCH DAMAGE.                                                            #
 -- # ********************************************************************************************* #
+-- # Original content by Stephan Nolting.                                                          #
+-- # Extended by Niklaus Leuenberger with support for multiple harts.                              #
+-- # ********************************************************************************************* #
 -- # The NEORV32 Processor - https://github.com/stnolting/neorv32              (c) Stephan Nolting #
 -- #################################################################################################
 
@@ -52,13 +55,14 @@ use neorv32.neorv32_package.all;
 entity neorv32_debug_dm_smp is
   generic (
     CPU_BASE_ADDR : std_ulogic_vector(31 downto 0);
-    LEGACY_MODE   : boolean -- false = spec. v1.0, true = spec. v0.13
+    LEGACY_MODE   : boolean;                        -- false = spec. v1.0, true = spec. v0.13
+    NUM_HARTS     : natural range 1 to 32           -- number of implemented harts i.e. CPUs, 1 to 32
   );
   port (
     -- global control --
-    clk_i          : in  std_ulogic; -- global clock line
-    rstn_i         : in  std_ulogic; -- global reset line, low-active
-    cpu_debug_i    : in  std_ulogic; -- CPU is in debug mode
+    clk_i          : in  std_ulogic;                              -- global clock line
+    rstn_i         : in  std_ulogic;                              -- global reset line, low-active
+    cpu_debug_i    : in  std_ulogic_vector(NUM_HARTS-1 downto 0); -- CPU is in debug mode
     -- debug module interface (DMI) --
     dmi_req_i      : in  dmi_req_t; -- request
     dmi_rsp_o      : out dmi_rsp_t; -- response
@@ -66,8 +70,8 @@ entity neorv32_debug_dm_smp is
     bus_req_i      : in  bus_req_t; -- bus request
     bus_rsp_o      : out bus_rsp_t; -- bus response
     -- CPU control --
-    cpu_ndmrstn_o  : out std_ulogic; -- soc reset
-    cpu_halt_req_o : out std_ulogic  -- request hart to halt (enter debug mode)
+    cpu_ndmrstn_o  : out std_ulogic;                             -- soc reset (all harts)
+    cpu_halt_req_o : out std_ulogic_vector(NUM_HARTS-1 downto 0) -- request hart to halt (enter debug mode)
   );
 end neorv32_debug_dm_smp;
 
@@ -77,9 +81,9 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
   -- DM Memory Layout
   -- **********************************************************
   constant dm_code_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"00"); -- base address of code ROM (park loop)
-  constant dm_pbuf_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"40"); -- base address of program buffer (PBUF)
-  constant dm_data_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"80"); -- base address of abstract data buffer (DATA)
-  constant dm_sreg_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"C0"); -- base address of status register (SREG)
+  constant dm_pbuf_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"80"); -- base address of program buffer (PBUF)
+  constant dm_data_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"A0"); -- base address of abstract data buffer (DATA)
+  constant dm_sreg_base_c : std_ulogic_vector(31 downto 0) := std_ulogic_vector(unsigned(CPU_BASE_ADDR) + x"C0"); -- base address of status registers (SREG)
 
   -- **********************************************************
   -- DMI Access
@@ -109,6 +113,9 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
   signal dmi_wren : std_ulogic;
   signal dmi_rden : std_ulogic;
 
+  -- hartsellen -- 
+  constant hartsellen_c : natural := index_size_f(NUM_HARTS);
+
   -- debug module DMI registers / access --
   type progbuf_t is array (0 to 1) of std_ulogic_vector(31 downto 0);
   type dm_reg_t is record
@@ -119,9 +126,10 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
     progbuf                      : progbuf_t;
     command                      : std_ulogic_vector(31 downto 0);
     --
-    halt_req    : std_ulogic;
-    resume_req  : std_ulogic;
-    reset_ack   : std_ulogic;
+    halt_req    : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    resume_req  : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    reset_ack   : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    hartsel     : std_ulogic_vector(hartsellen_c downto 0); -- deliberately one bigger than neccessary! needed to check for nonexistant
     wr_acc_err  : std_ulogic;
     rd_acc_err  : std_ulogic;
     clr_acc_err : std_ulogic;
@@ -158,10 +166,17 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
     illegal_cmd     : std_ulogic;
     cmderr          : std_ulogic_vector(02 downto 0);
     -- hart status --
-    hart_halted     : std_ulogic;
-    hart_resume_req : std_ulogic;
-    hart_resume_ack : std_ulogic;
-    hart_reset      : std_ulogic;
+    hart_halted     : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    hart_resume_req : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    hart_resume_ack : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    hart_reset      : std_ulogic_vector(NUM_HARTS-1 downto 0);
+    -- hartselect --
+    hartsel_vec     : std_ulogic_vector(NUM_HARTS-1 downto 0); -- one-hot decoded hartsel
+    -- selected hart status --
+    sel_havereset   : std_logic;
+    sel_resume_ack  : std_logic;
+    sel_nonexistent : std_logic;
+    sel_halted      : std_logic;
   end record;
   signal dm_ctrl : dm_ctrl_t;
 
@@ -173,35 +188,50 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
   -- CPU Bus and Debug Interfaces
   -- **********************************************************
 
-  -- status and control register - bits --
-  -- for write access we only care about the actual BYTE WRITE ACCESSES! --
-  constant sreg_halt_ack_c      : natural :=  0; -- -/w: CPU is halted in debug mode and waits in park loop
-  constant sreg_resume_req_c    : natural :=  8; -- r/-: DM requests CPU to resume
-  constant sreg_resume_ack_c    : natural :=  8; -- -/w: CPU starts resuming
-  constant sreg_execute_req_c   : natural := 16; -- r/-: DM requests to execute program buffer
-  constant sreg_execute_ack_c   : natural := 16; -- -/w: CPU starts to execute program buffer
-  constant sreg_exception_ack_c : natural := 24; -- -/w: CPU has detected an exception
+  -- status and control register - word offsets --
+  constant sreg_halt_ack_c      : std_ulogic_vector(1 downto 0) := "00"; -- -/w: CPU is halted in debug mode and waits in park loop
+  constant sreg_resume_req_c    : std_ulogic_vector(1 downto 0) := "01"; -- r/-: DM requests CPU to resume
+  constant sreg_resume_ack_c    : std_ulogic_vector(1 downto 0) := "01"; -- -/w: CPU starts resuming
+  constant sreg_execute_req_c   : std_ulogic_vector(1 downto 0) := "10"; -- r/-: DM requests to execute program buffer
+  constant sreg_execute_ack_c   : std_ulogic_vector(1 downto 0) := "10"; -- -/w: CPU starts to execute program buffer
+  constant sreg_exception_ack_c : std_ulogic_vector(1 downto 0) := "11"; -- -/w: CPU has detected an exception
 
   -- code ROM containing "park loop" --
   -- copied manually from 'sw/ocd-firmware/neorv32_debug_mem_code.vhd' --
-  type code_rom_t is array (0 to 15) of std_ulogic_vector(31 downto 0);
+  type code_rom_t is array (0 to 31) of std_ulogic_vector(31 downto 0);
   constant code_rom : code_rom_t := (
-    00 => x"fc0001a3",
-    01 => x"00100073",
-    02 => x"7b241073",
-    03 => x"fc000023",
-    04 => x"fc204403",
-    05 => x"00041c63",
-    06 => x"fc104403",
-    07 => x"fe0408e3",
-    08 => x"fc0000a3",
-    09 => x"7b202473",
-    10 => x"7b200073",
-    11 => x"fc000123",
-    12 => x"7b202473",
-    13 => x"0000100f",
-    14 => x"f4000067",
-    15 => x"00000073"
+    x"f14024f3",
+    x"00100413",
+    x"009414b3",
+    x"fc902623",
+    x"00100073",
+    x"7b241073",
+    x"7b349073",
+    x"f14024f3",
+    x"00100413",
+    x"009414b3",
+    x"fc902023",
+    x"fc802403",
+    x"00947433",
+    x"02041063",
+    x"fc402403",
+    x"00947433",
+    x"fc040ee3",
+    x"fc902223",
+    x"7b202473",
+    x"7b3024f3",
+    x"7b200073",
+    x"fc902423",
+    x"7b202473",
+    x"7b3024f3",
+    x"0000100f",
+    x"f8000067",
+    x"00000073",
+    x"00000073",
+    x"00000073",
+    x"00000073",
+    x"00000073",
+    x"00000073"
   );
 
   -- access helpers --
@@ -209,13 +239,12 @@ architecture neorv32_debug_dm_smp_rtl of neorv32_debug_dm_smp is
 
   -- Debug Core Interface --
   type dci_t is record
-    halt_ack      : std_ulogic; -- CPU (re-)entered HALT state (single-shot)
-    resume_req    : std_ulogic; -- DM wants the CPU to resume when set
-    resume_ack    : std_ulogic; -- CPU starts resuming when set (single-shot)
-    execute_req   : std_ulogic; -- DM wants CPU to execute program buffer when set
-    execute_ack   : std_ulogic; -- CPU starts executing program buffer when set (single-shot)
-    exception_ack : std_ulogic; -- CPU has detected an exception (single-shot)
-    progbuf       : std_ulogic_vector(255 downto 0); -- program buffer, 4 32-bit entries
+    halt_ack      : std_ulogic_vector(NUM_HARTS-1 downto 0); -- CPU (re-)entered HALT state (single-shot)
+    resume_req    : std_ulogic_vector(NUM_HARTS-1 downto 0); -- DM wants the CPU to resume when set
+    resume_ack    : std_ulogic_vector(NUM_HARTS-1 downto 0); -- CPU starts resuming when set (single-shot)
+    execute_req   : std_ulogic_vector(NUM_HARTS-1 downto 0); -- DM wants CPU to execute program buffer when set
+    execute_ack   : std_ulogic_vector(NUM_HARTS-1 downto 0); -- CPU starts executing program buffer when set (single-shot)
+    exception_ack : std_ulogic_vector(NUM_HARTS-1 downto 0); -- CPU has detected an exception (single-shot)
     data_we       : std_ulogic; -- write abstract data
     data_reg      : std_ulogic_vector(31 downto 0); -- memory-mapped data exchange register
   end record;
@@ -243,7 +272,7 @@ begin
       if (dm_reg.dmcontrol_dmactive = '0') then -- DM reset / DM disabled
         dm_ctrl.state         <= CMD_IDLE;
         dm_ctrl.ldsw_progbuf  <= instr_sw_c;
-        dci.execute_req       <= '0';
+        dci.execute_req       <= (others => '0');
         dm_ctrl.pbuf_en       <= '0';
         --
         dm_ctrl.illegal_cmd   <= '0';
@@ -252,7 +281,7 @@ begin
       else -- DM active
 
         -- defaults --
-        dci.execute_req       <= '0';
+        dci.execute_req       <= (others => '0');
         dm_ctrl.illegal_cmd   <= '0';
         dm_ctrl.illegal_state <= '0';
 
@@ -278,7 +307,7 @@ begin
                (dm_reg.command(22 downto 20) = "010") and -- aarsize: has to be 32-bit
                (dm_reg.command(19) = '0') and -- aarpostincrement: not supported
                ((dm_reg.command(17) = '0') or (dm_reg.command(15 downto 05) = "00010000000")) then -- regno: only GPRs are supported: 0x1000..0x101f if transfer is set
-              if (dm_ctrl.hart_halted = '1') then -- CPU is halted
+              if (dm_ctrl.sel_halted = '1') then -- CPU is halted
                 dm_ctrl.state <= CMD_EXE_PREPARE;
               else -- error! CPU is still running
                 dm_ctrl.illegal_state <= '1';
@@ -316,14 +345,14 @@ begin
 
           when CMD_EXE_TRIGGER => -- request CPU to execute command
           -- ------------------------------------------------------------
-            dci.execute_req <= '1'; -- request execution
-            if (dci.execute_ack = '1') then -- CPU starts execution
+            dci.execute_req <= dm_ctrl.hartsel_vec; -- request execution
+            if (or_reduce_f(dci.execute_ack and dm_ctrl.hartsel_vec) = '1') then -- CPU starts execution
               dm_ctrl.state <= CMD_EXE_BUSY;
             end if;
 
           when CMD_EXE_BUSY => -- wait for CPU to finish
           -- ------------------------------------------------------------
-            if (dci.halt_ack = '1') then -- CPU is parked (halted) again -> execution done
+            if (or_reduce_f(dci.halt_ack and dm_ctrl.hartsel_vec) = '1') then -- CPU is parked (halted) again -> execution done
               dm_ctrl.state <= CMD_IDLE;
             end if;
 
@@ -342,7 +371,7 @@ begin
         if (dm_ctrl.cmderr = "000") then -- ready to set new error
           if (dm_ctrl.illegal_state = '1') then -- cannot execute since hart is not in expected state
             dm_ctrl.cmderr <= "100";
-          elsif (dci.exception_ack = '1') then -- exception during execution
+          elsif (or_reduce_f(dci.exception_ack and dm_ctrl.hartsel_vec) = '1') then -- exception during execution
             dm_ctrl.cmderr <= "011";
           elsif (dm_ctrl.illegal_cmd = '1') then -- unsupported command
             dm_ctrl.cmderr <= "010";
@@ -366,53 +395,64 @@ begin
   hart_status: process(rstn_i, clk_i)
   begin
     if (rstn_i = '0') then
-      dm_ctrl.hart_halted     <= '0';
-      dm_ctrl.hart_resume_req <= '0';
-      dm_ctrl.hart_resume_ack <= '0';
-      dm_ctrl.hart_reset      <= '0';
+      dm_ctrl.hart_halted     <= (others => '0');
+      dm_ctrl.hart_resume_req <= (others => '0');
+      dm_ctrl.hart_resume_ack <= (others => '0');
+      dm_ctrl.hart_reset      <= (others => '0');
     elsif rising_edge(clk_i) then
+      for i in 0 to NUM_HARTS-1 loop
 
-      -- HALTED ACK --
-      if (dm_reg.dmcontrol_ndmreset = '1') then
-        dm_ctrl.hart_halted <= '0';
-      elsif (dci.halt_ack = '1') then
-        dm_ctrl.hart_halted <= '1';
-      elsif (dci.resume_ack = '1') then
-        dm_ctrl.hart_halted <= '0';
-      end if;
+        -- HALTED ACK --
+        if (dm_reg.dmcontrol_ndmreset = '1') then
+          dm_ctrl.hart_halted(i) <= '0';
+        elsif (dci.halt_ack(i) = '1') then
+          dm_ctrl.hart_halted(i) <= '1';
+        elsif (dci.resume_ack(i) = '1') then
+          dm_ctrl.hart_halted(i) <= '0';
+        end if;
 
-      -- RESUME REQ --
-      if (dm_reg.dmcontrol_ndmreset = '1') then
-        dm_ctrl.hart_resume_req <= '0';
-      elsif (dm_reg.resume_req = '1') then
-        dm_ctrl.hart_resume_req <= '1';
-      elsif (dci.resume_ack = '1') then
-        dm_ctrl.hart_resume_req <= '0';
-      end if;
+        -- RESUME REQ --
+        if (dm_reg.dmcontrol_ndmreset = '1') then
+          dm_ctrl.hart_resume_req(i) <= '0';
+        elsif (dm_reg.resume_req(i) = '1') then
+          dm_ctrl.hart_resume_req(i) <= '1';
+        elsif (dci.resume_ack(i) = '1') then
+          dm_ctrl.hart_resume_req(i) <= '0';
+        end if;
 
-      -- RESUME ACK --
-      if (dm_reg.dmcontrol_ndmreset = '1') then
-        dm_ctrl.hart_resume_ack <= '0';
-      elsif (dci.resume_ack = '1') then
-        dm_ctrl.hart_resume_ack <= '1';
-      elsif (dm_reg.resume_req = '1') then
-        dm_ctrl.hart_resume_ack <= '0';
-      end if;
+        -- RESUME ACK --
+        if (dm_reg.dmcontrol_ndmreset = '1') then
+          dm_ctrl.hart_resume_ack(i) <= '0';
+        elsif (dci.resume_ack(i) = '1') then
+          dm_ctrl.hart_resume_ack(i) <= '1';
+        elsif (dm_reg.resume_req(i) = '1') then
+          dm_ctrl.hart_resume_ack(i) <= '0';
+        end if;
 
-      -- hart has been RESET --
-      if (dm_reg.dmcontrol_ndmreset = '1') then -- explicit RESET triggered by DM
-        dm_ctrl.hart_reset <= '1';
-      elsif (dm_reg.reset_ack = '1') then
-        dm_ctrl.hart_reset <= '0';
-      end if;
+        -- hart has been RESET --
+        if (dm_reg.dmcontrol_ndmreset = '1') then -- explicit RESET triggered by DM
+          dm_ctrl.hart_reset(i) <= '1';
+        elsif (dm_reg.reset_ack(i) = '1') then
+          dm_ctrl.hart_reset(i) <= '0';
+        end if;
 
+      end loop;
     end if;
   end process hart_status;
+
+  -- state of currently selected hart dmstatus register --
+  dm_ctrl.sel_havereset   <= or_reduce_f(dm_ctrl.hart_reset      and dm_ctrl.hartsel_vec);
+  dm_ctrl.sel_resume_ack  <= or_reduce_f(dm_ctrl.hart_resume_ack and dm_ctrl.hartsel_vec);
+  dm_ctrl.sel_nonexistent <= '0' when unsigned(dm_reg.hartsel) < NUM_HARTS else '1'; -- no more harts exist above
+  dm_ctrl.sel_halted      <= or_reduce_f(dm_ctrl.hart_halted     and dm_ctrl.hartsel_vec);
 
 
   -- Debug Module Interface - Write Access --------------------------------------------------
   -- -------------------------------------------------------------------------------------------
   dmi_write_access: process(rstn_i, clk_i)
+    variable hartsel : std_ulogic_vector(hartsellen_c downto 0);
+    variable hartsel_vec_full : std_ulogic_vector(2**hartsellen_c-1 downto 0);
+    variable hartsel_vec : std_ulogic_vector(NUM_HARTS-1 downto 0);
   begin
     if (rstn_i = '0') then
       dm_reg.dmcontrol_ndmreset <= '0'; -- no system SoC reset
@@ -424,17 +464,19 @@ begin
       dm_reg.command <= (others => '0');
       dm_reg.progbuf <= (others => instr_nop_c);
       --
-      dm_reg.halt_req    <= '0';
-      dm_reg.resume_req  <= '0';
-      dm_reg.reset_ack   <= '0';
-      dm_reg.wr_acc_err  <= '0';
-      dm_reg.clr_acc_err <= '0';
-      dm_reg.autoexec_wr <= '0';
+      dm_reg.halt_req     <= (others => '0');
+      dm_reg.resume_req   <= (others => '0');
+      dm_reg.reset_ack    <= (others => '0');
+      dm_reg.hartsel      <= (others => '0');
+      dm_reg.wr_acc_err   <= '0';
+      dm_reg.clr_acc_err  <= '0';
+      dm_reg.autoexec_wr  <= '0';
+      dm_ctrl.hartsel_vec <= (others => '0');
     elsif rising_edge(clk_i) then
 
       -- default --
-      dm_reg.resume_req  <= '0';
-      dm_reg.reset_ack   <= '0';
+      dm_reg.resume_req  <= (others => '0');
+      dm_reg.reset_ack   <= (others => '0');
       dm_reg.wr_acc_err  <= '0';
       dm_reg.clr_acc_err <= '0';
       dm_reg.autoexec_wr <= '0';
@@ -444,9 +486,26 @@ begin
 
         -- debug module control --
         if (dmi_req_i.addr = addr_dmcontrol_c) then
-          dm_reg.halt_req           <= dmi_req_i.data(31); -- haltreq (-/w): write 1 to request halt; has to be cleared again by debugger
-          dm_reg.resume_req         <= dmi_req_i.data(30); -- resumereq (-/w1): write 1 to request resume; auto-clears
-          dm_reg.reset_ack          <= dmi_req_i.data(28); -- ackhavereset (-/w1): write 1 to ACK reset; auto-clears
+          -- hartsel{lo,hi} (r/w): hartselect, convert to bitvector and save to variable, this write applies to the new value of hartsel
+          dm_reg.hartsel <= dmi_req_i.data(hartsellen_c+16 downto 16);
+          hartsel_vec_full := (others => '0');
+          hartsel_vec_full(to_integer(unsigned(dmi_req_i.data(hartsellen_c+15 downto 16)))) := '1';
+          hartsel_vec :=hartsel_vec_full(NUM_HARTS-1 downto 0);
+          dm_ctrl.hartsel_vec <= hartsel_vec;
+          -- haltreq (-/w): write 1 to request halt; has to be cleared again by debugger
+          if (dmi_req_i.data(31) = '1' ) then
+            dm_reg.halt_req <= dm_reg.halt_req or hartsel_vec;
+          else
+            dm_reg.halt_req <= dm_reg.halt_req and (not hartsel_vec);
+          end if;
+          -- resumereq (-/w1): write 1 to request resume; auto-clears
+          if (dmi_req_i.data(30) = '1' ) then
+            dm_reg.resume_req <= hartsel_vec;
+          end if;
+          -- ackhavereset (-/w1): write 1 to ACK reset; auto-clears
+          if (dmi_req_i.data(28) = '1' ) then
+            dm_reg.reset_ack <= hartsel_vec;
+          end if;
           dm_reg.dmcontrol_ndmreset <= dmi_req_i.data(01); -- ndmreset (r/w): soc reset
           dm_reg.dmcontrol_dmactive <= dmi_req_i.data(00); -- dmactive (r/w): DM reset
         end if;
@@ -515,7 +574,7 @@ begin
   dci.data_we <= '1' when (dmi_wren = '1') and (dmi_req_i.addr = addr_data0_c) and (dm_ctrl.busy = '0') else '0';
 
   -- CPU halt/resume request --
-  cpu_halt_req_o <= dm_reg.halt_req and dm_reg.dmcontrol_dmactive; -- single-shot
+  cpu_halt_req_o <= dm_reg.halt_req when (dm_reg.dmcontrol_dmactive = '1') else (others => '0'); -- single-shot
   dci.resume_req <= dm_ctrl.hart_resume_req; -- active until explicitly cleared
 
   -- SoC reset --
@@ -545,18 +604,18 @@ begin
           dmi_rsp_o.data(31 downto 23) <= (others => '0');           -- reserved (r/-)
           dmi_rsp_o.data(22)           <= '1';                       -- impebreak (r/-): there is an implicit ebreak instruction after the visible program buffer
           dmi_rsp_o.data(21 downto 20) <= (others => '0');           -- reserved (r/-)
-          dmi_rsp_o.data(19)           <= dm_ctrl.hart_reset;        -- allhavereset (r/-): there is only one hart that can be reset
-          dmi_rsp_o.data(18)           <= dm_ctrl.hart_reset;        -- anyhavereset (r/-): there is only one hart that can be reset
-          dmi_rsp_o.data(17)           <= dm_ctrl.hart_resume_ack;   -- allresumeack (r/-): there is only one hart that can acknowledge resume request
-          dmi_rsp_o.data(16)           <= dm_ctrl.hart_resume_ack;   -- anyresumeack (r/-): there is only one hart that can acknowledge resume request
-          dmi_rsp_o.data(15)           <= '0';                       -- allnonexistent (r/-): there is only one hart that is always existent
-          dmi_rsp_o.data(14)           <= '0';                       -- anynonexistent (r/-): there is only one hart that is always existent
-          dmi_rsp_o.data(13)           <= dm_reg.dmcontrol_ndmreset; -- allunavail (r/-): there is only one hart that is unavailable during reset
-          dmi_rsp_o.data(12)           <= dm_reg.dmcontrol_ndmreset; -- anyunavail (r/-): there is only one hart that is unavailable during reset
-          dmi_rsp_o.data(11)           <= not dm_ctrl.hart_halted;   -- allrunning (r/-): there is only one hart that can be RUNNING or HALTED
-          dmi_rsp_o.data(10)           <= not dm_ctrl.hart_halted;   -- anyrunning (r/-): there is only one hart that can be RUNNING or HALTED
-          dmi_rsp_o.data(09)           <= dm_ctrl.hart_halted;       -- allhalted (r/-): there is only one hart that can be RUNNING or HALTED
-          dmi_rsp_o.data(08)           <= dm_ctrl.hart_halted;       -- anyhalted (r/-): there is only one hart that can be RUNNING or HALTED
+          dmi_rsp_o.data(19)           <= dm_ctrl.sel_havereset;     -- allhavereset (r/-): selected hart has been reset and reset has not been acknowledged for that hart
+          dmi_rsp_o.data(18)           <= dm_ctrl.sel_havereset;     -- anyhavereset (r/-): selected hart has been reset and reset has not been acknowledged for that hart
+          dmi_rsp_o.data(17)           <= dm_ctrl.sel_resume_ack;    -- allresumeack (r/-): selected hart did ack the resume request
+          dmi_rsp_o.data(16)           <= dm_ctrl.sel_resume_ack;    -- anyresumeack (r/-): selected hart did ack the resume request
+          dmi_rsp_o.data(15)           <= dm_ctrl.sel_nonexistent;   -- allnonexistent (r/-): is the currently selected hart is always existent
+          dmi_rsp_o.data(14)           <= dm_ctrl.sel_nonexistent;   -- anynonexistent (r/-): is the currently selected hart is always existent
+          dmi_rsp_o.data(13)           <= dm_reg.dmcontrol_ndmreset; -- allunavail (r/-): unavailable during reset
+          dmi_rsp_o.data(12)           <= dm_reg.dmcontrol_ndmreset; -- anyunavail (r/-): unavailable during reset
+          dmi_rsp_o.data(11)           <= not dm_ctrl.sel_halted;    -- allrunning (r/-): selected hart can be RUNNING or HALTED
+          dmi_rsp_o.data(10)           <= not dm_ctrl.sel_halted;    -- anyrunning (r/-): selected hart can be RUNNING or HALTED
+          dmi_rsp_o.data(09)           <= dm_ctrl.sel_halted;        -- allhalted (r/-): selected hart can be RUNNING or HALTED
+          dmi_rsp_o.data(08)           <= dm_ctrl.sel_halted;        -- anyhalted (r/-): selected hart can be RUNNING or HALTED
           dmi_rsp_o.data(07)           <= '1';                       -- authenticated (r/-): authentication passed since there is no authentication
           dmi_rsp_o.data(06)           <= '0';                       -- authbusy (r/-): always ready since there is no authentication
           dmi_rsp_o.data(05)           <= '0';                       -- hasresethaltreq (r/-): halt-on-reset not implemented
@@ -565,19 +624,20 @@ begin
 
         -- debug module control --
         when addr_dmcontrol_c =>
-          dmi_rsp_o.data(31)           <= '0';                       -- haltreq (-/w): write-only
-          dmi_rsp_o.data(30)           <= '0';                       -- resumereq (-/w1): write-only
-          dmi_rsp_o.data(29)           <= '0';                       -- hartreset (r/w): not supported
-          dmi_rsp_o.data(28)           <= '0';                       -- ackhavereset (-/w1): write-only
-          dmi_rsp_o.data(27)           <= '0';                       -- reserved (r/-)
-          dmi_rsp_o.data(26)           <= '0';                       -- hasel (r/-) - only a single hart can be selected at once
-          dmi_rsp_o.data(25 downto 16) <= (others => '0');           -- hartsello (r/-) - there is only one hart
-          dmi_rsp_o.data(15 downto 06) <= (others => '0');           -- hartselhi (r/-) - there is only one hart
-          dmi_rsp_o.data(05 downto 04) <= (others => '0');           -- reserved (r/-)
-          dmi_rsp_o.data(03)           <= '0';                       -- setresethaltreq (-/w1): halt-on-reset request - halt-on-reset not implemented
-          dmi_rsp_o.data(02)           <= '0';                       -- clrresethaltreq (-/w1): halt-on-reset ack - halt-on-reset not implemented
-          dmi_rsp_o.data(01)           <= dm_reg.dmcontrol_ndmreset; -- ndmreset (r/w): soc reset
-          dmi_rsp_o.data(00)           <= dm_reg.dmcontrol_dmactive; -- dmactive (r/w): DM reset
+          dmi_rsp_o.data(31)                        <= '0';             -- haltreq (-/w): write-only
+          dmi_rsp_o.data(30)                        <= '0';             -- resumereq (-/w1): write-only
+          dmi_rsp_o.data(29)                        <= '0';             -- hartreset (r/w): not supported
+          dmi_rsp_o.data(28)                        <= '0';             -- ackhavereset (-/w1): write-only
+          dmi_rsp_o.data(27)                        <= '0';             -- reserved (r/-)
+          dmi_rsp_o.data(26)                        <= '0';             -- hasel (r/-) - there is a single currently selected hart by hartsel
+          dmi_rsp_o.data(25 downto hartsellen_c+16) <= (others => '0'); -- hartsello (r/-) - unimplemented harts
+          dmi_rsp_o.data(hartsellen_c+15 downto 16) <= dm_reg.hartsel(hartsellen_c-1 downto 0); -- hartsello (r/w) - hartid of currently selected hart
+          dmi_rsp_o.data(15 downto 06)              <= (others => '0'); -- hartselhi (r/-) - only up to 32 harts supported
+          dmi_rsp_o.data(05 downto 04)              <= (others => '0'); -- reserved (r/-)
+          dmi_rsp_o.data(03)                        <= '0';             -- setresethaltreq (-/w1): halt-on-reset request - halt-on-reset not implemented
+          dmi_rsp_o.data(02)                        <= '0';             -- clrresethaltreq (-/w1): halt-on-reset ack - halt-on-reset not implemented
+          dmi_rsp_o.data(01)                        <= dm_reg.dmcontrol_ndmreset; -- ndmreset (r/w): soc reset
+          dmi_rsp_o.data(00)                        <= dm_reg.dmcontrol_dmactive; -- dmactive (r/w): DM reset
 
         -- hart info --
         when addr_hartinfo_c =>
@@ -628,7 +688,7 @@ begin
 
         -- halt summary 0 (r/-) --
         when addr_haltsum0_c =>
-          dmi_rsp_o.data(0) <= dm_ctrl.hart_halted; -- hart 0 is halted
+          dmi_rsp_o.data(NUM_HARTS-1 downto 0) <= dm_ctrl.hart_halted;
 
         -- not implemented (r/-) --
         when others =>
@@ -668,8 +728,8 @@ begin
 
   -- Access Control ------------------------------------------------------------------------
   -- -------------------------------------------------------------------------------------------
-  rden <= cpu_debug_i and bus_req_i.re; -- allow access only when in debug mode
-  wren <= cpu_debug_i and bus_req_i.we; -- allow access only when in debug mode
+  rden <= or_reduce_f(cpu_debug_i) and bus_req_i.re; -- allow access only when in debug mode
+  wren <= or_reduce_f(cpu_debug_i) and bus_req_i.we; -- allow access only when in debug mode
 
 
   -- Write Access ---------------------------------------------------------------------------
@@ -678,10 +738,10 @@ begin
   begin
     if (rstn_i = '0') then
       dci.data_reg      <= (others => '0');
-      dci.halt_ack      <= '0';
-      dci.resume_ack    <= '0';
-      dci.execute_ack   <= '0';
-      dci.exception_ack <= '0';
+      dci.halt_ack      <= (others => '0');
+      dci.resume_ack    <= (others => '0');
+      dci.execute_ack   <= (others => '0');
+      dci.exception_ack <= (others => '0');
     elsif rising_edge(clk_i) then
       -- data buffer --
       if (dci.data_we = '1') then -- DM write access
@@ -690,16 +750,18 @@ begin
         dci.data_reg <= bus_req_i.data;
       end if;
       -- control and status register CPU write access --
-      dci.halt_ack      <= '0'; -- all writable flags auto-clear
-      dci.resume_ack    <= '0';
-      dci.execute_ack   <= '0';
-      dci.exception_ack <= '0';
-      -- NOTE: only check the individual BYTE ACCESSES - not the actual write data --
+      dci.halt_ack      <= (others => '0'); -- all writable flags auto-clear
+      dci.resume_ack    <= (others => '0');
+      dci.execute_ack   <= (others => '0');
+      dci.exception_ack <= (others => '0');
       if (bus_req_i.addr(7 downto 6) = dm_sreg_base_c(7 downto 6)) and (wren = '1') then
-        dci.halt_ack      <= bus_req_i.ben(sreg_halt_ack_c/8);
-        dci.resume_ack    <= bus_req_i.ben(sreg_resume_ack_c/8);
-        dci.execute_ack   <= bus_req_i.ben(sreg_execute_ack_c/8);
-        dci.exception_ack <= bus_req_i.ben(sreg_exception_ack_c/8);
+        case bus_req_i.addr(3 downto 2) is
+          when sreg_halt_ack_c      => dci.halt_ack      <= bus_req_i.data(NUM_HARTS-1 downto 0);
+          when sreg_resume_ack_c    => dci.resume_ack    <= bus_req_i.data(NUM_HARTS-1 downto 0);
+          when sreg_execute_ack_c   => dci.execute_ack   <= bus_req_i.data(NUM_HARTS-1 downto 0);
+          when sreg_exception_ack_c => dci.exception_ack <= bus_req_i.data(NUM_HARTS-1 downto 0);
+          when others => null;
+        end case;
       end if;
     end if;
   end process write_access;
@@ -711,25 +773,30 @@ begin
   begin
     if rising_edge(clk_i) then
       bus_rsp_o.ack  <= rden or wren;
+      bus_rsp_o.err  <= '0';
       bus_rsp_o.data <= (others => '0');
       if (rden = '1') then -- output enable
-        case bus_req_i.addr(7 downto 6) is -- module select
-          when "00" => -- dm_code_base_c: code ROM
-            bus_rsp_o.data <= code_rom(to_integer(unsigned(bus_req_i.addr(5 downto 2))));
-          when "01" => -- dm_pbuf_base_c: program buffer
+        case bus_req_i.addr(7 downto 5) is -- module select
+          when "000" | "001" | "010" | "011" => -- dm_code_base_c: code ROM
+            bus_rsp_o.data <= code_rom(to_integer(unsigned(bus_req_i.addr(6 downto 2))));
+          when "100" => -- dm_pbuf_base_c: program buffer
             bus_rsp_o.data <= cpu_progbuf(to_integer(unsigned(bus_req_i.addr(3 downto 2))));
-          when "10" => -- dm_data_base_c: data buffer
+          when "101" => -- dm_data_base_c: data buffer
             bus_rsp_o.data <= dci.data_reg;
           when others => -- dm_sreg_base_c: control and status register
-            bus_rsp_o.data(sreg_resume_req_c)  <= dci.resume_req;
-            bus_rsp_o.data(sreg_execute_req_c) <= dci.execute_req;
+            case bus_req_i.addr(3 downto 2) is
+              when sreg_resume_req_c  => bus_rsp_o.data(NUM_HARTS-1 downto 0) <= dci.resume_req;
+              when sreg_execute_req_c => bus_rsp_o.data(NUM_HARTS-1 downto 0) <= dci.execute_req;
+              when others =>
+                bus_rsp_o.data <= (others => '0');
+                -- access error --
+                bus_rsp_o.ack <= '0';
+                bus_rsp_o.err <= '1';
+            end case;
         end case;
       end if;
     end if;
   end process read_access;
-
-  -- no access error possible --
-  bus_rsp_o.err <= '0';
 
 
 end neorv32_debug_dm_smp_rtl;
