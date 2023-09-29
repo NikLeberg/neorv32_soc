@@ -61,8 +61,8 @@ int main() {
         delay_ms(32);
         // enable other cores with msi interrupt aka ipi
         neorv32_cpu_store_unsigned_word(0xf0000004, 1);
-        // neorv32_cpu_store_unsigned_word(0xf0000008, 1);
-        // neorv32_cpu_store_unsigned_word(0xf000000c, 1);
+        neorv32_cpu_store_unsigned_word(0xf0000008, 1);
+        neorv32_cpu_store_unsigned_word(0xf000000c, 1);
         // neorv32_cpu_store_unsigned_word(0xf0000010, 1);
     }
 

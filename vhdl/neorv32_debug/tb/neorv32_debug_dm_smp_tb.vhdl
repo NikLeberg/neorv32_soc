@@ -51,12 +51,12 @@ ARCHITECTURE simulation OF neorv32_debug_dm_smp_tb IS
     -- Extra signsl for connecting DUT to a CPU.
     SIGNAL wb_req : wb_req_arr_t(2 * NUM_HARTS - 1 DOWNTO 0);
     SIGNAL wb_resp : wb_resp_arr_t(2 * NUM_HARTS - 1 DOWNTO 0);
-    SIGNAL wb_slv_req : wb_req_arr_t(2 DOWNTO 0);
-    SIGNAL wb_slv_resp : wb_resp_arr_t(2 DOWNTO 0);
+    SIGNAL wb_slv_req : wb_req_arr_t(1 DOWNTO 0);
+    SIGNAL wb_slv_resp : wb_resp_arr_t(1 DOWNTO 0);
+    SIGNAL wb_imem_portb_resp : wb_resp_sig_t; -- dummy
     CONSTANT WB_MEMORY_MAP : wb_map_t :=
     (
     (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port a)
-    (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port b)
     (base_io_dm_c, iodev_size_c) -- NEORV32 OCD, 256 B
     );
     CONSTANT wb_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
@@ -137,12 +137,11 @@ BEGIN
         );
 
     -- The wishbone busses of the CPU need to be muxed.
-    wb_crossbar_inst : ENTITY work.wb_crossbar
+    wb_crossbar_inst : ENTITY work.wb_crossbar_rr
         GENERIC MAP(
             -- General --
             N_MASTERS  => 2 * NUM_HARTS, -- number of connected masters
-            N_SLAVES   => 3,             -- number of connected slaves
-            N_OTHERS   => 1,             -- number of interfaces for other slaves not in memory map
+            N_SLAVES   => 2,             -- number of connected slaves
             MEMORY_MAP => WB_MEMORY_MAP  -- memory map of address space
         )
         PORT MAP(
@@ -156,7 +155,7 @@ BEGIN
             wb_slaves_o => wb_slv_req,
             wb_slaves_i => wb_slv_resp,
             -- Other unmapped Wishbone slave interface(s) --
-            wb_other_slaves_i(0) => wb_err_resp
+            wb_others_i => wb_err_resp
         );
 
     -- IMEM dual-port ROM --
@@ -169,19 +168,21 @@ BEGIN
             clk_i  => clk,  -- global clock, rising edge
             rstn_i => rstn, -- global reset, low-active, asyn
             -- Wishbone slave interfaces --
-            wb_slaves_i => wb_slv_req(1 DOWNTO 0), -- control and data from master to slave
-            wb_slaves_o => wb_slv_resp(1 DOWNTO 0) -- status and data from slave to master
+            wb_slaves_i(0) => wb_slv_req(0), -- control and data from master to slave
+            wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
+            wb_slaves_o(0) => wb_slv_resp(0), -- status and data from slave to master
+            wb_slaves_o(1) => wb_imem_portb_resp
         );
 
     -- Map Wishbone signals to neorv32 internal bus of debug module.
-    bus_req.we <= wb_slv_req(2).stb AND wb_slv_req(2).we;
-    bus_req.re <= wb_slv_req(2).stb AND NOT wb_slv_req(2).we;
-    bus_req.addr <= wb_slv_req(2).adr;
-    bus_req.data <= wb_slv_req(2).dat;
-    bus_req.ben <= wb_slv_req(2).sel;
-    wb_slv_resp(2).dat <= bus_rsp.data;
-    wb_slv_resp(2).ack <= bus_rsp.ack;
-    wb_slv_resp(2).err <= bus_rsp.err;
+    bus_req.we <= wb_slv_req(1).stb AND wb_slv_req(1).we;
+    bus_req.re <= wb_slv_req(1).stb AND NOT wb_slv_req(1).we;
+    bus_req.addr <= wb_slv_req(1).adr;
+    bus_req.data <= wb_slv_req(1).dat;
+    bus_req.ben <= wb_slv_req(1).sel;
+    wb_slv_resp(1).dat <= bus_rsp.data;
+    wb_slv_resp(1).ack <= bus_rsp.ack;
+    wb_slv_resp(1).err <= bus_rsp.err;
 
     -- Actual testing process.
     test : PROCESS IS
