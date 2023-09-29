@@ -9,7 +9,7 @@
 --
 -- Description:             Wishbone accessible instruction memory (IMEM).
 --                          Implemented as dual-port ROM each port gets made
---                          accessible though one Wishbone slave channel. The
+--                          accessible through one Wishbone slave channel. The
 --                          idea is that two masters (i.e. CPUs) can access the
 --                          instruction memory at the same time.
 --

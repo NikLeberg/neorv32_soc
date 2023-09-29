@@ -14,9 +14,12 @@ set entities {
     "wb_pkg"
     "wb_mux"
     "wb_crossbar"
+    "arb_round_robin"
+    "wb_crossbar_rr"
+    "wb_remap"
     "wb_sdram"
+    "wb_mem"
     "wb_imem"
-    "wb_dmem"
     "wb_riscv_clint"
 
     "neorv32_wb_gateway"
@@ -32,7 +35,10 @@ set entities {
 # List the testbenches in the order that they should be compiled and executed.
 # (This assumes testbench file and entity have the same name.)
 set testbenches {
+    "arb_round_robin_tb"
+
     "wb_crossbar_tb"
+    "wb_remap_tb"
     "wb_riscv_clint_tb"
 
     "neorv32_debug_dm_smp_tb"

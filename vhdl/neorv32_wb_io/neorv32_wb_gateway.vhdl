@@ -83,7 +83,7 @@ BEGIN
     END PROCESS proc_request;
 
     -- Map CPU bus to Wishbone.
-    wb_master_o.cyc <= pending_request OR pending_atomic; -- hold on to slave if atmoic access
+    wb_master_o.cyc <= pending_request OR pending_atomic; -- hold on to slave if atomic access
     wb_master_o.stb <= pending_request;
     wb_master_o.we <= pending_write;
     wb_master_o.sel <= req_i.ben;
