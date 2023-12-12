@@ -1,0 +1,69 @@
+include ../scripts/makefile.def
+
+# Run makefile from within the vsim docker container for faster compilation.
+$(info Running QuestaSim Makefile.)
+
+# Load the generated design unit dependencies.
+-include deps.d
+
+.PHONY: questa
+questa: $(OBJS) $(OBJS_TB) | modelsim.ini $(LIBS)
+
+# Copy the ini file from the QuestaSim install directory to allow for
+# modifications and persistent library mappings inbetween docker container
+# invocations.
+modelsim.ini:
+	@vmap -quiet -c
+MAKE_CLEAN += modelsim.ini
+
+# Map the defined libraries into work library, requires modifiable ini file.
+$(LIBS): | modelsim.ini
+	@vlib -quiet $@
+	@vmap -quiet $@ work
+MAKE_CLEAN += $(LIBS)
+
+# Compile the design units with vcom and enabled 2008 VHDL language features.
+VCOM  ?= vcom
+FLAGS += -quiet # dont print informal output
+FLAGS += -2008  # enable VHDL-2008 language features
+FLAGS += -pedanticerrors -check_synthesis -fsmverbose w -lint # enable warnings
+FLAGS += -suppress 1320 # ignore: Type of expression "x" is ambiguous; using element type y, not aggregate type z.
+FLAGS += -suppress 1292 # ignore: Slice range direction "downto" specified in slice with prefix of unknown direction.
+
+# Helper macros to determine to what library a given file is associated. The
+# file path is compared to the paths defined in LIB_PATHS and on a match the
+# corresponding library name from LIBS is returned.
+lib_count := $(words $(LIBS))
+get_lib_at_index = $(word $(1),$(LIBS))
+get_lib_path_at_index = $(word $(1),$(LIB_PATHS))
+is_file_of_this_lib_index = $(findstring $(call get_lib_path_at_index,$(2)),$(1))
+get_lib_of_file = $(foreach i,$(shell seq 1 $(lib_count)),$(if $(call is_file_of_this_lib_index,$(1),$(i)),$(call get_lib_at_index,$(i))))
+
+obj/%.vhd.o: ../%.vhd
+	@echo [CC] $<
+	@$(VCOM) $(FLAGS) -work $(call get_lib_of_file,$<) $<
+	@mkdir -p $(@D)
+	@touch $@
+
+obj/%.vhdl.o: ../%.vhdl
+	@echo [CC] $<
+	@$(VCOM) $(FLAGS) -work $(call get_lib_of_file,$<) $<
+	@mkdir -p $(@D)
+	@touch $@
+
+obj/%.psl.o: ../%.psl
+	@mkdir -p $(@D)
+	@touch $@
+
+%: du/%
+	@
+
+.PHONY: sim
+sim:
+	@echo Starting vsim GUI...
+	@vsim $(filter-out questa sim,$(MAKECMDGOALS))
+MAKE_CLEAN += transcript vsim.wlf
+
+.PHONY: clean
+clean:
+	@rm -rf $(MAKE_CLEAN)

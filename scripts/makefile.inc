@@ -1,0 +1,67 @@
+include $(PROJ_ROOT)/scripts/makefile.def
+
+$(info Running main Makefile.)
+
+# Define bash as the shell to use for sub-shells. The flag --rcfile is set to
+# the .env file containing aliases of commands for running in docker containers.
+SHELL       = /bin/bash
+.SHELLFLAGS = --rcfile ../.devcontainer/.env -lc
+
+# Helper variables.
+tab := $(shell echo -e "\t")
+
+# Glob relevant files of all libraries.
+VHDL_FILES = $(foreach lib_path,$(LIB_PATHS),$(shell find $(lib_path) -wholename '**/*.vhd*'))
+PSL_FILES  = $(foreach lib_path,$(LIB_PATHS),$(shell find $(lib_path) -wholename '**/*.psl'))
+
+# First rule to catch make invocation with no target that "builds" first rule.
+.PHONY: help
+help:
+	@echo "A set of Makefiles for synthesizing, testing and validating VHDL projects with"
+	@echo "automatic dependency resolution. (c) MIT 2023 Niklaus Leuenberger"
+	@echo "To compile, type  'make <tool> <library>.<design_unit>'."
+	@echo "To simulate, type 'make <tool> <library>.<design_unit> sim'."
+	@echo "Available tools:"
+	@echo "$(tab)questa - compiling and simulating with Intel QuestaSim / ModelSim"
+	@echo "$(tab)oss    - simulating with open source GHDL"
+	@echo "Definitions from 'makefile.def':"
+	@echo "$(tab)LIBS:          $(LIBS)"
+	@echo "$(tab)LIB_PATHS:     $(LIB_PATHS)"
+	@echo "$(tab)IGNORED_FILES: $(IGNORED_FILES)"
+	@echo "$(tab)TOP:           $(TOP)"
+
+# Evaluate dependencies of relevant library files on change.
+DEP_PARSE_SCRIPT := $(PROJ_ROOT)/scripts/dep_parse.py
+deps.d: $(DEP_PARSE_SCRIPT) $(VHDL_FILES) $(PSL_FILES)
+	@$(DEP_PARSE_SCRIPT) > deps.d
+MAKE_CLEAN += deps.d deps_graph.dot
+
+.PHONY: questa
+questa: deps.d
+	@questa_make -f $(PROJ_ROOT)/scripts/makefile.questa $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+
+.PHONY: oss
+oss: deps.d
+	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+
+.PHONY: quartus
+quartus: deps.d
+	@quartus_make -f $(PROJ_ROOT)/scripts/makefile.quartus $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+
+# Do nothing targets, they are defined in the tool makefiles.
+.PHONY: sim test
+sim test:
+	@
+
+.PHONY: clean
+clean:
+	@rm -f $(MAKE_CLEAN)
+	@rm -rf du/
+	@rm -rf obj/
+	@questa_make -f $(PROJ_ROOT)/scripts/makefile.questa clean
+	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss clean
+	@quartus_make -f $(PROJ_ROOT)/scripts/makefile.quartus clean
+
+# Catch-All target. Actual work should be done in sub-makes.
+%:
+	@

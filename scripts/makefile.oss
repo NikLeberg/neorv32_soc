@@ -1,0 +1,56 @@
+include ../scripts/makefile.def
+
+# Run makefile from within the hdl-containers/formal docker container for faster
+# compilation.
+$(info Running OSS Makefile.)
+
+# Load the generated design unit dependencies.
+-include deps.d
+
+.PHONY: oss
+oss: $(OBJS) $(OBJS_TB)
+
+# Compile the design units with vcom and enabled 2008 VHDL language features.
+GHDL  ?= ghdl
+FLAGS += --std=08 # enable VHDL-2008 language features
+FLAGS += -g -v # add debug information
+
+# Helper macros to determine to what library a given file is associated. The
+# file path is compared to the paths defined in LIB_PATHS and on a match the
+# corresponding library name from LIBS is returned.
+lib_count := $(words $(LIBS))
+get_lib_at_index = $(word $(1),$(LIBS))
+get_lib_path_at_index = $(word $(1),$(LIB_PATHS))
+is_file_of_this_lib_index = $(findstring $(call get_lib_path_at_index,$(2)),$(1))
+get_lib_of_file = $(strip $(foreach i,$(shell seq 1 $(lib_count)),$(if $(call is_file_of_this_lib_index,$(1),$(i)),$(call get_lib_at_index,$(i)))))
+
+obj/%.vhd.o: ../%.vhd
+	@echo [CC] $<
+	@$(GHDL) -a $(FLAGS) --work=$(call get_lib_of_file,$<) $<
+	@mkdir -p $(@D)
+	@touch $@
+
+obj/%.vhdl.o: ../%.vhdl
+	@echo [CC] $<
+	@$(GHDL) -a $(FLAGS) --work=$(call get_lib_of_file,$<) $<
+	@mkdir -p $(@D)
+	@touch $@
+
+obj/%.psl.o: ../%.psl
+	@echo [CC] $<
+	@$(GHDL) -a $(FLAGS) --work=$(call get_lib_of_file,$<) $<
+	@mkdir -p $(@D)
+	@touch $@
+
+%: du/%
+	@echo [LD] $@
+	@$(GHDL) -e $(FLAGS) $@
+
+.PHONY: sim
+sim:
+	@$(GHDL) -r $(FLAGS) $(filter-out oss sim,$(MAKECMDGOALS))
+
+.PHONY: clean
+clean:
+	@rm -rf $(MAKE_CLEAN)
+	@rm -f *.cf

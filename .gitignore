@@ -1,14 +1,11 @@
 # ignore run output of vsim / vcom
 transcript
 stderr
-# ignore generated files by ModelSim / QuestaSim
-sim/*
-!sim/*.gitkeep
-# ignore generated files by Quartus
-quartus/*
-!quartus/*.gitkeep
 # ignore build artifacts of software
-sw/*.bin
-sw/*.elf
-sw/*.o
+*.bin
+*.elf
+*.o
 sw/*.vhd
+# ignore build artifacts of hardware
+build/*
+!build/makefile

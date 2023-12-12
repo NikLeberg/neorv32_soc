@@ -1,0 +1,17 @@
+# List of VHDL libraries.
+LIBS      ?= work    neorv32
+# List of paths to the corresponding libraries stated above.
+LIB_PATHS ?= ../vhdl ../lib/neorv32
+# Files to ignore in the above library paths.
+IGNORED_FILES += ../lib/neorv32/sim/simple/neorv32_imem.iram.simple.vhd
+IGNORED_FILES += ../lib/neorv32/sim/simple/neorv32_imem.simple.vhd
+IGNORED_FILES += ../lib/neorv32/sim/simple/neorv32_tb.simple.vhd
+IGNORED_FILES += ../lib/neorv32/sim/neorv32_tb.vhd
+IGNORED_FILES += ../lib/neorv32/sim/uart_rx_pkg.vhd
+IGNORED_FILES += ../lib/neorv32/sim/uart_rx.vhd
+# Toplevel of design.
+TOP ?= top
+
+export LIBS
+export LIB_PATHS
+export IGNORED_FILES
