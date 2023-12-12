@@ -91,6 +91,11 @@
             "fileLocation": "absolute"
         }
     ],
+    "options": {
+        "env": {
+            "BASH_ENV": "${workspaceFolder}/.devcontainer/.env"
+        },
+    },
     "tasks": [
         {
             "label": "sim-compile",

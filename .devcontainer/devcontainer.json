@@ -1,16 +1,19 @@
 {
-    "name": "neorv32_soc",
-    "image": "ghcr.io/nikleberg/neorv32_soc:latest",
+    "name": "${localWorkspaceFolderBasename}",
+    "image": "ghcr.io/nikleberg/dev-base",
     "runArgs": [
-        "--hostname",
-        "neorv32_soc",
-        "-e",
-        "DISPLAY=host.docker.internal:0.0", // X11 display from VcXsrv that is running on Windows Host
-        "-v",
-        "/dev:/dev", // access to JTAG USB Blaster
-        "--mac-address",
-        "00:ab:ab:ab:ab:ab", // fixed NIC id for QuestaSim license
-        "--privileged"
+        // set a human friendly machine name for the container
+        "--hostname=${localWorkspaceFolderBasename}",
+        // forward the WSLg display
+        "--env=DISPLAY=:0",
+        "--volume=/tmp/.X11-unix/:/tmp/.X11-unix/",
+        // get access to USB/JTAG devices (requires priviledged for hot-plug)
+        "--volume=/dev:/dev",
+        "--privileged",
+        // forward docker socket to allow Docker-outside-of-Docker (DooD)
+        "--volume=/var/run/docker.sock:/var/run/docker.sock",
+        // Install a script with aliases for DooD based tools / commands.
+        "--env=BASH_ENV=/workspaces/${localWorkspaceFolderBasename}/.devcontainer/.env"
     ],
     "customizations": {
         "vscode": {
