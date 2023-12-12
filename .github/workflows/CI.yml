@@ -10,8 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nikleberg/neorv32_soc:latest
-      options: --mac-address=00:ab:ab:ab:ab:ab # for QuestaSim license
+      image: ghcr.io/nikleberg/dev-base
 
     steps:
     - uses: actions/checkout@v3
@@ -23,11 +22,17 @@ jobs:
         cd sw
         make CLI_FLAGS+='-DSIMULATION=1' exe install
 
-    - name: Run Simulation
+    - name: Run Simulation (Questa)
       run: |
-        cd sim
-        vsim -c -do ../scripts/sim_compile.tcl
-        vsim -c -do ../scripts/sim_test.tcl
+        cd build
+        make questa work.top
+        make clean
+
+    - name: Run Simulation (GHDL)
+      run: |
+        cd build
+        make oss work.top
+        make clean
 
     - name: Build Software (for Syn)
       run: |
@@ -36,9 +41,8 @@ jobs:
 
     - name: Run Synthesis
       run: |
-        cd quartus
-        quartus_sh -t ../scripts/quartus_project.tcl
-        quartus_sh -t ../scripts/quartus_compile.tcl
+        cd build
+        make quartus work.top
 
     - name: Archive CI Artifacts
       uses: actions/upload-artifact@v3
@@ -47,4 +51,4 @@ jobs:
         path: |
           sw/main.elf
           sw/neorv32_exe.bin
-          quartus/output_files/*.sof
+          build/output_files/*.sof
