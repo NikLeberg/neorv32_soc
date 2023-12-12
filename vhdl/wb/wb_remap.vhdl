@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wb_remap
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2023-09-25, leuen4
 --                              initial version
+--                          0.2, 2023-12-12, leuen4
+--                              set generics to allow instantiation as toplevel
 -- =============================================================================
 
 LIBRARY ieee;
@@ -21,8 +23,8 @@ USE work.wb_pkg.ALL;
 
 ENTITY wb_remap IS
     GENERIC (
-        MEMORY_MAP_FROM : wb_map_t; -- from what address
-        MEMORY_MAP_TO   : wb_map_t  -- to what address
+        MEMORY_MAP_FROM : wb_map_t := (0 => (x"0000_0000", 1)); -- from what address
+        MEMORY_MAP_TO   : wb_map_t := (0 => (x"f000_0000", 1))  -- to what address
     );
     PORT (
         -- Wishbone master interface --
