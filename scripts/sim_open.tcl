@@ -1,14 +1,20 @@
-# as first argument the testbench_entity should be given
-set ent [lindex $argv 0]
+# last argument should be the testbench entity
+set ent [lindex $argv end]
 
-# load simulation of given entity
-vsim -t ns -debugDB $ent
+# Get definitions of files and entities.
+quietly source ../scripts/files.tcl
 
 # add all available signals from testbench and dut
 add wave -divider testbench
 add wave *
 add wave -divider dut
 catch {add wave dut/*}
+
+# If a dedicated tcl script for this testbench exists, source it.
+quietly set tcl_file [lsearch -inline -glob $tcl_files "*/$ent.tcl"]
+if {$tcl_file ne ""} {
+    quietly source $tcl_file
+}
 
 # only show short names of signals
 config wave -signalnamewidth 1

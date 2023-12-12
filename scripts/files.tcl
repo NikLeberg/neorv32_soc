@@ -38,6 +38,7 @@ set testbenches {
     "arb_round_robin_tb"
 
     "wb_crossbar_tb"
+    "wb_crossbar_rr_tb"
     "wb_remap_tb"
     "wb_riscv_clint_tb"
 
@@ -45,3 +46,9 @@ set testbenches {
 
     "top_tb"
 }
+
+# Gather all extra tcl scripts residing in testbench subfolders.
+set tcl_files [glob -nocomplain                                                \
+    ../vhdl/**/tb/*.tcl                                                        \
+    ../vhdl/**/**/tb/*.tcl                                                     \
+]
