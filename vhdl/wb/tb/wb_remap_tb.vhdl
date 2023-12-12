@@ -34,9 +34,9 @@ ARCHITECTURE simulation OF wb_remap_tb IS
     );
     CONSTANT WB_MEMORY_MAP_TO : wb_map_t :=
     (
-    (x"aeae_aeae", 1 * 1024),
-    (x"8000_0000", 1 * 1024),
-    (x"a000_0000", 32 * 1024 * 1024)
+    (x"aeae_aeae", 1),
+    (x"8000_0000", 1024),
+    (x"a000_0000", 1024 * 1024)
     );
     SIGNAL wb_master_original : wb_req_sig_t;
     SIGNAL wb_master_remapped : wb_req_sig_t;
