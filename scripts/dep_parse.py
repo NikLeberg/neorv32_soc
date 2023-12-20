@@ -1,8 +1,35 @@
 #!/usr/bin/env python3
 
 import sys, re, os
-import networkx as nx
 from pathlib import Path
+
+class _DiGraph:
+    # modelled after networkx
+    nodes = {}
+    edges = []
+
+    def add_node(self, node, **kwargs):
+        self.nodes[node] = kwargs
+
+    def remove_node(self, node):
+        self.nodes.pop(node, None)
+        self.edges = [
+            (n_from, n_to) for (n_from, n_to) in self.edges
+            if n_from != node and n_to != node
+        ]
+
+    def add_edge(self, node_from, node_to):
+        for node in [node_from, node_to]:
+            if not node in self.nodes:
+                self.add_node(node)
+        self.edges.append((node_from, node_to))
+
+    def copy(self):
+        return self.nodes.copy()
+    
+    def out_edges(self, node):
+        return [(n_from, n_to) for (n_from, n_to) in self.edges if n_from == node]
+
 
 class VHDLDependencyParser:
     TESTBENCH_FILE_REGEX = r"(_[tT][bB]\.)|(\/[tT][bB]_)"
@@ -36,7 +63,7 @@ class VHDLDependencyParser:
     ]
 
     def __init__(self):
-        self._dep_graph = nx.DiGraph()
+        self._dep_graph = _DiGraph()
 
     def glob_parse(self, path, library="work", ignore=None):
         if isinstance(path, str):
@@ -86,7 +113,7 @@ class VHDLDependencyParser:
                 self._dep_graph.remove_node(n)
 
     def write_makefile_rules(self):
-        for n in self._dep_graph.nodes():
+        for n in self._dep_graph.nodes:
             node = self._dep_graph.nodes[n]
             # name of the design unit (entity, architecture, package, etc.)
             design_unit = n.replace("*", "ANY") # make does not like "*"
