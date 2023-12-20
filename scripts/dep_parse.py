@@ -85,17 +85,6 @@ class VHDLDependencyParser:
             if any([n.startswith(unit + ".") for unit in units]):
                 self._dep_graph.remove_node(n)
 
-    def deps_to_dot(self, output_file="deps_graph.dot"):
-        nx.drawing.nx_pydot.write_dot(self._dep_graph, output_file)
-
-    def deps_of(self, unit):
-        dep_nodes = nx.descendants(self._dep_graph, unit) | {unit}
-        subgraph = self._dep_graph.subgraph(dep_nodes)
-        ordered_nodes = nx.topological_sort(subgraph)
-        # all_files = nx.get_node_attributes(self._dep_graph, "file")
-        # ordered_files = [file for node in ordered_nodes if (file := all_files.get(node)) is not None]
-        return list(ordered_nodes)
-
     def write_makefile_rules(self):
         for n in self._dep_graph.nodes():
             node = self._dep_graph.nodes[n]
@@ -152,16 +141,10 @@ class VHDLDependencyParser:
         for regex in self.PACKAGE_DEF_REGEX:
             for match in re.finditer(regex, src, re.IGNORECASE):
                 defines.add(f"{library}.{match.group('name')}")
-        # # defining any entity?
-        # for regex in self.ENTITY_DEF_REGEX:
-        #     for match in re.finditer(regex, src, re.IGNORECASE):
-        #         defines.add(f"{library}.{match.group('name')}")
-        #         # automatically also defines the "catch-all" architecture
-        #         uses.add(f"{library}.{match.group('name')}.*")
-        # # defining any architecture?
-        # for regex in self.ARCH_DEF_REGEX:
-        #     for match in re.finditer(regex, src, re.IGNORECASE):
-        #         defines.add(f"{library}.{match.group('entity')}.{match.group('name')}")
+        # defining any entity?
+        for regex in self.ENTITY_DEF_REGEX:
+            for match in re.finditer(regex, src, re.IGNORECASE):
+                defines.add(f"{library}.{match.group('name')}")
         return defines
 
     def _parse_src_to_uses(self, src):
@@ -188,12 +171,6 @@ class VHDLDependencyParser:
             for match in re.finditer(regex, src, re.IGNORECASE):
                 defines.add(f"{library}.{match.group('name')}.body")
                 uses.add(f"{library}.{match.group('name')}")
-        # defining any entity?
-        for regex in self.ENTITY_DEF_REGEX:
-            for match in re.finditer(regex, src, re.IGNORECASE):
-                defines.add(f"{library}.{match.group('name')}")
-                # automatically also defines the "catch-all" architecture
-                # uses.add(f"{library}.{match.group('name')}.*")
         # defining any architecture?
         for regex in self.ARCH_DEF_REGEX:
             for match in re.finditer(regex, src, re.IGNORECASE):
