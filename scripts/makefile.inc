@@ -33,8 +33,8 @@ help:
 # Evaluate dependencies of relevant library files on change.
 DEP_PARSE_SCRIPT := $(PROJ_ROOT)/scripts/dep_parse.py
 deps.d: $(DEP_PARSE_SCRIPT) $(VHDL_FILES) $(PSL_FILES)
-	@$(DEP_PARSE_SCRIPT) > deps.d
-MAKE_CLEAN += deps.d deps_graph.dot
+	@python $(DEP_PARSE_SCRIPT)
+MAKE_CLEAN += deps.d
 
 .PHONY: questa
 questa: deps.d

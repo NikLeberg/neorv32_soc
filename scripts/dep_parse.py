@@ -112,7 +112,8 @@ class VHDLDependencyParser:
             if any([n.startswith(unit + ".") for unit in units]):
                 self._dep_graph.remove_node(n)
 
-    def write_makefile_rules(self):
+    def write_makefile_rules(self, file):
+        f = open(file, mode="w")
         for n in self._dep_graph.nodes:
             node = self._dep_graph.nodes[n]
             # name of the design unit (entity, architecture, package, etc.)
@@ -125,32 +126,33 @@ class VHDLDependencyParser:
                 obj_file = "obj/" + str(file.relative_to(root)) + ".o"
             # ignore referenced design units that we do not know a file for
             if not "ANY" in design_unit and not obj_file:
-                print(f"Referenced design unit '{design_unit}' is not defined in any file. Ignoring.", file=sys.stderr)
+                print(f"Referenced design unit '{design_unit}' is not defined in any file. Ignoring.")
                 continue
             # print design unit object dependencies
             # <design_unit>: <object_file_dependencies>
             #     @touch <design_unit>
-            print(f"du/{design_unit}: {obj_file}")
-            print(f"\t@echo [DU] {design_unit}")
-            print("\t@mkdir -p $(@D)")
-            print("\t@touch $@")
+            print(f"du/{design_unit}: {obj_file}", file=f)
+            print(f"\t@echo [DU] {design_unit}", file=f)
+            print("\t@mkdir -p $(@D)", file=f)
+            print("\t@touch $@", file=f)
             # print obj file dependency-only rule
             # <obj_file>: <design_unit_dependencies>
             if obj_file:
-                print(f"{obj_file}:", end=" ")
+                print(f"{obj_file}:", end=" ", file=f)
                 for (_, du_dep) in self._dep_graph.out_edges(n):
                     node_dep = self._dep_graph.nodes[du_dep]
                     # If dependency (e.g. entity and architecture) are in the
                     # same file, then ignore it, compiling the file will resolve
                     # it. If not done then make warns about circular rules.
                     if node.get("file") != node_dep.get("file"):
-                        print("du/" + du_dep.replace("*", "ANY"), end=" ")
-                print("")
+                        print("du/" + du_dep.replace("*", "ANY"), end=" ", file=f)
+                print("", file=f)
                 # add testbenches to OBJS_TB, other sources to OBJS
                 if re.search(self.TESTBENCH_FILE_REGEX, obj_file, re.IGNORECASE):
-                    print(f"OBJS_TB += {obj_file}")
+                    print(f"OBJS_TB += {obj_file}", file=f)
                 else:
-                    print(f"OBJS += {obj_file}")
+                    print(f"OBJS += {obj_file}", file=f)
+        f.close()
 
     def _parse_file(self, filepath, library="work"):
         with open(filepath, mode="r", encoding="utf-8") as file:
@@ -213,7 +215,7 @@ class VHDLDependencyParser:
     def _is_refering_to(self, u, v):
         if "*" in u and not "*" in v:
             # convert to regex pattern
-            pattern = u.replace(".", "\.").replace("*", ".+")
+            pattern = u.replace(".", "\\.").replace("*", ".+")
             match = re.search(pattern, v, re.IGNORECASE)
             if match:
                 return True
@@ -221,7 +223,7 @@ class VHDLDependencyParser:
 
 
 if __name__ == "__main__":
-    print("Scanning dependencies...", file=sys.stderr)
+    print("Scanning dependencies...")
 
     vhdl_parser = VHDLDependencyParser()
 
@@ -229,7 +231,6 @@ if __name__ == "__main__":
     #  - LIBS:          space separated list of library names
     #  - LIB_PATHS:     space separated list of corresponding library paths
     #  - IGNORED_FILES: space separated list of files or file patterns to ignore
-
     libs   = os.getenv("LIBS", "").split()
     paths  = os.getenv("LIB_PATHS", "").split()
     ignore = os.getenv("IGNORED_FILES", "").split()
@@ -247,4 +248,4 @@ if __name__ == "__main__":
     vhdl_parser.remove(["ieee", "std"])
     vhdl_parser.resolve()
 
-    vhdl_parser.write_makefile_rules()
+    vhdl_parser.write_makefile_rules("deps.d")
