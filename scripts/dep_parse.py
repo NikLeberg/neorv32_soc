@@ -243,5 +243,4 @@ if __name__ == "__main__":
     vhdl_parser.remove(["ieee", "std"])
     vhdl_parser.resolve()
 
-    vhdl_parser.deps_to_dot()
     vhdl_parser.write_makefile_rules()
