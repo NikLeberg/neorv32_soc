@@ -64,6 +64,10 @@ sim:
 	@vsim $(filter-out questa sim,$(MAKECMDGOALS))
 MAKE_CLEAN += transcript vsim.wlf
 
+.PHONY: test
+test: $(TESTBENCHES)
+	vsim -c -do ../scripts/questa/questa_test.tcl $(TESTBENCHES)
+
 .PHONY: clean
 clean:
 	@rm -rf $(MAKE_CLEAN)

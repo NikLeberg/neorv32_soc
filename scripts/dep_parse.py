@@ -150,6 +150,9 @@ class VHDLDependencyParser:
                 # add testbenches to OBJS_TB, other sources to OBJS
                 if re.search(self.TESTBENCH_FILE_REGEX, obj_file, re.IGNORECASE):
                     print(f"OBJS_TB += {obj_file}", file=f)
+                    # if this is a entity (first level), then add to testbenches
+                    if design_unit.count(".") == 1:
+                        print(f"TESTBENCHES += {design_unit}", file=f)
                 else:
                     print(f"OBJS += {obj_file}", file=f)
         f.close()
