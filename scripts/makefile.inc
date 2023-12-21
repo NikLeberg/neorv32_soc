@@ -36,17 +36,25 @@ deps.d: $(DEP_PARSE_SCRIPT) $(VHDL_FILES) $(PSL_FILES)
 	@python $(DEP_PARSE_SCRIPT)
 MAKE_CLEAN += deps.d
 
+-include last.tool
+LAST_TOOL ?=
+MAKE_CLEAN += last.tool
+
 .PHONY: questa
-questa: deps.d
+questa: deps.d questa_tool
 	@questa_make -f $(PROJ_ROOT)/scripts/makefile.questa $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
 
 .PHONY: oss
-oss: deps.d
+oss: deps.d oss_tool
 	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
 
 .PHONY: quartus
-quartus: deps.d
+quartus: deps.d quartus_tool
 	@quartus_make -f $(PROJ_ROOT)/scripts/makefile.quartus $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+
+%_tool:
+	@test -z "$(LAST_TOOL)" || test "$(LAST_TOOL)" == "$*"
+	@echo "LAST_TOOL=$*" > last.tool
 
 # Do nothing targets, they are defined in the tool makefiles.
 .PHONY: sim test
@@ -54,13 +62,16 @@ sim test:
 	@
 
 .PHONY: clean
-clean:
+clean: $(LAST_TOOL)_clean
 	@rm -f $(MAKE_CLEAN)
 	@rm -rf du/
 	@rm -rf obj/
-	@questa_make -f $(PROJ_ROOT)/scripts/makefile.questa clean
-	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss clean
-	@quartus_make -f $(PROJ_ROOT)/scripts/makefile.quartus clean
+
+_clean:
+	@
+
+%_clean:
+	@$*_make -f $(PROJ_ROOT)/scripts/makefile.$* clean
 
 # Catch-All target. Actual work should be done in sub-makes.
 %:
