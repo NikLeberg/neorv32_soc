@@ -26,6 +26,7 @@ jobs:
       run: |
         cd build
         make questa work.top
+        make questa test
         make clean
 
     - name: Run Simulation (GHDL)
