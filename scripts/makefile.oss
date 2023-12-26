@@ -10,10 +10,11 @@ $(info Running OSS Makefile.)
 .PHONY: oss
 oss: $(OBJS) $(OBJS_TB)
 
-# Compile the design units with vcom and enabled 2008 VHDL language features.
+# Compile the design units with GHDL and enabled 2008 VHDL language features.
 GHDL  ?= ghdl
 FLAGS += --std=08 # enable VHDL-2008 language features
 FLAGS += -g -v # add debug information
+SIM_FLAGS += --ieee-asserts=disable # ignore "metavalue detected"
 
 # Helper macros to determine to what library a given file is associated. The
 # file path is compared to the paths defined in LIB_PATHS and on a match the
@@ -48,7 +49,14 @@ obj/%.psl.o: ../%.psl
 
 .PHONY: sim
 sim:
-	@$(GHDL) -r $(FLAGS) $(filter-out oss sim,$(MAKECMDGOALS))
+	@$(GHDL) -r $(FLAGS) $(filter-out oss sim,$(MAKECMDGOALS)) $(SIM_FLAGS)
+
+.PHONY: test
+test: $(TESTBENCHES)
+	@set -e; for tb in $(TESTBENCHES); do \
+		echo Running testbench $${tb}...; \
+		$(GHDL) -r $(FLAGS) $${tb} $(SIM_FLAGS); \
+	done
 
 .PHONY: clean
 clean:
