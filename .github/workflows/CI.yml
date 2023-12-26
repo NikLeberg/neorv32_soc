@@ -33,6 +33,7 @@ jobs:
       run: |
         cd build
         make oss work.top
+        make oss test
         make clean
 
     - name: Build Software (for Syn)
