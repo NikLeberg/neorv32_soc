@@ -77,7 +77,8 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
     SIGNAL wb_slaves_rx : wb_req_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     SIGNAL wb_slaves_tx : wb_resp_arr_t(WB_N_SLAVES - 1 DOWNTO 0);
     -- Error slave to terminate accesses on the others port of crossbar.
-    CONSTANT wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
+    -- CONSTANT wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
+    SIGNAL wb_slave_err_o : wb_resp_sig_t := (ack => '0', err => '1', dat => x"deadbeef");
 
     -- State signals for the dummy slaves.
     signal slave_delayed_stb : std_ulogic_vector(WB_N_SLAVES - 1 DOWNTO 0) := (others => '0');
