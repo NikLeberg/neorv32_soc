@@ -9,6 +9,9 @@ IGNORED_FILES += ../lib/neorv32/sim/simple/neorv32_tb.simple.vhd
 IGNORED_FILES += ../lib/neorv32/sim/neorv32_tb.vhd
 IGNORED_FILES += ../lib/neorv32/sim/uart_rx_pkg.vhd
 IGNORED_FILES += ../lib/neorv32/sim/uart_rx.vhd
+IGNORED_FILES += ../lib/neorv32/rtl/core/mem/neorv32_imem.legacy.vhd
+IGNORED_FILES += ../lib/neorv32/rtl/core/mem/neorv32_dmem.legacy.vhd
+IGNORED_FILES += ../vhdl/vga/tb/vga_tb.vhdl
 # Toplevel of design.
 TOP ?= top
 

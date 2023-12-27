@@ -59,7 +59,10 @@ ARCHITECTURE simulation OF neorv32_debug_dm_smp_tb IS
     (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port a)
     (base_io_dm_c, iodev_size_c) -- NEORV32 OCD, 256 B
     );
-    CONSTANT wb_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    -- CONSTANT wb_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    SIGNAL wb_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    -- CONSTANT wb_master_no_req : wb_req_sig_t := (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0'));
+    SIGNAL wb_master_no_req : wb_req_sig_t := (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0'));
 
     -- available DMI registers --
     CONSTANT addr_data0_c : STD_ULOGIC_VECTOR(6 DOWNTO 0) := "000" & x"4";
@@ -169,7 +172,7 @@ BEGIN
             rstn_i => rstn, -- global reset, low-active, asyn
             -- Wishbone slave interfaces --
             wb_slaves_i(0) => wb_slv_req(0), -- control and data from master to slave
-            wb_slaves_i(1) => (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0')),
+            wb_slaves_i(1) => wb_master_no_req,
             wb_slaves_o(0) => wb_slv_resp(0), -- status and data from slave to master
             wb_slaves_o(1) => wb_imem_portb_resp
         );

@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: recursive
+        submodules: true
 
     - name: Build Software (for Sim)
       run: |
@@ -26,12 +26,14 @@ jobs:
       run: |
         cd build
         make questa work.top
+        make questa test
         make clean
 
     - name: Run Simulation (GHDL)
       run: |
         cd build
         make oss work.top
+        make oss test
         make clean
 
     - name: Build Software (for Syn)
