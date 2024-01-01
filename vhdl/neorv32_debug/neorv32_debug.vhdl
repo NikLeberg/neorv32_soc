@@ -67,8 +67,8 @@ ARCHITECTURE no_target_specific OF neorv32_debug IS
 BEGIN
 
     -- Map Wishbone signals to neorv32 internal bus.
-    req.we <= wb_slave_i.stb AND wb_slave_i.we;
-    req.re <= wb_slave_i.stb AND NOT wb_slave_i.we;
+    req.stb <= wb_slave_i.stb;
+    req.rw <= wb_slave_i.we;
     req.addr <= wb_slave_i.adr;
     req.data <= wb_slave_i.dat;
     req.ben <= wb_slave_i.sel;

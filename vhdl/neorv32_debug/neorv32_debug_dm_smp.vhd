@@ -728,8 +728,8 @@ begin
 
   -- Access Control ------------------------------------------------------------------------
   -- -------------------------------------------------------------------------------------------
-  rden <= or_reduce_f(cpu_debug_i) and bus_req_i.re; -- allow access only when in debug mode
-  wren <= or_reduce_f(cpu_debug_i) and bus_req_i.we; -- allow access only when in debug mode
+  rden <= or_reduce_f(cpu_debug_i) and bus_req_i.stb and not bus_req_i.rw; -- allow access only when in debug mode
+  wren <= or_reduce_f(cpu_debug_i) and bus_req_i.stb and     bus_req_i.rw; -- allow access only when in debug mode
 
 
   -- Write Access ---------------------------------------------------------------------------

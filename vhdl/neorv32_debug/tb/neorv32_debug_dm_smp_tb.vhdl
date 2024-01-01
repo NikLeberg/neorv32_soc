@@ -178,8 +178,8 @@ BEGIN
         );
 
     -- Map Wishbone signals to neorv32 internal bus of debug module.
-    bus_req.we <= wb_slv_req(1).stb AND wb_slv_req(1).we;
-    bus_req.re <= wb_slv_req(1).stb AND NOT wb_slv_req(1).we;
+    bus_req.stb <= wb_slv_req(1).stb;
+    bus_req.rw <= wb_slv_req(1).we;
     bus_req.addr <= wb_slv_req(1).adr;
     bus_req.data <= wb_slv_req(1).dat;
     bus_req.ben <= wb_slv_req(1).sel;

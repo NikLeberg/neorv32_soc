@@ -144,23 +144,24 @@ BEGIN
                 CPU_DEBUG_PARK_ADDR => dm_park_entry_c,                       -- cpu debug mode parking loop entry address
                 CPU_DEBUG_EXC_ADDR  => dm_exc_entry_c,                        -- cpu debug mode exception entry address
                 -- RISC-V CPU Extensions --
-                CPU_EXTENSION_RISCV_A        => true,                -- implement atomic memory operations extension?
-                CPU_EXTENSION_RISCV_B        => false,               -- implement bit-manipulation extension?
-                CPU_EXTENSION_RISCV_C        => false,               -- implement compressed extension?
-                CPU_EXTENSION_RISCV_E        => false,               -- implement embedded RF extension?
-                CPU_EXTENSION_RISCV_M        => true,                -- implement mul/div extension?
-                CPU_EXTENSION_RISCV_U        => false,               -- implement user mode extension?
-                CPU_EXTENSION_RISCV_Zfinx    => false,               -- implement 32-bit floating-point extension (using INT reg!)
-                CPU_EXTENSION_RISCV_Zicntr   => true,                -- implement base counters?
-                CPU_EXTENSION_RISCV_Zihpm    => false,               -- implement hardware performance monitors?
-                CPU_EXTENSION_RISCV_Zifencei => true,                -- implement instruction stream sync.?
-                CPU_EXTENSION_RISCV_Zmmul    => false,               -- implement multiply-only M sub-extension?
-                CPU_EXTENSION_RISCV_Zxcfu    => false,               -- implement custom (instr.) functions unit?
-                CPU_EXTENSION_RISCV_Sdext    => ON_CHIP_DEBUGGER_EN, -- implement external debug mode extension?
-                CPU_EXTENSION_RISCV_Sdtrig   => ON_CHIP_DEBUGGER_EN, -- implement debug mode trigger module extension?
+                CPU_EXTENSION_RISCV_A      => true,                -- implement atomic memory operations extension?
+                CPU_EXTENSION_RISCV_B      => false,               -- implement bit-manipulation extension?
+                CPU_EXTENSION_RISCV_C      => false,               -- implement compressed extension?
+                CPU_EXTENSION_RISCV_E      => false,               -- implement embedded RF extension?
+                CPU_EXTENSION_RISCV_M      => true,                -- implement mul/div extension?
+                CPU_EXTENSION_RISCV_U      => false,               -- implement user mode extension?
+                CPU_EXTENSION_RISCV_Zfinx  => false,               -- implement 32-bit floating-point extension (using INT reg!)
+                CPU_EXTENSION_RISCV_Zicntr => true,                -- implement base counters?
+                CPU_EXTENSION_RISCV_Zicond => false,               -- implement integer conditional operations?
+                CPU_EXTENSION_RISCV_Zihpm  => false,               -- implement hardware performance monitors?
+                CPU_EXTENSION_RISCV_Zmmul  => false,               -- implement multiply-only M sub-extension?
+                CPU_EXTENSION_RISCV_Zxcfu  => false,               -- implement custom (instr.) functions unit?
+                CPU_EXTENSION_RISCV_Sdext  => ON_CHIP_DEBUGGER_EN, -- implement external debug mode extension?
+                CPU_EXTENSION_RISCV_Sdtrig => ON_CHIP_DEBUGGER_EN, -- implement debug mode trigger module extension?
                 -- Extension Options --
-                FAST_MUL_EN   => true,  -- use DSPs for M extension's multiplier
-                FAST_SHIFT_EN => false, -- use barrel shifter for shift operations
+                FAST_MUL_EN    => true,  -- use DSPs for M extension's multiplier
+                FAST_SHIFT_EN  => false, -- use barrel shifter for shift operations
+                REGFILE_HW_RST => false, -- implement full hardware reset for register file
                 -- Physical Memory Protection (PMP) --
                 PMP_NUM_REGIONS     => 0, -- number of regions (0..16)
                 PMP_MIN_GRANULARITY => 4, -- minimal region granularity in bytes, has to be a power of 2, min 4 bytes
