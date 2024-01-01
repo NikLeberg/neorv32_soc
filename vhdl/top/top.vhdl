@@ -107,8 +107,8 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL con_jtag_tck, con_jtag_tdi, con_jtag_tdo, con_jtag_tms : STD_LOGIC;
     SIGNAL con_gpio_o : STD_ULOGIC_VECTOR(63 DOWNTO 0);
     SIGNAL con_mti, con_msi : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
-    SIGNAL con_dci_ndmrstn : STD_ULOGIC;
-    SIGNAL con_dci_halt_req : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
+    SIGNAL con_dci_ndmrstn : STD_ULOGIC := '1';
+    SIGNAL con_dci_halt_req : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL con_dci_cpu_debug : STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);
 
     -- Wishbone interface signals
@@ -120,8 +120,8 @@ ARCHITECTURE top_arch OF top IS
     CONSTANT WB_N_SLAVES_MUX : NATURAL := 5;
     CONSTANT WB_MEMORY_MAP_CROSSBAR : wb_map_t :=
     (
-    (x"0000_0000", 1 * 1024), -- IMEM, 1 KB (port a)
-    (x"1000_0000", 1 * 1024), -- IMEM, 1 KB (port b)
+    (x"0000_0000", 16 * 1024), -- IMEM, 16 KB (port a)
+    (x"1000_0000", 16 * 1024), -- IMEM, 16 KB (port b)
     (x"8000_0000", 32 * 1024 * 1024) -- SDRAM, 32 MB
     );
     CONSTANT WB_MEMORY_MAP_MUX : wb_map_t :=
@@ -291,7 +291,7 @@ BEGIN
     gen_sim : IF SIMULATION = TRUE GENERATE
         wb_imem_inst : ENTITY work.wb_mem(simulation)
             GENERIC MAP(
-                MEM_SIZE  => 32 * 1024,             -- size of instruction memory in bytes
+                MEM_SIZE  => 16 * 1024,             -- size of instruction memory in bytes
                 MEM_IMAGE => application_init_image -- initialization image of memory
             )
             PORT MAP(

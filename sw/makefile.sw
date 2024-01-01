@@ -9,7 +9,8 @@ MARCH = rv32ima_zicsr
 
 # User flags for additional configuration (will be added to compiler flags)
 USER_FLAGS := $(CLI_FLAGS)
-USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=8k
+USER_FLAGS += -Wl,--defsym,__neorv32_rom_size=16K
+USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=32M
 USER_FLAGS += -Og
 
 # Change flags if we are building for the sumulation.
