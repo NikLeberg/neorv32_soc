@@ -4,12 +4,6 @@
     "runArgs": [
         // set a human friendly machine name for the container
         "--hostname=${localWorkspaceFolderBasename}",
-        // forward the WSLg display
-        "--env=DISPLAY=:0",
-        "--volume=/tmp/.X11-unix/:/tmp/.X11-unix/",
-        // get access to USB/JTAG devices (requires priviledged for hot-plug)
-        "--volume=/dev:/dev",
-        "--privileged",
         // forward docker socket to allow Docker-outside-of-Docker (DooD)
         "--volume=/var/run/docker.sock:/var/run/docker.sock",
         // Install a script with aliases for DooD based tools / commands.

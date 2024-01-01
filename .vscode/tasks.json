@@ -93,84 +93,58 @@
     ],
     "options": {
         "env": {
-            "BASH_ENV": "${workspaceFolder}/.devcontainer/.env"
+            "BASH_ENV": "${workspaceFolder}/.devcontainer/.env",
+            "SIM_TOOL": "oss"
         },
+        "cwd": "${workspaceFolder}/build"
     },
     "tasks": [
         {
             "label": "sim-compile",
-            "command": "vsim -c -do ../scripts/sim_compile.tcl",
-            "options": {
-                "cwd": "${workspaceFolder}/sim"
-            },
+            "command": "make $SIM_TOOL",
             "dependsOn": [
                 "sw-install-sim"
             ]
         },
         {
             "label": "sim-test",
-            "command": "vsim -c -do ../scripts/sim_test.tcl",
-            "options": {
-                "cwd": "${workspaceFolder}/sim"
-            },
+            "command": "make $SIM_TOOL test",
             "dependsOn": [
-                "sim-compile"
+                "sw-install-sim"
             ]
         },
         {
             "label": "sim-open",
-            // Gui Mode (no -c flag)
-            "command": "vsim -debugdb -voptargs=+acc=rn+*. -do ../scripts/sim_open.tcl ${fileBasenameNoExtension}",
-            "options": {
-                "cwd": "${workspaceFolder}/sim"
-            },
-            "dependsOn": "sim-compile"
-        },
-        {
-            "label": "quartus-project",
-            "command": "quartus_sh -t ../scripts/quartus_project.tcl",
-            "options": {
-                "cwd": "${workspaceFolder}/quartus"
-            }
+            "command": "make $SIM_TOOL work.${fileBasenameNoExtension} sim",
         },
         {
             "label": "quartus-compile",
-            "command": "quartus_sh -t ../scripts/quartus_compile.tcl",
-            "options": {
-                "cwd": "${workspaceFolder}/quartus"
-            },
+            "command": "make quartus synth",
             "dependsOn": [
-                "quartus-project",
                 "sw-install"
             ]
         },
         {
             "label": "quartus-open",
-            "command": "quartus_sh -t ../scripts/quartus_open.tcl",
-            "options": {
-                "cwd": "${workspaceFolder}/quartus"
-            },
-            "dependsOn": [
-                "quartus-project"
-            ]
+            "command": "make quartus open",
         },
         {
             "label": "quartus-program",
             "command": "quartus_pgm -c USB-Blaster --mode jtag --operation='p;top.sof'",
             "options": {
-                "cwd": "${workspaceFolder}/quartus/output_files"
+                "cwd": "${workspaceFolder}/build/output_files"
             }
         },
         {
             "label": "quartus-flash",
-            "command": "quartus_cpf -c ../../scripts/quartus_flash.cof; quartus_pgm ../../scripts/quartus_flash.cdf",
+            "command": "quartus_cpf -c ../../scripts/quartus/quartus_flash.cof; quartus_pgm ../../scripts/quartus/quartus_flash.cdf",
             "options": {
-                "cwd": "${workspaceFolder}/quartus/output_files",
+                "cwd": "${workspaceFolder}/build/output_files",
             }
         },
         {
             "label": "clean",
-            "command": "rm -rf quartus/* sim/* && touch quartus/.gitkeep && touch sim/.gitkeep",
+            "command": "make clean",
             "presentation": {
                 "reveal": "silent"
             },
@@ -215,13 +189,6 @@
         {
             "label": "sw-debug",
             "command": "make debug",
-            "options": {
-                "cwd": "${workspaceFolder}/sw"
-            }
-        },
-        {
-            "label": "sw-env",
-            "command": "bash -l",
             "options": {
                 "cwd": "${workspaceFolder}/sw"
             }
