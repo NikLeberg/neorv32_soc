@@ -44,7 +44,7 @@ jobs:
     - name: Run Synthesis
       run: |
         cd build
-        make quartus work.top
+        make quartus work.top synth
 
     - name: Archive CI Artifacts
       uses: actions/upload-artifact@v3

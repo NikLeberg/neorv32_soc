@@ -12,8 +12,6 @@ IGNORED_FILES += ../lib/neorv32/sim/uart_rx.vhd
 IGNORED_FILES += ../lib/neorv32/rtl/core/mem/neorv32_imem.legacy.vhd
 IGNORED_FILES += ../lib/neorv32/rtl/core/mem/neorv32_dmem.legacy.vhd
 IGNORED_FILES += ../vhdl/vga/tb/vga_tb.vhdl
-# Toplevel of design.
-TOP ?= top
 
 export LIBS
 export LIB_PATHS

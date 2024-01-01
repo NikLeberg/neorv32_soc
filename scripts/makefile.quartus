@@ -8,16 +8,8 @@ $(info Running Quartus Makefile.)
 -include deps.d
 
 .PHONY: quartus
-quartus: quartus_project.tcl $(OBJS)
-	@quartus_sh -t quartus_project.tcl
-	@quartus_sh -t $(PROJ_ROOT)/scripts/quartus/quartus_compile.tcl
-MAKE_CLEAN += top.qpf top.qsf flowsummary.log
-
-.PHONY: quartus_project.tcl
-quartus_project.tcl:
-	@cp $(PROJ_ROOT)/scripts/quartus/quartus_project.tcl.template quartus_project.tcl
-	@sed -i 's/<<top_level_entity>>/$(TOP)/g' quartus_project.tcl
-MAKE_CLEAN += quartus_project.tcl
+quartus:
+	@
 
 # Helper macros to determine to what library a given file is associated. The
 # file path is compared to the paths defined in LIB_PATHS and on a match the
@@ -28,13 +20,16 @@ get_lib_path_at_index = $(word $(1),$(LIB_PATHS))
 is_file_of_this_lib_index = $(findstring $(call get_lib_path_at_index,$(2)),$(1))
 get_lib_of_file = $(strip $(foreach i,$(shell seq 1 $(lib_count)),$(if $(call is_file_of_this_lib_index,$(1),$(i)),$(call get_lib_at_index,$(i)))))
 
-obj/%.vhd.o: | ../%.vhd quartus_project.tcl
-	@sed -i 's@#<<du_files>>@set_global_assignment -name VHDL_FILE $(word 1,$|) -library $(call get_lib_of_file,$(word 1,$|))\n#<<du_files>>@g' quartus_project.tcl
+# Helper macro to access the nth word in a dot separated string.
+word_dot = $(word $2,$(subst ., ,$1))
+
+obj/%.vhd.o: ../%.vhd | quartus_project.tcl
+	@sed -i 's@#<<du_files>>@set_global_assignment -name VHDL_FILE $(word 1,$^) -library $(call get_lib_of_file,$(word 1,$^))\n#<<du_files>>@g' quartus_project.tcl
 	@mkdir -p $(@D)
 	@touch $@
 
-obj/%.vhdl.o: | ../%.vhdl quartus_project.tcl
-	@sed -i 's@#<<du_files>>@set_global_assignment -name VHDL_FILE $(word 1,$|) -library $(call get_lib_of_file,$(word 1,$|))\n#<<du_files>>@g' quartus_project.tcl
+obj/%.vhdl.o: ../%.vhdl | quartus_project.tcl
+	@sed -i 's@#<<du_files>>@set_global_assignment -name VHDL_FILE $(word 1,$^) -library $(call get_lib_of_file,$(word 1,$^))\n#<<du_files>>@g' quartus_project.tcl
 	@mkdir -p $(@D)
 	@touch $@
 
@@ -42,12 +37,35 @@ obj/%.psl.o:
 	@mkdir -p $(@D)
 	@touch $@
 
-%: du/%
-	@echo [LD] $@
+%:
+	@echo [TOP] $@
+	$(eval TOP := $(call word_dot,$@,2))
 
-.PHONY: sim
-sim:
-	@$(GHDL) -r $(FLAGS) $(filter-out oss sim,$(MAKECMDGOALS))
+.PHONY: synth
+synth: output_files/top.sof
+
+output_files/top.sof: quartus_project.tcl $(OBJS)
+	@quartus_sh -t quartus_project.tcl
+	@quartus_sh -t $(PROJ_ROOT)/scripts/quartus/quartus_compile.tcl
+MAKE_CLEAN += flowsummary.log
+
+quartus_project.tcl:
+	@cp $(PROJ_ROOT)/scripts/quartus/quartus_project.tcl.template quartus_project.tcl
+	@sed -i 's/<<top_level_entity>>/$(TOP)/g' quartus_project.tcl
+MAKE_CLEAN += quartus_project.tcl top.qpf top.qsf
+
+.PHONY: program
+program: output_files/top.sof
+	@quartus_pgm -c USB-Blaster --mode jtag --operation='p;output_files/top.sof'
+
+.PHONY: flash
+flash: output_files/top.sof
+	@quartus_cpf -c $(PROJ_ROOT)/scripts/quartus/quartus_flash.cof
+	@quartus_pgm $(PROJ_ROOT)/scripts/quartus/quartus_flash.cdf
+
+.PHONY: open
+open: quartus_project.tcl $(OBJS)
+	@quartus top.qpf
 
 .PHONY: clean
 clean:
