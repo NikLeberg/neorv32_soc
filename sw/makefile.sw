@@ -11,9 +11,11 @@ MARCH = rv32ima_zicsr
 USER_FLAGS := $(CLI_FLAGS)
 USER_FLAGS += -Wl,--defsym,__neorv32_rom_size=16K
 USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=32M
+USER_FLAGS += -Wl,--defsym,__neorv32_stack_size=8K
+USER_FLAGS += -Wl,--defsym,__neorv32_num_harts=4
 USER_FLAGS += -Og
 
-# Change flags if we are building for the sumulation.
+# Change flags if we are building for the simulation.
 ifneq (,$(findstring SIMULATION,$(USER_FLAGS)))
 USER_FLAGS += -DUART0_SIM_MODE
 USER_FLAGS += -DUART1_SIM_MODE
