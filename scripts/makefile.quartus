@@ -44,15 +44,18 @@ obj/%.psl.o:
 .PHONY: synth
 synth: output_files/top.sof
 
-output_files/top.sof: quartus_project.tcl $(OBJS)
-	@quartus_sh -t quartus_project.tcl
+output_files/top.sof: top.qpf
 	@quartus_sh -t $(PROJ_ROOT)/scripts/quartus/quartus_compile.tcl
 MAKE_CLEAN += flowsummary.log
+
+top.qpf: quartus_project.tcl $(OBJS)
+	@quartus_sh -t quartus_project.tcl
+MAKE_CLEAN += top.qpf top.qsf
 
 quartus_project.tcl:
 	@cp $(PROJ_ROOT)/scripts/quartus/quartus_project.tcl.template quartus_project.tcl
 	@sed -i 's/<<top_level_entity>>/$(TOP)/g' quartus_project.tcl
-MAKE_CLEAN += quartus_project.tcl top.qpf top.qsf
+MAKE_CLEAN += quartus_project.tcl
 
 .PHONY: program
 program: output_files/top.sof
@@ -64,8 +67,9 @@ flash: output_files/top.sof
 	@quartus_pgm $(PROJ_ROOT)/scripts/quartus/quartus_flash.cdf
 
 .PHONY: open
-open: quartus_project.tcl $(OBJS)
+open: top.qpf $(OBJS)
 	@quartus top.qpf
+MAKE_CLEAN += top.*.rpt top.*.summary
 
 .PHONY: clean
 clean:
