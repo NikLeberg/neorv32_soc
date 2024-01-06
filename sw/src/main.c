@@ -40,11 +40,10 @@ void delay_ms(uint32_t time_ms) {
 }
 
 void msi_handler(void) {
-    uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
-    neorv32_cpu_store_unsigned_word(0xf0000000 + 4 * hart_id, 0);
+    smp_reset_ipi_for_hart(smp_get_hart_id());
 }
 
-static smp_spinlock_t lock = SMP_SPINLOCK_INIT;
+static smp_mutex_t mutex = SMP_MUTEX_INIT;
 
 /**
  * @brief Main function
@@ -60,16 +59,16 @@ int main() {
     if (hart_id == 0) {
         delay_ms(32);
         // enable other cores with msi interrupt aka ipi
-        neorv32_cpu_store_unsigned_word(0xf0000004, 1);
-        neorv32_cpu_store_unsigned_word(0xf0000008, 1);
-        neorv32_cpu_store_unsigned_word(0xf000000c, 1);
-        // neorv32_cpu_store_unsigned_word(0xf0000010, 1);
+        smp_set_ipi_for_hart(1);
+        smp_set_ipi_for_hart(2);
+        smp_set_ipi_for_hart(3);
+        smp_set_ipi_for_hart(4);
     }
 
     for (;;) {
-        smp_spinlock_lock(&lock);
+        smp_mutex_take(&mutex);
         neorv32_gpio_pin_toggle(hart_id);
-        smp_spinlock_unlock(&lock);
+        smp_mutex_give(&mutex);
         delay_ms(delay);
     }
 
