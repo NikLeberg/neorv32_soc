@@ -394,9 +394,9 @@ BEGIN
             REPORT "Abstract read of s0 with 32 bits did fail."
                 SEVERITY failure;
             dmi_read(addr_data0_c); -- read result (MISA csr) from data0
-            ASSERT dmi_rsp.data = x"40801101"
+            ASSERT dmi_rsp.data = x"40801105"
             REPORT "MISA of hart " & INTEGER'image(i) & " was expected to be " &
-                "0x40801101 (RV32AIMX) and not " & to_hstring(dmi_rsp.data) & "."
+                "0x40801105 (RV32AIMCX) and not 0x" & to_hstring(dmi_rsp.data) & "."
                 SEVERITY failure;
             -- request hart i to resume
             dmi_write(addr_dmcontrol_c, "010000" & STD_ULOGIC_VECTOR(to_unsigned(i, 10)) & x"0001");
