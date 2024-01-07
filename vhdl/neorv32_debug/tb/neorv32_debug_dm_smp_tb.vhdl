@@ -164,7 +164,7 @@ BEGIN
     -- IMEM dual-port ROM --
     wb_imem_inst : ENTITY work.wb_imem
         GENERIC MAP(
-            IMEM_SIZE => 1 * 1024 -- size of instruction memory in bytes
+            IMEM_SIZE => 16 * 1024 -- size of instruction memory in bytes
         )
         PORT MAP(
             -- Global control --
