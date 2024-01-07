@@ -8,7 +8,7 @@ RISCV_PREFIX = riscv32-unknown-elf-
 MARCH = rv32imac_zicsr
 
 # FreeRTOS kernel home folder
-FREERTOS_HOME = ../lib/FreeRTOS/FreeRTOS/Source
+FREERTOS_HOME = ../lib/FreeRTOS-Kernel
 
 # User flags for additional configuration (will be added to compiler flags)
 USER_FLAGS := $(CLI_FLAGS)
