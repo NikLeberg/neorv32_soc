@@ -67,17 +67,24 @@ BEGIN
         -- Each hart tries to blink its respective LED on gpio0.
         -- Check that hart0 is able to blink it a few times.
 
-        FOR i IN 0 TO 3 LOOP
-            -- Wait for LSB gpio bit to go high.
-            WAIT UNTIL s_gpio0_o(0) = '1' FOR 100 us;
-            ASSERT s_gpio0_o(0) = '1'
-            REPORT "LED0 was not observed to go high, did hart0 run?"
-                SEVERITY failure;
+        -- Wait for LSB gpio bit to go high. The SW is first setting up FreeRTOS
+        -- and requires more time for the first toggle.
+        WAIT UNTIL s_gpio0_o(0) = '1' FOR 1000 us;
+        ASSERT s_gpio0_o(0) = '1'
+        REPORT "LED0 was not observed to go high, did hart0 run?"
+            SEVERITY failure;
 
+        FOR i IN 0 TO 3 LOOP
             -- Wait for LSB gpio bit to go low.
-            WAIT UNTIL s_gpio0_o(0) = '0' FOR 100 us;
+            WAIT UNTIL s_gpio0_o(0) = '0' FOR 50 us;
             ASSERT s_gpio0_o(0) = '0'
             REPORT "LED0 was not observed to go low, did hart0 run?"
+                SEVERITY failure;
+
+            -- Wait for LSB gpio bit to go high.
+            WAIT UNTIL s_gpio0_o(0) = '1' FOR 50 us;
+            ASSERT s_gpio0_o(0) = '1'
+            REPORT "LED0 was not observed to go high, did hart0 run?"
                 SEVERITY failure;
         END LOOP;
 

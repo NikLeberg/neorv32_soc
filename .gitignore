@@ -6,6 +6,7 @@ stderr
 *.elf
 *.o
 sw/*.vhd
+sw/*.asm
 # ignore build artifacts of hardware
 build/*
 !build/makefile

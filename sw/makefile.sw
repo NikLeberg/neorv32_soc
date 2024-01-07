@@ -5,7 +5,10 @@ NEORV32_HOME = ../lib/neorv32
 RISCV_PREFIX = riscv32-unknown-elf-
 
 # CPU architecture
-MARCH = rv32ima_zicsr
+MARCH = rv32imac_zicsr
+
+# FreeRTOS kernel home folder
+FREERTOS_HOME = ../lib/FreeRTOS/FreeRTOS/Source
 
 # User flags for additional configuration (will be added to compiler flags)
 USER_FLAGS := $(CLI_FLAGS)
@@ -13,6 +16,7 @@ USER_FLAGS += -Wl,--defsym,__neorv32_rom_size=16K
 USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=32M
 USER_FLAGS += -Wl,--defsym,__neorv32_stack_size=8K
 USER_FLAGS += -Wl,--defsym,__neorv32_num_harts=4
+USER_FLAGS += -Wl,--defsym,__neorv32_heap_size=4M
 USER_FLAGS += -Og
 
 # Change flags if we are building for the simulation.
@@ -24,6 +28,15 @@ endif
 # Add application sources
 APP_SRC += $(wildcard ./src/*.c) $(wildcard ./src/*.s) $(wildcard ./src/*.cpp) $(wildcard ./src/*.S)
 APP_INC += -I ./include
+ASM_INC += -I ./include
+
+# Add FreeRTOS sources
+APP_SRC += $(wildcard $(FREERTOS_HOME)/*.c)
+APP_INC += -I $(FREERTOS_HOME)/include
+APP_SRC += $(wildcard  $(FREERTOS_HOME)/portable/GCC/RISC-V/*.c)
+APP_SRC +=  $(FREERTOS_HOME)/portable/GCC/RISC-V/portASM.S
+APP_INC += -I  $(FREERTOS_HOME)/portable/GCC/RISC-V
+APP_SRC += $(wildcard  $(FREERTOS_HOME)/portable/MemMang/heap_4.c)
 
 # Include the common neorv32 buildsystem. Provides targets like exe, bin etc.
 include $(NEORV32_HOME)/sw/common/common.mk
