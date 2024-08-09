@@ -5,7 +5,7 @@ NEORV32_HOME = ../lib/neorv32
 RISCV_PREFIX = riscv32-unknown-elf-
 
 # CPU architecture
-MARCH = rv32imac_zicsr
+MARCH = rv32ia_zicsr
 
 # FreeRTOS kernel home folder
 FREERTOS_HOME = ../lib/FreeRTOS-Kernel
