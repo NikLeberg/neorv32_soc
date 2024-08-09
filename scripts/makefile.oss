@@ -15,6 +15,7 @@ GHDL  ?= ghdl
 FLAGS += --std=08 # enable VHDL-2008 language features
 FLAGS += -g -v # add debug information
 SIM_FLAGS += --ieee-asserts=disable # ignore "metavalue detected"
+SIM_FLAGS += --wave=wave.ghw # save waveform
 
 # Helper macros to determine to what library a given file is associated. The
 # file path is compared to the paths defined in LIB_PATHS and on a match the
@@ -62,3 +63,5 @@ test: $(TESTBENCHES)
 clean:
 	@rm -rf $(MAKE_CLEAN)
 	@rm -f *.cf
+	@rm -f *.vcd
+	@rm -f *.ghw
