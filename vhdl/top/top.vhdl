@@ -145,11 +145,9 @@ ARCHITECTURE top_arch OF top IS
     SIGNAL wb_slaves_mux_req : wb_req_arr_t(WB_N_SLAVES_MUX - 1 DOWNTO 0);
     SIGNAL wb_slaves_mux_resp : wb_resp_arr_t(WB_N_SLAVES_MUX - 1 DOWNTO 0);
     -- Error slave to terminate accesses that have no associated slave.
-    -- CONSTANT wb_slave_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
-    SIGNAL wb_slave_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
+    CONSTANT wb_slave_err_resp : wb_resp_sig_t := (ack => '0', err => '1', dat => (OTHERS => '0'));
     -- Always idle master for not used dial-master entities. 
-    -- CONSTANT wb_master_no_req : wb_req_sig_t := (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0'));
-    SIGNAL wb_master_no_req : wb_req_sig_t := (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0'));
+    CONSTANT wb_master_no_req : wb_req_sig_t := (cyc => '0', stb => '0', we => '0', sel => (OTHERS => '0'), adr => (OTHERS => '0'), dat => (OTHERS => '0'));
 
     SIGNAL wb_dmem_portb_resp : wb_resp_sig_t; -- dummy
 
