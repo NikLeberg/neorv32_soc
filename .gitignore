@@ -1,12 +1,18 @@
 # ignore run output of vsim / vcom
 transcript
 stderr
+# ignore ghdl analyse artifacts
+*.cf
 # ignore build artifacts of software
 *.bin
 *.elf
 *.o
 sw/*.vhd
 sw/*.asm
+sw/*.coe
+sw/*.hex
+sw/*.mem
+sw/*.mif
 # ignore build artifacts of hardware
 build/*
 !build/makefile
