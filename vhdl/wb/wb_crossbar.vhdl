@@ -61,7 +61,7 @@ ENTITY wb_crossbar IS
     PORT (
         -- Global control --
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-        rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
+        rstn_i : IN STD_ULOGIC; -- global reset, low-active, syn
         -- Wishbone master interface(s) --
         wb_masters_i : IN wb_req_arr_t(N_MASTERS - 1 DOWNTO 0);
         wb_masters_o : OUT wb_resp_arr_t(N_MASTERS - 1 DOWNTO 0);

@@ -52,7 +52,7 @@ BEGIN
         PORT MAP(
             -- Global control --
             clk_i  => clk,  -- global clock, rising edge
-            rstn_i => rstn, -- global reset, low-active, asyn
+            rstn_i => rstn, -- global reset, low-active, syn
             -- Wishbone slave interface --
             wb_slave_i => wb_slave_rx,
             wb_slave_o => wb_slave_tx,

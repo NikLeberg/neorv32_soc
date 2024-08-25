@@ -59,7 +59,7 @@ ENTITY wb_sdram IS
     PORT (
         -- Global control --
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-        rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
+        rstn_i : IN STD_ULOGIC; -- global reset, low-active, syn
         -- Wishbone slave interface --
         wb_slave_i : IN wb_req_sig_t;
         wb_slave_o : OUT wb_resp_sig_t;

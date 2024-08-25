@@ -45,7 +45,7 @@ ENTITY wb_imem IS
     PORT (
         -- Global control --
         clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-        rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
+        rstn_i : IN STD_ULOGIC; -- global reset, low-active, sync
 
         -- Wishbone slave interfaces --
         wb_slaves_i : IN wb_req_arr_t(1 DOWNTO 0);  -- control and data from master to slave
