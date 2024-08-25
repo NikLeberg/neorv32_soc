@@ -29,7 +29,7 @@
 --                                           individual bytes 
 --                          Supports: - 32 bit r/w on 4 byte boundaries
 --                                    - 16 bit r/w on 2 byte boundaries
---                                    -  8 bit r/2 on any byte address
+--                                    -  8 bit r/w on any byte address
 --
 -- Changes:                 0.1, 2023-02-05, leuen4
 --                              initial version
