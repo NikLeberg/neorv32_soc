@@ -27,30 +27,6 @@ ENTITY wb_crossbar_tb IS
 END ENTITY wb_crossbar_tb;
 
 ARCHITECTURE simulation OF wb_crossbar_tb IS
-    -- Component definition for device under test.
-    COMPONENT wb_crossbar IS
-        GENERIC (
-            -- General --
-            N_MASTERS  : POSITIVE; -- number of connected masters
-            N_SLAVES   : POSITIVE; -- number of connected slaves
-            N_OTHERS   : POSITIVE; -- number of interfaces for other slaves not in memory map
-            MEMORY_MAP : wb_map_t  -- memory map of address space
-        );
-        PORT (
-            -- Global control --
-            clk_i  : IN STD_ULOGIC; -- global clock, rising edge
-            rstn_i : IN STD_ULOGIC; -- global reset, low-active, asyn
-            -- Wishbone master interface(s) --
-            wb_masters_i : IN wb_req_arr_t(N_MASTERS - 1 DOWNTO 0);
-            wb_masters_o : OUT wb_resp_arr_t(N_MASTERS - 1 DOWNTO 0);
-            -- Wishbone slave interface(s) --
-            wb_slaves_o : OUT wb_req_arr_t(N_SLAVES - 1 DOWNTO 0);
-            wb_slaves_i : IN wb_resp_arr_t(N_SLAVES - 1 DOWNTO 0);
-            -- Other unmapped Wishbone slave interface(s) --
-            wb_other_slaves_o : OUT wb_req_arr_t(N_OTHERS - 1 DOWNTO 0);
-            wb_other_slaves_i : IN wb_resp_arr_t(N_OTHERS - 1 DOWNTO 0)
-        );
-    END COMPONENT wb_crossbar;
 
     -- Signals for sequential DUTs.
     CONSTANT CLK_PERIOD : DELAY_LENGTH := 20 ns; -- 50 MHz
@@ -85,28 +61,28 @@ ARCHITECTURE simulation OF wb_crossbar_tb IS
 
 BEGIN
     -- Instantiate the device under test.
-    dut : wb_crossbar
-    GENERIC MAP(
-        -- General --
-        N_MASTERS  => WB_N_MASTERS, -- number of connected masters
-        N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
-        N_OTHERS   => WB_N_OTHERS,  -- number of interfaces for other slaves not in memory map
-        MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
-    )
-    PORT MAP(
-        -- Global control --
-        clk_i  => clk,  -- global clock, rising edge
-        rstn_i => rstn, -- global reset, low-active, asyn
-        -- Wishbone master interface(s) --
-        wb_masters_i => wb_masters_tx,
-        wb_masters_o => wb_masters_rx,
-        -- Wishbone slave interface(s) --
-        wb_slaves_o => wb_slaves_rx,
-        wb_slaves_i => wb_slaves_tx,
-        -- Other unmapped Wishbone slave interface(s) --
-        wb_other_slaves_o    => OPEN,
-        wb_other_slaves_i(0) => wb_slave_err_o
-    );
+    dut : ENTITY work.wb_crossbar
+        GENERIC MAP(
+            -- General --
+            N_MASTERS  => WB_N_MASTERS, -- number of connected masters
+            N_SLAVES   => WB_N_SLAVES,  -- number of connected slaves
+            N_OTHERS   => WB_N_OTHERS,  -- number of interfaces for other slaves not in memory map
+            MEMORY_MAP => WB_MEMORY_MAP -- memory map of address space
+        )
+        PORT MAP(
+            -- Global control --
+            clk_i  => clk,  -- global clock, rising edge
+            rstn_i => rstn, -- global reset, low-active, syn
+            -- Wishbone master interface(s) --
+            wb_masters_i => wb_masters_tx,
+            wb_masters_o => wb_masters_rx,
+            -- Wishbone slave interface(s) --
+            wb_slaves_o => wb_slaves_rx,
+            wb_slaves_i => wb_slaves_tx,
+            -- Other unmapped Wishbone slave interface(s) --
+            wb_other_slaves_o    => OPEN,
+            wb_other_slaves_i(0) => wb_slave_err_o
+        );
 
     -- Clock that stops after all tests are done.
     clk <= '0' WHEN tb_done = '1' ELSE
