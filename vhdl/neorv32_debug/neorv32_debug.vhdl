@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  neorv32_debug
 --
@@ -15,6 +15,8 @@
 --
 -- Changes:                 0.1, 2023-08-27, leuen4
 --                              initial version
+--                          0.2, 2024-09-14, leuen4
+--                              update to pipelined wishbone variant
 -- =============================================================================
 
 LIBRARY ieee;
@@ -24,7 +26,7 @@ USE ieee.numeric_std.ALL;
 LIBRARY neorv32;
 USE neorv32.neorv32_package.ALL;
 
-USE work.wb_pkg.ALL;
+USE work.wbp_pkg.ALL;
 
 ENTITY neorv32_debug IS
     GENERIC (
@@ -37,11 +39,10 @@ ENTITY neorv32_debug IS
         rstn_i : IN STD_ULOGIC; -- global reset, low-active, async
 
         -- jtag connection --
-        jtag_trst_i : IN STD_ULOGIC;
-        jtag_tck_i  : IN STD_ULOGIC;
-        jtag_tdi_i  : IN STD_ULOGIC;
-        jtag_tdo_o  : OUT STD_ULOGIC;
-        jtag_tms_i  : IN STD_ULOGIC;
+        jtag_tck_i : IN STD_ULOGIC;
+        jtag_tdi_i : IN STD_ULOGIC;
+        jtag_tdo_o : OUT STD_ULOGIC;
+        jtag_tms_i : IN STD_ULOGIC;
 
         -- debug core interface (DCI) --
         dci_ndmrstn_o   : OUT STD_ULOGIC;                                -- soc reset (all harts)
@@ -49,8 +50,8 @@ ENTITY neorv32_debug IS
         dci_cpu_debug_i : IN STD_ULOGIC_VECTOR(NUM_HARTS - 1 DOWNTO 0);  -- cpu is in debug mode
 
         -- Wishbone slave interface --
-        wb_slave_i : IN wb_req_sig_t;  -- control and data from master to slave
-        wb_slave_o : OUT wb_resp_sig_t -- status and data from slave to master
+        wbp_mosi : IN wbp_mosi_sig_t; -- control and data from master to slave
+        wbp_miso : OUT wbp_miso_sig_t -- status and data from slave to master
     );
 END ENTITY neorv32_debug;
 
@@ -67,14 +68,15 @@ ARCHITECTURE no_target_specific OF neorv32_debug IS
 BEGIN
 
     -- Map Wishbone signals to neorv32 internal bus.
-    req.stb <= wb_slave_i.stb;
-    req.rw <= wb_slave_i.we;
-    req.addr <= wb_slave_i.adr;
-    req.data <= wb_slave_i.dat;
-    req.ben <= wb_slave_i.sel;
-    wb_slave_o.dat <= rsp.data;
-    wb_slave_o.ack <= rsp.ack;
-    wb_slave_o.err <= rsp.err;
+    req.stb <= wbp_mosi.stb;
+    req.rw <= wbp_mosi.we;
+    req.addr <= wbp_mosi.adr;
+    req.data <= wbp_mosi.dat;
+    req.ben <= wbp_mosi.sel;
+    wbp_miso.dat <= rsp.data;
+    wbp_miso.ack <= rsp.ack;
+    wbp_miso.err <= rsp.err;
+    wbp_miso.stall <= '0';
 
     -- **************************************************************************************************************************
     -- On-Chip Debugger Complex
@@ -93,11 +95,10 @@ BEGIN
             clk_i  => clk_i,
             rstn_i => rstn_i,
             -- jtag connection --
-            jtag_trst_i => jtag_trst_i,
-            jtag_tck_i  => jtag_tck_i,
-            jtag_tdi_i  => jtag_tdi_i,
-            jtag_tdo_o  => jtag_tdo_o,
-            jtag_tms_i  => jtag_tms_i,
+            jtag_tck_i => jtag_tck_i,
+            jtag_tdi_i => jtag_tdi_i,
+            jtag_tdo_o => jtag_tdo_o,
+            jtag_tms_i => jtag_tms_i,
             -- debug module interface (DMI) --
             dmi_req_o => dmi_req,
             dmi_rsp_i => dmi_rsp
