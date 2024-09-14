@@ -297,7 +297,7 @@ BEGIN
             -- request hart i to halt
             dmi_write(addr_dmcontrol_c, "100000" & STD_ULOGIC_VECTOR(to_unsigned(i, 10)) & x"0001");
             -- wait until hart i is halted
-            FOR i IN 0 TO TIMEOUT_REQ LOOP
+            FOR j IN 0 TO TIMEOUT_REQ LOOP
                 dmi_read(addr_dmstatus_c);
                 IF dmi_rsp.data(9 DOWNTO 8) /= "00" THEN
                     EXIT;
@@ -311,7 +311,7 @@ BEGIN
             -- do an abstract read of s0 of 64 bit width => should fail
             dmi_write(addr_command_c, x"00" & '0' & "011" & "0010" & x"1008");
             -- wait until idle
-            FOR i IN 0 TO TIMEOUT_BUSY LOOP
+            FOR j IN 0 TO TIMEOUT_BUSY LOOP
                 dmi_read(addr_abstractcs_c);
                 IF dmi_rsp.data(12) = '0' THEN
                     EXIT;
@@ -334,7 +334,7 @@ BEGIN
             -- do an abstract read of s0 of 32 bit width => should succeed
             dmi_write(addr_command_c, x"00" & '0' & "010" & "0010" & x"1008");
             -- wait until idle
-            FOR i IN 0 TO TIMEOUT_BUSY LOOP
+            FOR j IN 0 TO TIMEOUT_BUSY LOOP
                 dmi_read(addr_abstractcs_c);
                 IF dmi_rsp.data(12) = '0' THEN
                     EXIT;
@@ -351,7 +351,7 @@ BEGIN
             dmi_read(addr_data0_c);
             -- repeat abstract read for register s1
             dmi_write(addr_command_c, x"00" & '0' & "010" & "0010" & x"1009");
-            FOR i IN 0 TO TIMEOUT_BUSY LOOP
+            FOR j IN 0 TO TIMEOUT_BUSY LOOP
                 dmi_read(addr_abstractcs_c);
                 IF dmi_rsp.data(12) = '0' THEN
                     EXIT;
@@ -368,7 +368,7 @@ BEGIN
             dmi_write(addr_progbuf0_c, x"30102473"); -- csrr
             dmi_write(addr_progbuf1_c, x"00100073"); -- ebreak
             dmi_write(addr_command_c, x"00" & '0' & "010" & "0100" & x"1000"); -- execute program
-            FOR i IN 0 TO TIMEOUT_BUSY LOOP
+            FOR j IN 0 TO TIMEOUT_BUSY LOOP
                 dmi_read(addr_abstractcs_c);
                 IF dmi_rsp.data(12) = '0' THEN -- wait until idle
                     EXIT;
@@ -381,7 +381,7 @@ BEGIN
             REPORT "Exec of program buffer failed."
                 SEVERITY failure;
             dmi_write(addr_command_c, x"00" & '0' & "010" & "0010" & x"1008"); -- read s0
-            FOR i IN 0 TO TIMEOUT_BUSY LOOP
+            FOR j IN 0 TO TIMEOUT_BUSY LOOP
                 dmi_read(addr_abstractcs_c);
                 IF dmi_rsp.data(12) = '0' THEN -- wait until idle
                     EXIT;
@@ -401,7 +401,7 @@ BEGIN
             -- request hart i to resume
             dmi_write(addr_dmcontrol_c, "010000" & STD_ULOGIC_VECTOR(to_unsigned(i, 10)) & x"0001");
             -- wait until hart i is resumed
-            FOR i IN 0 TO TIMEOUT_REQ LOOP
+            FOR j IN 0 TO TIMEOUT_REQ LOOP
                 dmi_read(addr_dmstatus_c);
                 IF dmi_rsp.data(17 DOWNTO 16) /= "00" THEN
                     EXIT;
@@ -421,7 +421,7 @@ BEGIN
             -- request hart i to halt
             dmi_write(addr_dmcontrol_c, "100000" & STD_ULOGIC_VECTOR(to_unsigned(i, 10)) & x"0001");
             -- wait until hart i is halted
-            FOR i IN 0 TO TIMEOUT_REQ LOOP
+            FOR j IN 0 TO TIMEOUT_REQ LOOP
                 dmi_read(addr_dmstatus_c);
                 IF dmi_rsp.data(9 DOWNTO 8) /= "00" THEN
                     EXIT;
@@ -441,7 +441,7 @@ BEGIN
             -- request hart i to resume
             dmi_write(addr_dmcontrol_c, "010000" & STD_ULOGIC_VECTOR(to_unsigned(i, 10)) & x"0001");
             -- wait until hart i is resumed
-            FOR i IN 0 TO TIMEOUT_REQ LOOP
+            FOR j IN 0 TO TIMEOUT_REQ LOOP
                 dmi_read(addr_dmstatus_c);
                 IF dmi_rsp.data(17 DOWNTO 16) /= "00" THEN
                     EXIT;

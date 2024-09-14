@@ -44,7 +44,7 @@ USE work.wbp_pkg.ALL;
 
 ENTITY wbp_riscv_clint IS
     GENERIC (
-        N_HARTS : POSITIVE := 1 -- number of HARTs (1 to 4095)
+        N_HARTS : NATURAL RANGE 1 TO 4095 := 1 -- number of HARTs (1 to 4095)
     );
     PORT (
         -- Global control --
