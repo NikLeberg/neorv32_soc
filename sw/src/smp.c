@@ -2,10 +2,10 @@
  * @file smp.c
  * @author NikLeberg (niklaus.leuenb@gmail.com)
  * @brief Symmetric Multi Processing for the neorv32.
- * @version 0.1
- * @date 2023-08-09
+ * @version 0.2
+ * @date 2024-09-14
  *
- * @copyright Copyright (c) 2023 Niklaus Leuenberger
+ * @copyright Copyright (c) 2024 Niklaus Leuenberger
  *
  */
 
@@ -13,8 +13,8 @@
 #include "smp.h"
 
 #include <neorv32_cpu.h>
-#include <neorv32_cpu_csr.h>
 #include <neorv32_cpu_amo.h>
+#include <neorv32_cpu_csr.h>
 
 
 void smp_spinlock_lock(smp_spinlock_t *lock) {
@@ -29,11 +29,9 @@ void smp_spinlock_lock(smp_spinlock_t *lock) {
 }
 
 void smp_spinlock_unlock(smp_spinlock_t *lock) {
-    // Assuming no dcache the following would work:
-    //     *lock = SMP_SPINLOCK_UNLOCKED;
-    // But we potentially have a dcache and no coherency (so far).
-    // We reuse the store-conditional instruction as it is always uncached.
-    neorv32_cpu_store_conditional_word((uint32_t)lock, SMP_SPINLOCK_UNLOCKED);
+    // The following assumes we do not have a core local d-cache. And if we have
+    // one that it has coherency.
+    *lock = SMP_SPINLOCK_UNLOCKED;
 }
 
 void smp_mutex_take(smp_mutex_t *mutex) {
@@ -48,6 +46,7 @@ void smp_mutex_take(smp_mutex_t *mutex) {
     } else {
         while (mutex->owner != SMP_MUTEX_FREE) {
             smp_spinlock_unlock(&mutex->lock);
+            asm volatile("nop");
             smp_spinlock_lock(&mutex->lock);
         }
         mutex->owner = hart_id;
