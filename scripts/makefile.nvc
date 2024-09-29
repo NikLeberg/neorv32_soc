@@ -1,0 +1,62 @@
+include ../scripts/makefile.def
+
+# Run makefile from within the nikleberg/nvc docker container for faster
+# compilation.
+$(info Running NVC Makefile.)
+
+# Load the generated design unit dependencies.
+-include deps.d
+
+.PHONY: nvc
+nvc: $(OBJS) $(OBJS_TB)
+
+# Compile the design units with NVC.
+NVC        ?= nvc
+GLOB_FLAGS += -L. # global flags: include build directory for library search
+ELAB_FLAGS += --jit # elaboration flags: delay LLVM JIT generation until runtime
+SIM_FLAGS  += --ieee-warnings=off # sim flags: ignore "metavalue detected"
+
+# Helper macros to determine to what library a given file is associated. The
+# file path is compared to the paths defined in LIB_PATHS and on a match the
+# corresponding library name from LIBS is returned.
+lib_count := $(words $(LIBS))
+get_lib_at_index = $(word $(1),$(LIBS))
+get_lib_path_at_index = $(word $(1),$(LIB_PATHS))
+is_file_of_this_lib_index = $(findstring $(call get_lib_path_at_index,$(2)),$(1))
+get_lib_of_file = $(strip $(foreach i,$(shell seq 1 $(lib_count)),$(if $(call is_file_of_this_lib_index,$(1),$(i)),$(call get_lib_at_index,$(i)))))
+
+# Helper macro to access the nth word in a dot separated string.
+word_dot = $(word $2,$(subst ., ,$1))
+
+obj/%.vhd.o: ../%.vhd
+	@echo [CC] $<
+	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $<
+	@mkdir -p $(@D)
+	@touch $@
+
+obj/%.vhdl.o: ../%.vhdl
+	@echo [CC] $<
+	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $<
+	@mkdir -p $(@D)
+	@touch $@
+
+%: du/%
+	@echo [LD] $@
+	@$(NVC) $(GLOB_FLAGS) -e $(ELAB_FLAGS) $(call word_dot,$@,2)
+MAKE_CLEAN += $(LIBS)
+
+.PHONY: sim
+sim:
+	@$(NVC) $(GLOB_FLAGS) -r $(SIM_FLAGS) $(call word_dot,$(filter-out nvc sim,$(MAKECMDGOALS)),2)
+MAKE_CLEAN += *.vcd
+
+.PHONY: test
+test: $(TESTBENCHES)
+	@set -e; for tb in $(TESTBENCHES); do \
+		echo Running testbench $${tb}...; \
+		$(MAKE) -f $(firstword $(MAKEFILE_LIST)) sim $${tb}; \
+	done
+
+.PHONY: clean
+clean:
+	@rm -rf $(MAKE_CLEAN)

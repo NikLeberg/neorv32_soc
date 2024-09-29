@@ -24,6 +24,7 @@ help:
 	@echo "Available tools:"
 	@echo "$(tab)questa - compiling and simulating with Intel QuestaSim / ModelSim"
 	@echo "$(tab)oss    - simulating with open source GHDL"
+	@echo "$(tab)nvc    - simulating with open source NVC"
 	@echo "Definitions from 'makefile.def':"
 	@echo "$(tab)LIBS:          $(LIBS)"
 	@echo "$(tab)LIB_PATHS:     $(LIB_PATHS)"
@@ -47,6 +48,10 @@ questa: deps.d questa_tool
 .PHONY: oss
 oss: deps.d oss_tool
 	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+
+.PHONY: nvc
+nvc: deps.d nvc_tool
+	@nvc_make -f $(PROJ_ROOT)/scripts/makefile.nvc $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
 
 .PHONY: quartus
 quartus: deps.d quartus_tool
