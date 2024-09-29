@@ -23,7 +23,7 @@ help:
 	@echo "To simulate, type 'make <tool> <library>.<design_unit> sim'."
 	@echo "Available tools:"
 	@echo "$(tab)questa - compiling and simulating with Intel QuestaSim / ModelSim"
-	@echo "$(tab)oss    - simulating with open source GHDL"
+	@echo "$(tab)ghdl   - simulating with open source GHDL"
 	@echo "$(tab)nvc    - simulating with open source NVC"
 	@echo "Definitions from 'makefile.def':"
 	@echo "$(tab)LIBS:          $(LIBS)"
@@ -45,9 +45,9 @@ MAKE_CLEAN += last.tool
 questa: deps.d questa_tool
 	@questa_make -f $(PROJ_ROOT)/scripts/makefile.questa $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
 
-.PHONY: oss
-oss: deps.d oss_tool
-	@oss_make -f $(PROJ_ROOT)/scripts/makefile.oss $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
+.PHONY: ghdl
+ghdl: deps.d ghdl_tool
+	@ghdl_make -f $(PROJ_ROOT)/scripts/makefile.ghdl $(MAKECMDGOALS) PROJ_ROOT=$(PROJ_ROOT)
 
 .PHONY: nvc
 nvc: deps.d nvc_tool

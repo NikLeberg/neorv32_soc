@@ -3,13 +3,13 @@ include ../scripts/makefile.fn
 
 # Run makefile from within the hdl-containers/formal docker container for faster
 # compilation.
-$(info Running OSS Makefile.)
+$(info Running GHDL Makefile.)
 
 # Load the generated design unit dependencies.
 -include deps.d
 
-.PHONY: oss
-oss: $(OBJS) $(OBJS_TB)
+.PHONY: ghdl
+ghdl: $(OBJS) $(OBJS_TB)
 
 # Compile the design units with GHDL and enabled 2008 VHDL language features.
 GHDL  ?= ghdl
@@ -42,7 +42,7 @@ obj/%.psl.o: ../%.psl
 
 .PHONY: sim
 sim:
-	@$(GHDL) -r $(FLAGS) $(filter-out oss sim,$(MAKECMDGOALS)) $(SIM_FLAGS)
+	@$(GHDL) -r $(FLAGS) $(filter-out ghdl sim,$(MAKECMDGOALS)) $(SIM_FLAGS)
 
 .PHONY: test
 test: $(TESTBENCHES)

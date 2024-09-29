@@ -32,8 +32,8 @@ jobs:
     - name: Run Simulation (GHDL)
       run: |
         cd build
-        make oss work.top
-        make oss test
+        make ghdl work.top
+        make ghdl test
         make clean
 
     - name: Build Software (for Syn)
