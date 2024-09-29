@@ -1,4 +1,5 @@
 include ../scripts/makefile.def
+include ../scripts/makefile.fn
 
 # Run makefile from within the hdl-containers/formal docker container for faster
 # compilation.
@@ -16,15 +17,6 @@ FLAGS += --std=08 # enable VHDL-2008 language features
 FLAGS += -g -v # add debug information
 SIM_FLAGS += --ieee-asserts=disable # ignore "metavalue detected"
 SIM_FLAGS += --wave=wave.ghw # save waveform
-
-# Helper macros to determine to what library a given file is associated. The
-# file path is compared to the paths defined in LIB_PATHS and on a match the
-# corresponding library name from LIBS is returned.
-lib_count := $(words $(LIBS))
-get_lib_at_index = $(word $(1),$(LIBS))
-get_lib_path_at_index = $(word $(1),$(LIB_PATHS))
-is_file_of_this_lib_index = $(findstring $(call get_lib_path_at_index,$(2)),$(1))
-get_lib_of_file = $(strip $(foreach i,$(shell seq 1 $(lib_count)),$(if $(call is_file_of_this_lib_index,$(1),$(i)),$(call get_lib_at_index,$(i)))))
 
 obj/%.vhd.o: ../%.vhd
 	@echo [CC] $<
