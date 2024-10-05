@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.2
+-- Version:                 0.3
 --
 -- Entity:                  neorv32_wbp_gateway
 --
@@ -21,6 +21,9 @@
 --                              initial version
 --                          0.2, 2024-09-09, leuen4
 --                              add support for atomic lr/sc sequences
+--                          0.3, 2024-10-05, leuen4
+--                              delay BTB transactions also for error responses
+--                              fix order of `rvsc.pending` reset
 -- =============================================================================
 
 LIBRARY ieee;
@@ -96,7 +99,7 @@ BEGIN
     -- requires a one cycle pause. (Technically, this pause is only required if
     -- the addressed slave did change. Addressing the same slave would be
     -- allowed.) If back-to-back transactions are detected, this delays stb.
-    btb.state_next <= ACK WHEN btb.state = IDLE AND wbp_miso.ack = '1' ELSE
+    btb.state_next <= ACK WHEN btb.state = IDLE AND (wbp_miso.ack OR wbp_miso.err) = '1' ELSE
     DELAY WHEN btb.state = ACK AND req_i.stb = '1' ELSE
     IDLE WHEN btb.state = ACK AND req_i.stb = '0' ELSE
     IDLE WHEN btb.state = DELAY ELSE
@@ -137,8 +140,8 @@ BEGIN
     '0';
 
     -- transaction pending starting from stb until ack or err
-    rvsc.pending_next <= '1' WHEN (btb.stb AND (NOT rvsc.is_failure)) = '1' ELSE
-    '0' WHEN (wbp_miso.ack OR wbp_miso.err) = '1' ELSE
+    rvsc.pending_next <= '0' WHEN (wbp_miso.ack OR wbp_miso.err) = '1' ELSE
+    '1' WHEN (btb.stb AND (NOT rvsc.is_failure)) = '1' ELSE
     rvsc.pending;
 
     rvsc.int_stb_next <= rvsc.is_break;
