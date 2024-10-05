@@ -11,6 +11,7 @@ jobs:
     container:
       image: ghcr.io/nikleberg/dev-base
     strategy:
+      fail-fast: false
       matrix:
         simulator:
           - questa
