@@ -42,6 +42,10 @@ top.qpf: quartus_project.tcl $(OBJS)
 MAKE_CLEAN += top.qpf top.qsf
 
 quartus_project.tcl:
+	@if [ -z "$(TOP)" ]; then \
+		echo "Error: TOP variable is not defined"; \
+		exit 1; \
+	fi
 	@cp $(PROJ_ROOT)/scripts/quartus/quartus_project.tcl.template quartus_project.tcl
 	@sed -i 's/<<top_level_entity>>/$(TOP)/g' quartus_project.tcl
 MAKE_CLEAN += quartus_project.tcl
