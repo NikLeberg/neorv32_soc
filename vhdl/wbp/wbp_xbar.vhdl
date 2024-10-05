@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wbp_xbar
 --
@@ -14,6 +14,8 @@
 --
 -- Changes:                 0.1, 2024-08-19, leuen4
 --                              initial version
+--                          0.2, 2024-10-05, leuen4
+--                              assert `err` signal only for one cycle
 -- =============================================================================
 
 LIBRARY ieee;
@@ -50,6 +52,7 @@ ARCHITECTURE no_target_specific OF wbp_xbar IS
     SIGNAL requested, granted, granted_next, granted_last : matrix_t := (OTHERS => (OTHERS => '0'));
 
     SIGNAL request_error : STD_ULOGIC_VECTOR(N_MASTERS - 1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL request_error_reg : STD_ULOGIC_VECTOR(N_MASTERS - 1 DOWNTO 0) := (OTHERS => '0');
 
     SIGNAL masters_miso : wbp_miso_arr_t(N_MASTERS - 1 DOWNTO 0);
     SIGNAL slaves_mosi : wbp_mosi_arr_t(N_SLAVES - 1 DOWNTO 0);
@@ -106,6 +109,7 @@ BEGIN
                     request_error(m) <= wbp_masters_mosi(m).cyc;
                 END IF;
             END LOOP;
+            request_error_reg <= request_error;
         END IF;
     END PROCESS request_error_proc;
 
@@ -183,7 +187,7 @@ BEGIN
     END PROCESS conn_mosi_proc;
 
     -- Connect slave response to master.
-    conn_miso_proc : PROCESS (granted, wbp_slaves_miso, request_error) IS
+    conn_miso_proc : PROCESS (granted, wbp_slaves_miso, request_error, request_error_reg) IS
         -- Compute the slave number from the given grant matrix.
         FUNCTION get_slave_num (grant : matrix_t; master : NATURAL) RETURN NATURAL IS
         BEGIN
@@ -206,7 +210,7 @@ BEGIN
             slave_num := get_slave_num(granted, m);
             IF slave_num /= N_SLAVES THEN
                 masters_miso(m) <= wbp_slaves_miso(slave_num);
-            ELSIF request_error(m) = '1' THEN
+            ELSIF request_error(m) = '1' AND request_error_reg(m) = '0' THEN
                 masters_miso(m) <= slave_err;
             ELSE
                 masters_miso(m) <= slave_idle;
