@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -7,50 +6,52 @@ on:
   pull_request:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/nikleberg/dev-base
+    strategy:
+      matrix:
+        simulator:
+          - questa
+          - ghdl
+          - nvc
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build Software
+        run: |
+          cd sw
+          make CLI_FLAGS+='-DSIMULATION=1' exe install
+      - name: Run Simulation
+        run: |
+          cd build
+          make ${{matrix.simulator}} work.top
+          make ${{matrix.simulator}} test
 
-    - name: Build Software (for Sim)
-      run: |
-        cd sw
-        make CLI_FLAGS+='-DSIMULATION=1' exe install
-
-    - name: Run Simulation (Questa)
-      run: |
-        cd build
-        make questa work.top
-        make questa test
-        make clean
-
-    - name: Run Simulation (GHDL)
-      run: |
-        cd build
-        make ghdl work.top
-        make ghdl test
-        make clean
-
-    - name: Build Software (for Syn)
-      run: |
-        cd sw
-        make clean exe install
-
-    - name: Run Synthesis
-      run: |
-        cd build
-        make quartus work.top synth
-
-    - name: Archive CI Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ci_artifacts
-        path: |
-          sw/main.elf
-          sw/neorv32_exe.bin
-          build/output_files/*.sof
+  synthesize:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/nikleberg/dev-base
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build Software
+        run: |
+          cd sw
+          make exe install
+      - name: Run Synthesis
+        run: |
+          cd build
+          make quartus work.top synth
+      - name: Archive CI Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci_artifacts
+          path: |
+            sw/main.elf
+            sw/neorv32_exe.bin
+            build/output_files/*.sof
