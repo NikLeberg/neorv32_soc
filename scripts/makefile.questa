@@ -27,7 +27,7 @@ MAKE_CLEAN += $(LIBS)
 VCOM  ?= vcom
 FLAGS += -quiet # dont print informal output
 FLAGS += -2008  # enable VHDL-2008 language features
-FLAGS += -pedanticerrors -check_synthesis -fsmverbose w -lint # enable warnings
+FLAGS += -fsmverbose w -lint=full # enable warnings
 FLAGS += -suppress 1320 # ignore: Type of expression "x" is ambiguous; using element type y, not aggregate type z.
 FLAGS += -suppress 1292 # ignore: Slice range direction "downto" specified in slice with prefix of unknown direction.
 FLAGS += -error    1400 # promote: Signal "x" is read in the process but is not in the sensitivity list.
