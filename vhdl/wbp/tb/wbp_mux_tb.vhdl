@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.1
+-- Version:                 0.2
 --
 -- Entity:                  wbp_mux_tb
 --
@@ -11,6 +11,8 @@
 --
 -- Changes:                 0.1, 2024-08-25, leuen4
 --                              initial version
+--                          0.2, 2024-10-08, leuen4
+--                              fix too early de-assertion of address
 -- =============================================================================
 
 LIBRARY ieee;
@@ -97,10 +99,7 @@ BEGIN
             WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
             assert master_miso.stall = '0' report "slave did not deassert stall" severity failure;
 
-            master_mosi.adr <= (others => '0');
             master_mosi.dat <= (others => '0');
-            master_mosi.we <= '0';
-            master_mosi.sel <= (others => '0');
             master_mosi.stb <= '0';
 
             for i in 1 to MAX_DELAY / CLK_PERIOD loop
@@ -114,6 +113,9 @@ BEGIN
             ASSERT master_miso.dat = data report "read data invalid" severity failure;
 
             master_mosi.cyc <= '0';
+            master_mosi.adr <= (others => '0');
+            master_mosi.we <= '0';
+            master_mosi.sel <= (others => '0');
 
             WAIT UNTIL rising_edge(clk);
         end procedure sim_read;
@@ -135,10 +137,7 @@ BEGIN
             WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
             assert master_miso.stall = '0' report "slave did not deassert stall" severity failure;
 
-            master_mosi.adr <= (others => '0');
             master_mosi.dat <= (others => '0');
-            master_mosi.we <= '0';
-            master_mosi.sel <= (others => '0');
             master_mosi.stb <= '0';
 
             for i in 1 to MAX_DELAY / CLK_PERIOD loop
@@ -150,6 +149,9 @@ BEGIN
             assert master_miso.err = '1' report "slave did NOT respond with err" severity failure;
 
             master_mosi.cyc <= '0';
+            master_mosi.adr <= (others => '0');
+            master_mosi.we <= '0';
+            master_mosi.sel <= (others => '0');
 
             WAIT UNTIL rising_edge(clk);
         end procedure sim_read_err;
