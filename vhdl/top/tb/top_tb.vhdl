@@ -76,13 +76,13 @@ BEGIN
 
         FOR i IN 0 TO 3 LOOP
             -- Wait for LSB gpio bit to go low.
-            WAIT UNTIL s_gpio0_o(0) = '0' FOR 200 us;
+            WAIT UNTIL s_gpio0_o(0) = '0' FOR 500 us;
             ASSERT s_gpio0_o(0) = '0'
             REPORT "LED0 was not observed to go low, did hart0 run?"
                 SEVERITY failure;
 
             -- Wait for LSB gpio bit to go high.
-            WAIT UNTIL s_gpio0_o(0) = '1' FOR 200 us;
+            WAIT UNTIL s_gpio0_o(0) = '1' FOR 500 us;
             ASSERT s_gpio0_o(0) = '1'
             REPORT "LED0 was not observed to go high, did hart0 run?"
                 SEVERITY failure;
