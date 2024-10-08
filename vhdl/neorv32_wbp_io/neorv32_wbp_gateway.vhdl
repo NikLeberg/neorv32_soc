@@ -24,6 +24,7 @@
 --                          0.3, 2024-10-05, leuen4
 --                              delay BTB transactions also for error responses
 --                              fix order of `rvsc.pending` reset
+--                              fix reset of `rvsc.expect_sc`
 -- =============================================================================
 
 LIBRARY ieee;
@@ -128,8 +129,8 @@ BEGIN
     -- invalid sc operation, either address missmatch or interrupted since lr
     rvsc.is_failure <= btb.stb AND rvsc.is_sc AND (rvsc.addr_match NAND rvsc.expect_sc);
 
-    rvsc.expect_sc_next <= '1' WHEN rvsc.is_lr = '1' ELSE
-    '0' WHEN btb.stb = '1' ELSE
+    rvsc.expect_sc_next <= '1' WHEN (rvsc.is_lr AND btb.stb) = '1' ELSE
+    '0' WHEN (btb.stb OR wbp_miso.err) = '1' ELSE
     rvsc.expect_sc;
 
     -- capture reserved address on lr operation
