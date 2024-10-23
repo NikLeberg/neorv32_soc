@@ -7,8 +7,12 @@
         // forward docker socket to allow Docker-outside-of-Docker (DooD)
         "--volume=/var/run/docker.sock:/var/run/docker.sock",
         // Install a script with aliases for DooD based tools / commands.
+        //  => this only works for non-interactive bash shells
         "--env=BASH_ENV=/workspaces/${localWorkspaceFolderBasename}/.devcontainer/.env"
     ],
+    // Install a script with aliases for DooD based tools / commands.
+    //  => this only works for interactive bash shells
+    "postCreateCommand": "echo \"source /workspaces/${localWorkspaceFolderBasename}/.devcontainer/.env\" >> /etc/bash.bashrc",
     "customizations": {
         "vscode": {
             // IDs of extensions installed when the container is created.
