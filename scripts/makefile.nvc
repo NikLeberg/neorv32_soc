@@ -13,19 +13,20 @@ nvc: $(OBJS) $(OBJS_TB)
 
 # Compile the design units with NVC.
 NVC        ?= nvc
-GLOB_FLAGS += -L. # global flags: include build directory for library search
-ELAB_FLAGS += --jit # elaboration flags: delay LLVM JIT generation until runtime
-SIM_FLAGS  += --ieee-warnings=off # sim flags: ignore "metavalue detected"
+GLOB_FLAGS += -L. 				  # include build directory for library search
+ANAL_FLAG  += --check-synthesis   # check common synthesis errors
+ELAB_FLAGS += --jit 			  # delay LLVM JIT generation until runtime
+SIM_FLAGS  += --ieee-warnings=off # ignore "metavalue detected"
 
 obj/%.vhd.o: ../%.vhd
 	@echo [CC] $<
-	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $<
+	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $(ANAL_FLAGS) $<
 	@mkdir -p $(@D)
 	@touch $@
 
 obj/%.vhdl.o: ../%.vhdl
 	@echo [CC] $<
-	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $<
+	@$(NVC) $(GLOB_FLAGS) --work=$(call get_lib_of_file,$<) -a $(ANAL_FLAGS) $<
 	@mkdir -p $(@D)
 	@touch $@
 
