@@ -51,27 +51,27 @@ ARCHITECTURE simulation OF wbp_mux_tb IS
     );
 
     -- Maximum delay for bus responses.
-    CONSTANT MAX_DELAY: DELAY_LENGTH := 10 * CLK_PERIOD;
+    CONSTANT MAX_DELAY : DELAY_LENGTH := 10 * CLK_PERIOD;
 
     -- Delayed and gated ack of dummy slaves.
-    SIGNAL dummy_slaves_ack : STD_LOGIC_VECTOR(N_SLAVES - 1 downto 0) := (OTHERS => '0');
+    SIGNAL dummy_slaves_ack : STD_LOGIC_VECTOR(N_SLAVES - 1 DOWNTO 0) := (OTHERS => '0');
 
 BEGIN
     -- Instantiate the device under test.
-    dut : entity work.wbp_mux
-    GENERIC MAP(
-        -- General --
-        N_SLAVES=>N_SLAVES,
-        MEMORY_MAP=>MEMORY_MAP
-    )
-    PORT MAP(
-        -- Wishbone master interface(s) --
-        wbp_master_mosi => wbp_master_mosi,
-        wbp_master_miso => wbp_master_miso,
-        -- Wishbone slave interface(s) --
-        wbp_slaves_mosi => wbp_slaves_mosi,
-        wbp_slaves_miso => wbp_slaves_miso
-    );
+    dut : ENTITY work.wbp_mux
+        GENERIC MAP(
+            -- General --
+            N_SLAVES   => N_SLAVES,
+            MEMORY_MAP => MEMORY_MAP
+        )
+        PORT MAP(
+            -- Wishbone master interface(s) --
+            wbp_master_mosi => wbp_master_mosi,
+            wbp_master_miso => wbp_master_miso,
+            -- Wishbone slave interface(s) --
+            wbp_slaves_mosi => wbp_slaves_mosi,
+            wbp_slaves_miso => wbp_slaves_miso
+        );
 
     -- Clock that stops after all tests are done.
     clk <= '0' WHEN tb_done = '1' ELSE
@@ -81,80 +81,80 @@ BEGIN
     rstn <= '0', '1' AFTER 2 * CLK_PERIOD;
 
     test : PROCESS IS
-        procedure sim_read (
-            signal clk : in std_ulogic;
-            signal master_mosi : out wbp_mosi_sig_t;
-            signal master_miso : in wbp_miso_sig_t;
-            constant address : STD_ULOGIC_VECTOR(WBP_ADDRESS_WIDTH - 1 DOWNTO 0);
-            constant data : STD_ULOGIC_VECTOR(WBP_DATA_WIDTH - 1 DOWNTO 0)
-        ) is
-        begin
+        PROCEDURE sim_read (
+            SIGNAL clk         : IN STD_ULOGIC;
+            SIGNAL master_mosi : OUT wbp_mosi_sig_t;
+            SIGNAL master_miso : IN wbp_miso_sig_t;
+            CONSTANT address   : STD_ULOGIC_VECTOR(WBP_ADDRESS_WIDTH - 1 DOWNTO 0);
+            CONSTANT data      : STD_ULOGIC_VECTOR(WBP_DATA_WIDTH - 1 DOWNTO 0)
+        ) IS
+        BEGIN
             master_mosi.adr <= address;
-            master_mosi.dat <= (others => 'X');
+            master_mosi.dat <= (OTHERS => 'X');
             master_mosi.we <= '0';
-            master_mosi.sel <= (others => '1');
+            master_mosi.sel <= (OTHERS => '1');
             master_mosi.stb <= '1';
             master_mosi.cyc <= '1';
-        
-            WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
-            assert master_miso.stall = '0' report "slave did not deassert stall" severity failure;
 
-            master_mosi.dat <= (others => '0');
+            WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
+            ASSERT master_miso.stall = '0' REPORT "slave did not deassert stall" SEVERITY failure;
+
+            master_mosi.dat <= (OTHERS => '0');
             master_mosi.stb <= '0';
 
-            for i in 1 to MAX_DELAY / CLK_PERIOD loop
-                if master_miso.ack = '1' OR master_miso.err = '1' then
-                    exit;
-                end if;
+            FOR i IN 1 TO MAX_DELAY / CLK_PERIOD LOOP
+                IF master_miso.ack = '1' OR master_miso.err = '1' THEN
+                    EXIT;
+                END IF;
                 WAIT UNTIL rising_edge(clk);
-            end loop;
-            assert master_miso.err = '0' report "slave did respond with err" severity failure;
-            assert master_miso.ack = '1' report "slave did not ack" severity failure;
-            ASSERT master_miso.dat = data report "read data invalid" severity failure;
+            END LOOP;
+            ASSERT master_miso.err = '0' REPORT "slave did respond with err" SEVERITY failure;
+            ASSERT master_miso.ack = '1' REPORT "slave did not ack" SEVERITY failure;
+            ASSERT master_miso.dat = data REPORT "read data invalid" SEVERITY failure;
 
             master_mosi.cyc <= '0';
-            master_mosi.adr <= (others => '0');
+            master_mosi.adr <= (OTHERS => '0');
             master_mosi.we <= '0';
-            master_mosi.sel <= (others => '0');
+            master_mosi.sel <= (OTHERS => '0');
 
             WAIT UNTIL rising_edge(clk);
-        end procedure sim_read;
-        
-        procedure sim_read_err (
-            signal clk : in std_ulogic;
-            signal master_mosi : out wbp_mosi_sig_t;
-            signal master_miso : in wbp_miso_sig_t;
-            constant address : STD_ULOGIC_VECTOR(WBP_ADDRESS_WIDTH - 1 DOWNTO 0)
-        ) is
-        begin
+        END PROCEDURE sim_read;
+
+        PROCEDURE sim_read_err (
+            SIGNAL clk         : IN STD_ULOGIC;
+            SIGNAL master_mosi : OUT wbp_mosi_sig_t;
+            SIGNAL master_miso : IN wbp_miso_sig_t;
+            CONSTANT address   : STD_ULOGIC_VECTOR(WBP_ADDRESS_WIDTH - 1 DOWNTO 0)
+        ) IS
+        BEGIN
             master_mosi.adr <= address;
-            master_mosi.dat <= (others => 'X');
+            master_mosi.dat <= (OTHERS => 'X');
             master_mosi.we <= '0';
-            master_mosi.sel <= (others => '1');
+            master_mosi.sel <= (OTHERS => '1');
             master_mosi.stb <= '1';
             master_mosi.cyc <= '1';
-        
-            WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
-            assert master_miso.stall = '0' report "slave did not deassert stall" severity failure;
 
-            master_mosi.dat <= (others => '0');
+            WAIT UNTIL rising_edge(clk) AND master_miso.stall = '0' FOR MAX_DELAY;
+            ASSERT master_miso.stall = '0' REPORT "slave did not deassert stall" SEVERITY failure;
+
+            master_mosi.dat <= (OTHERS => '0');
             master_mosi.stb <= '0';
 
-            for i in 1 to MAX_DELAY / CLK_PERIOD loop
-                if master_miso.ack = '1' OR master_miso.err = '1' then
-                    exit;
-                end if;
+            FOR i IN 1 TO MAX_DELAY / CLK_PERIOD LOOP
+                IF master_miso.ack = '1' OR master_miso.err = '1' THEN
+                    EXIT;
+                END IF;
                 WAIT UNTIL rising_edge(clk);
-            end loop;
-            assert master_miso.err = '1' report "slave did NOT respond with err" severity failure;
+            END LOOP;
+            ASSERT master_miso.err = '1' REPORT "slave did NOT respond with err" SEVERITY failure;
 
             master_mosi.cyc <= '0';
-            master_mosi.adr <= (others => '0');
+            master_mosi.adr <= (OTHERS => '0');
             master_mosi.we <= '0';
-            master_mosi.sel <= (others => '0');
+            master_mosi.sel <= (OTHERS => '0');
 
             WAIT UNTIL rising_edge(clk);
-        end procedure sim_read_err;
+        END PROCEDURE sim_read_err;
     BEGIN
         -- Wait for power on reset to finish.
         WAIT UNTIL rising_edge(clk);
@@ -191,12 +191,13 @@ BEGIN
 
     -- Let each slave respond with an ack for one clock after is has seen a stb
     -- from a master. On read accesses it will return the id of the slave.
-    dummy_slaves_gen : for s in 0 to N_SLAVES-1 generate
-        dummy_slaves_ack(s) <= wbp_slaves_mosi(s).stb when rising_edge(clk);
+    dummy_slaves_gen : FOR s IN 0 TO N_SLAVES - 1 GENERATE
+        dummy_slaves_ack(s) <= wbp_slaves_mosi(s).stb WHEN rising_edge(clk);
         wbp_slaves_miso(s).ack <= dummy_slaves_ack(s) AND wbp_slaves_mosi(s).cyc;
         wbp_slaves_miso(s).stall <= '0'; -- never stalled
         wbp_slaves_miso(s).err <= '0'; -- never any error
-        wbp_slaves_miso(s).dat <= STD_ULOGIC_VECTOR(to_unsigned(s, WBP_DATA_WIDTH)) WHEN wbp_slaves_miso(s).ack = '1' ELSE (OTHERS => '0'); -- slave number
-    end generate dummy_slaves_gen;
+        wbp_slaves_miso(s).dat <= STD_ULOGIC_VECTOR(to_unsigned(s, WBP_DATA_WIDTH)) WHEN wbp_slaves_miso(s).ack = '1' ELSE
+        (OTHERS => '0'); -- slave number
+    END GENERATE dummy_slaves_gen;
 
 END ARCHITECTURE simulation;
