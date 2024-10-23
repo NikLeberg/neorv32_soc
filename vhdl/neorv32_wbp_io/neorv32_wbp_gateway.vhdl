@@ -3,7 +3,7 @@
 --
 -- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
 --
--- Version:                 0.3
+-- Version:                 0.4
 --
 -- Entity:                  neorv32_wbp_gateway
 --
@@ -25,6 +25,8 @@
 --                              delay BTB transactions also for error responses
 --                              fix order of `rvsc.pending` reset
 --                              fix reset of `rvsc.expect_sc`
+--                          0.4, 2024-10-23, leuen4
+--                              improve throughput for accesses to same slave
 -- =============================================================================
 
 LIBRARY ieee;
@@ -54,6 +56,15 @@ END ENTITY neorv32_wbp_gateway;
 
 ARCHITECTURE no_target_specific OF neorv32_wbp_gateway IS
 
+    -- address comparator
+    TYPE comp_t IS RECORD
+        addr : STD_ULOGIC_VECTOR(31 DOWNTO 2);
+        addr_next : STD_ULOGIC_VECTOR(31 DOWNTO 2);
+        is_same_slave : STD_ULOGIC; -- same slave assuming 4k boundaries
+        is_same_addr : STD_ULOGIC;
+    END RECORD comp_t;
+    SIGNAL comp : comp_t;
+
     -- back-to-back prevention
     TYPE btb_state_t IS (IDLE, ACK, DELAY);
     TYPE btb_t IS RECORD
@@ -69,9 +80,6 @@ ARCHITECTURE no_target_specific OF neorv32_wbp_gateway IS
         is_sc : STD_ULOGIC; -- marks an sc operation (rvso = 1; rw = 1)
         is_break : STD_ULOGIC; -- marks that no sc did follow the lr
         is_failure : STD_ULOGIC; -- marks that current sc is not valid
-        addr : STD_ULOGIC_VECTOR(31 DOWNTO 2);
-        addr_next : STD_ULOGIC_VECTOR(31 DOWNTO 2);
-        addr_match : STD_ULOGIC;
         expect_sc : STD_ULOGIC;
         expect_sc_next : STD_ULOGIC;
         pending : STD_ULOGIC;
@@ -95,18 +103,28 @@ ARCHITECTURE no_target_specific OF neorv32_wbp_gateway IS
 
 BEGIN
 
+    -- Track last accessed address for back-to-back and reservation set
+    -- controllers. Complete match is required for reservation, partial match at
+    -- 4k boundary is required for BTB.
+    comp.addr_next <= req_i.addr(31 DOWNTO 2) WHEN req_i.stb = '1' ELSE
+    comp.addr;
+    comp.is_same_slave <= '1' WHEN comp.addr(31 DOWNTO 12) = req_i.addr(31 DOWNTO 12) ELSE
+    '0';
+    comp.is_same_addr <= comp.is_same_slave WHEN comp.addr(11 DOWNTO 2) = req_i.addr(11 DOWNTO 2) ELSE
+    '0';
+
     -- Internal CPU transactions can be done back-to-back i.e. after an ack, the
-    -- next stb can follow the next clock. This is not allowed in wishbone as it
-    -- requires a one cycle pause. (Technically, this pause is only required if
-    -- the addressed slave did change. Addressing the same slave would be
-    -- allowed.) If back-to-back transactions are detected, this delays stb.
+    -- next stb can immediately follow on the next clock. This is not allowed in
+    -- wishbone unless it addresses the same slave. Otherwise if back-to-back
+    -- transactions are detected, stb must be delayed.
     btb.state_next <= ACK WHEN btb.state = IDLE AND (wbp_miso.ack OR wbp_miso.err) = '1' ELSE
-    DELAY WHEN btb.state = ACK AND req_i.stb = '1' ELSE
-    IDLE WHEN btb.state = ACK AND req_i.stb = '0' ELSE
+    DELAY WHEN btb.state = ACK AND req_i.stb = '1' AND comp.is_same_slave = '0' ELSE
+    IDLE WHEN btb.state = ACK AND (req_i.stb = '0' OR comp.is_same_slave = '1') ELSE
     IDLE WHEN btb.state = DELAY ELSE
     btb.state;
 
     btb.stb <= req_i.stb WHEN btb.state = IDLE ELSE
+    req_i.stb WHEN btb.state = ACK AND comp.is_same_slave = '1' ELSE
     '1' WHEN btb.state = DELAY ELSE
     '0';
 
@@ -127,18 +145,11 @@ BEGIN
     rvsc.is_break <= btb.stb AND (NOT req_i.rvso) AND rvsc.expect_sc;
 
     -- invalid sc operation, either address missmatch or interrupted since lr
-    rvsc.is_failure <= btb.stb AND rvsc.is_sc AND (rvsc.addr_match NAND rvsc.expect_sc);
+    rvsc.is_failure <= btb.stb AND rvsc.is_sc AND (comp.is_same_addr NAND rvsc.expect_sc);
 
     rvsc.expect_sc_next <= '1' WHEN (rvsc.is_lr AND btb.stb) = '1' ELSE
     '0' WHEN (btb.stb OR wbp_miso.err) = '1' ELSE
     rvsc.expect_sc;
-
-    -- capture reserved address on lr operation
-    rvsc.addr_next <= req_i.addr(31 DOWNTO 2) WHEN (btb.stb AND rvsc.is_lr) = '1' ELSE
-    rvsc.addr;
-
-    rvsc.addr_match <= '1' WHEN rvsc.addr = req_i.addr(31 DOWNTO 2) ELSE
-    '0';
 
     -- transaction pending starting from stb until ack or err
     rvsc.pending_next <= '0' WHEN (wbp_miso.ack OR wbp_miso.err) = '1' ELSE
@@ -168,17 +179,17 @@ BEGIN
     BEGIN
         IF rising_edge(clk_i) THEN
             IF rstn_i = '0' THEN
+                comp.addr <= (OTHERS => '0');
                 btb.state <= IDLE;
                 rvsc.expect_sc <= '0';
-                rvsc.addr <= (OTHERS => '0');
                 rvsc.pending <= '0';
                 rvsc.int_stb <= '0';
                 rvsc.int_ack <= '0';
                 stall.repeat <= '0';
             ELSE
+                comp.addr <= comp.addr_next;
                 btb.state <= btb.state_next;
                 rvsc.expect_sc <= rvsc.expect_sc_next;
-                rvsc.addr <= rvsc.addr_next;
                 rvsc.pending <= rvsc.pending_next;
                 rvsc.int_stb <= rvsc.int_stb_next;
                 rvsc.int_ack <= rvsc.int_ack_next;
