@@ -7,6 +7,9 @@ RISCV_PREFIX = riscv32-unknown-elf-
 # CPU architecture
 MARCH = rv32ia_zicsr
 
+# Count of CPU HARTS
+NUM_HARTS = 4
+
 # FreeRTOS kernel home folder
 FREERTOS_HOME = ../lib/FreeRTOS-Kernel
 
@@ -15,9 +18,15 @@ USER_FLAGS := $(CLI_FLAGS)
 USER_FLAGS += -Wl,--defsym,__neorv32_rom_size=16K
 USER_FLAGS += -Wl,--defsym,__neorv32_ram_size=32M
 USER_FLAGS += -Wl,--defsym,__neorv32_stack_size=8K
-USER_FLAGS += -Wl,--defsym,__neorv32_num_harts=4
+USER_FLAGS += -Wl,--defsym,__neorv32_num_harts=$(NUM_HARTS)
 USER_FLAGS += -Wl,--defsym,__neorv32_heap_size=4M
 USER_FLAGS += -Og
+
+# Build in SMP mode if NUM_HARTS > 1.
+ifneq (1,$(NUM_HARTS))
+USER_FLAGS += -DSMP
+endif
+USER_FLAGS += -DNUM_HARTS=$(NUM_HARTS)
 
 # Change flags if we are building for the simulation.
 ifneq (,$(findstring SIMULATION,$(USER_FLAGS)))
