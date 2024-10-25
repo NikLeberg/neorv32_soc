@@ -2,31 +2,19 @@
  * @file main.c
  * @author Niklaus Leuenberger <@NikLeberg>
  * @brief Main application for NEORV32 processor.
- * @version 0.2
- * @date 2023-03-23
+ * @version 0.3
+ * @date 2024-10-25
  *
  * @copyright Copyright (c) 2024 Niklaus Leuenberger
  *            SPDX-License-Identifier: MIT
  *
  */
 
-#include <FreeRTOS.h>
-#include <task.h>
-
-#include <neorv32.h>
 #include "smp.h"
+#include <neorv32.h>
 
-void vAssertCalled(void);
-void vApplicationIdleHook(void);
-
-extern void freertos_risc_v_trap_handler(void); // FreeRTOS core
-static void setup_port(void);
 static void blinky(void *args);
 static void delay_ms(uint32_t time_ms);
-
-// void msi_handler(void) {
-//     smp_reset_ipi_for_hart(smp_get_hart_id());
-// }
 
 static smp_mutex_t mutex = SMP_MUTEX_INIT;
 
@@ -36,65 +24,31 @@ static smp_mutex_t mutex = SMP_MUTEX_INIT;
  * @return will never return
  */
 int main() {
-    // setup hardware and port software
-    setup_port();
-    // create a simple task
-    xTaskCreate(blinky, "blinky", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 2, NULL);
-    // start the scheduler
-    vTaskStartScheduler();
-    // will not get here unless something went horribly wrong
-    for (;;) {
-        neorv32_gpio_pin_toggle(1);
-        neorv32_gpio_pin_toggle(2);
-        delay_ms(100);
+    // wake other harts with msi interrupt aka ipi
+    for (int i = 1; i < NUM_HARTS; ++i) {
+        smp_set_ipi_for_hart(i);
     }
+
+    blinky(NULL);
 }
 
-static void setup_port(void) {
-    // install the freeRTOS kernel trap handler
-    neorv32_cpu_csr_write(CSR_MTVEC, (uint32_t)&freertos_risc_v_trap_handler);
-    // // the first HART is responsible to wake up all other cores
-    // uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
-    // if (hart_id == 0) {
-    //     // enable other cores with msi interrupt aka ipi
-    //     smp_set_ipi_for_hart(1);
-    //     smp_set_ipi_for_hart(2);
-    //     smp_set_ipi_for_hart(3);
-    //     smp_set_ipi_for_hart(4);
-    // }
-}
-
-void vAssertCalled(void) {
-    /* Flash the lowest 2 LEDs to indicate that assert was hit - interrupts are
-    off here to prevent any further tick interrupts or context switches, so the
-    delay is implemented as a busy-wait loop instead of a peripheral timer. */
-    taskDISABLE_INTERRUPTS();
-    neorv32_gpio_port_set(0);
-    while (1) {
-        for (int i = 0; i < (configCPU_CLOCK_HZ / 100); i++) {
-            asm volatile("nop");
-        }
-        neorv32_gpio_pin_toggle(0);
-        neorv32_gpio_pin_toggle(1);
-    }
-}
-
-void vApplicationIdleHook(void) {
-    // put CPU into sleep mote, it wakes up on any interrupt request
-    neorv32_cpu_sleep();
+/**
+ * @brief Main function of secondary HARTS
+ *
+ * @return will never return
+ */
+int secondary_main() {
+    blinky(NULL);
 }
 
 static void blinky(void *args) {
     (void)args;
     uint32_t hart_id = neorv32_cpu_csr_read(CSR_MHARTID);
     for (;;) {
-        neorv32_gpio_pin_toggle(0);
-#ifndef SIMULATION
-        vTaskDelay(pdMS_TO_TICKS(200));
-#else
-#warning "Running blinky task with no delay!"
-        vTaskDelay(0);
-#endif
+        smp_mutex_take(&mutex);
+        neorv32_gpio_pin_toggle(hart_id);
+        smp_mutex_give(&mutex);
+        delay_ms(100);
     }
 }
 
