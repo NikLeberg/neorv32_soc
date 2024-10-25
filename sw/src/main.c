@@ -1,11 +1,12 @@
 /**
  * @file main.c
- * @author Leuenberger Niklaus <leuen4@bfh.ch>
+ * @author Niklaus Leuenberger <@NikLeberg>
  * @brief Main application for NEORV32 processor.
  * @version 0.2
  * @date 2023-03-23
  *
- * @copyright Copyright (c) 2023 Niklaus Leuenberger
+ * @copyright Copyright (c) 2024 Niklaus Leuenberger
+ *            SPDX-License-Identifier: MIT
  *
  */
 

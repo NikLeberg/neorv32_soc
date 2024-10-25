@@ -1,11 +1,12 @@
 /**
  * @file smp.c
- * @author NikLeberg (niklaus.leuenb@gmail.com)
+ * @author Niklaus Leuenberger <@NikLeberg>
  * @brief Symmetric Multi Processing for the neorv32.
  * @version 0.2
  * @date 2024-09-14
  *
  * @copyright Copyright (c) 2024 Niklaus Leuenberger
+ *            SPDX-License-Identifier: MIT
  *
  */
 

@@ -1,11 +1,12 @@
 /**
  * @file smp.h
- * @author NikLeberg (niklaus.leuenb@gmail.com)
+ * @author Niklaus Leuenberger <@NikLeberg>
  * @brief Symmetric Multi Processing for the neorv32.
  * @version 0.2
  * @date 2024-01-04
  *
  * @copyright Copyright (c) 2024 Niklaus Leuenberger
+ *            SPDX-License-Identifier: MIT
  *
  */
 
@@ -85,7 +86,7 @@ void smp_spinlock_unlock(smp_spinlock_t *lock);
  *
  */
 #define SMP_MUTEX_INIT \
-    { .owner = UINT32_MAX, .recursion_count = 0, .lock = SMP_SPINLOCK_INIT }
+    {.owner = UINT32_MAX, .recursion_count = 0, .lock = SMP_SPINLOCK_INIT}
 
 /**
  * @brief Take the mutex once.
