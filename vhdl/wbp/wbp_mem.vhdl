@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wbp_mem.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_mem
 --
 -- Description:             Wishbone accessible memory (MEM). Implemented as
@@ -32,7 +28,13 @@
 --                          Software/Dual-port-RAM-in-Quartus-II-7-2-different-
 --                          behavior-on-ModelSim/m-p/35356
 --
--- Changes:                 0.1, 2024-08-23, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-23, NikLeberg
 --                              initial version
 -- =============================================================================
 

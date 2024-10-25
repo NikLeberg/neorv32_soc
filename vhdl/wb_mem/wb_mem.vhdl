@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wb_mem.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.3
---
 -- Entity:                  wb_mem
 --
 -- Description:             Wishbone accessible memory (MEM). Implemented as
@@ -32,11 +28,17 @@
 --                          Software/Dual-port-RAM-in-Quartus-II-7-2-different-
 --                          behavior-on-ModelSim/m-p/35356
 --
--- Changes:                 0.1, 2023-04-16, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.3
+--
+-- Changes:                 0.1, 2023-04-16, NikLeberg
 --                              initial version
---                          0.2, 2023-04-30, leuen4
+--                          0.2, 2023-04-30, NikLeberg
 --                              add simulation specific architecture
---                          0.3, 2023-09-30, leuen4
+--                          0.3, 2023-09-30, NikLeberg
 --                              consolidate {D,I}MEM into one entity
 -- =============================================================================
 

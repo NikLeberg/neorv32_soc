@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    neorv32_wbp_gateway.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.4
---
 -- Entity:                  neorv32_wbp_gateway
 --
 -- Description:             Converter / Gateway from the neorv32 specific cpu
@@ -17,15 +13,21 @@
 --                          32 words must be implemented (2 * 16 where 16 is the
 --                          RISC-V ISA specification of a bounded lr/sc seq).
 --
--- Changes:                 0.1, 2024-08-23, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.4
+--
+-- Changes:                 0.1, 2024-08-23, NikLeberg
 --                              initial version
---                          0.2, 2024-09-09, leuen4
+--                          0.2, 2024-09-09, NikLeberg
 --                              add support for atomic lr/sc sequences
---                          0.3, 2024-10-05, leuen4
+--                          0.3, 2024-10-05, NikLeberg
 --                              delay BTB transactions also for error responses
 --                              fix order of `rvsc.pending` reset
 --                              fix reset of `rvsc.expect_sc`
---                          0.4, 2024-10-23, leuen4
+--                          0.4, 2024-10-23, NikLeberg
 --                              improve throughput for accesses to same slave
 -- =============================================================================
 

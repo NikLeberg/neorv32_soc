@@ -1,15 +1,17 @@
 -- =============================================================================
 -- File:                    wbp_remap.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_remap
 --
 -- Description:             Remap wishbone request from one address to the next.
 --
--- Changes:                 0.1, 2024-08-25, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-25, NikLeberg
 --                              initial version
 -- =============================================================================
 

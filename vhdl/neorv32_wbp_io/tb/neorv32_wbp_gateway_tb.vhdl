@@ -1,16 +1,18 @@
 -- =============================================================================
 -- File:                    neorv32_wbp_gateway_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  neorv32_wbp_gateway_tb
 --
 -- Description:             Testbench for the NEORV32 CPU bus to pipelined
 --                          Wishbone gateway.
 --
--- Changes:                 0.1, 2024-10-23, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-10-23, NikLeberg
 --                              initial version
 -- =============================================================================
 

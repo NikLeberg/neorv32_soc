@@ -1,16 +1,18 @@
 -- =============================================================================
 -- File:                    wbp_mux.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_mux
 --
 -- Description:             Wishbone pipelined interconnect for single master
 --                          multi slave bus topology. One to many.
 --
--- Changes:                 0.1, 2024-08-23, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-23, NikLeberg
 --                              initial version
 -- =============================================================================
 

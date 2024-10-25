@@ -1,15 +1,17 @@
 -- =============================================================================
 -- File:                    wbp_xbar_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_xbar_tb
 --
 -- Description:             Testbench for the many to many crossbar.
 --
--- Changes:                 0.1, 2024-08-21, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-21, NikLeberg
 --                              initial version
 -- =============================================================================
 

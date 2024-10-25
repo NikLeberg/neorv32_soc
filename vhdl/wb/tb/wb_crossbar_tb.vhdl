@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    wb_crossbar_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  wb_crossbar_tb
 --
 -- Description:             Testbench for the many to many crossbar.
 --
--- Changes:                 0.1, 2023-04-14, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2023-04-14, NikLeberg
 --                              initial version
---                          0.2, 2023-08-03, leuen4
+--                          0.2, 2023-08-03, NikLeberg
 --                              added test for `others` interface
 --                              added test for address decoding
 -- =============================================================================

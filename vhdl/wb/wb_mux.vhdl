@@ -1,20 +1,22 @@
 -- =============================================================================
 -- File:                    wb_mux.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.3
---
 -- Entity:                  wb_mux
 --
 -- Description:             Wishbone interconnect for single master multi slave
 --                          bus topology. One to many, implemented with muxes.
 --
--- Changes:                 0.1, 2023-02-26, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.3
+--
+-- Changes:                 0.1, 2023-02-26, NikLeberg
 --                              initial version
---                          0.2, 2023-03-19, leuen4
+--                          0.2, 2023-03-19, NikLeberg
 --                              simplify coarse decoding (unchanged behaviour)
---                          0.3, 2023-04-14, leuen4
+--                          0.3, 2023-04-14, NikLeberg
 --                              rename from wb_intercon to wb_mux
 -- =============================================================================
 

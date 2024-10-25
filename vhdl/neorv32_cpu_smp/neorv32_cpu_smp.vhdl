@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    neorv32_cpu_smp.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.4
---
 -- Entity:                  neorv32_cpu_smp
 --
 -- Description:             Custom version of neorv32_cpu of neorv32 system. It
@@ -30,13 +26,19 @@
 --                          - [x] A extension support
 --                                > emulation over traps with lr sc possible
 --
--- Changes:                 0.1, 2023-04-16, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.4
+--
+-- Changes:                 0.1, 2023-04-16, NikLeberg
 --                              initial version
---                          0.2, 2023-04-23, leuen4
+--                          0.2, 2023-04-23, NikLeberg
 --                              combine d and i Wishbone bus into single array
---                          0.3, 2023-08-28, leuen4
+--                          0.3, 2023-08-28, NikLeberg
 --                              add signals for on-chip debuggers core interface
---                          0.4, 2024-08-05, leuen4
+--                          0.4, 2024-08-05, NikLeberg
 --                              merge i- and d-bus with bus switch, separate
 --                              cpus into primary and secondary
 -- =============================================================================

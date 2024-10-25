@@ -1,15 +1,17 @@
 -- =============================================================================
 -- File:                    arb_round_robin.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  arb_round_robin
 --
 -- Description:             Round-robin based arbitration cell.
 --
--- Changes:                 0.1, 2023-09-10, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-09-10, NikLeberg
 --                              initial version
 -- =============================================================================
 
@@ -74,6 +76,6 @@ BEGIN
     END PROCESS unmasked_priority_proc;
 
     ack <= ack_masked WHEN (ack_masked /= all_zeros) ELSE
-    ack_unmasked;
+        ack_unmasked;
 
 END ARCHITECTURE no_target_specific;

@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    wbp_mux_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  wbp_mux_tb
 --
 -- Description:             Testbench for the one to many interconnect.
 --
--- Changes:                 0.1, 2024-08-25, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2024-08-25, NikLeberg
 --                              initial version
---                          0.2, 2024-10-08, leuen4
+--                          0.2, 2024-10-08, NikLeberg
 --                              fix too early de-assertion of address
 -- =============================================================================
 

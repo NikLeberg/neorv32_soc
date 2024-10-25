@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    arb_round_robin_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  arb_round_robin_tb
 --
 -- Description:             Testbench for arb_round_robin entity. Checks if the
 --                          round-robin arbitration i.e. priority given to the
 --                          requests is correct.
 --
--- Changes:                 0.1, 2023-09-10, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-09-10, NikLeberg
 --                              initial implementation
 -- =============================================================================
 
@@ -53,8 +55,8 @@ BEGIN
             WAIT FOR 1 ns; -- A bit of time for combinational logic to settle.
             ASSERT exp_ack = ack
             REPORT "Expected ack for " & INTEGER'image(to_integer(UNSIGNED(exp_ack))) &
-            " but got ack for " & INTEGER'image(to_integer(UNSIGNED(ack))) & "."
-            SEVERITY failure;
+                " but got ack for " & INTEGER'image(to_integer(UNSIGNED(ack))) & "."
+                SEVERITY failure;
         END PROCEDURE check;
         VARIABLE tmp : STD_ULOGIC_VECTOR(NUM - 1 DOWNTO 0);
     BEGIN

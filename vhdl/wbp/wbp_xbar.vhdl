@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wbp_xbar.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  wbp_xbar
 --
 -- Description:             Wishbone interconnect for pipelined multi master
@@ -12,9 +8,15 @@
 --                          equal statistical priorities. Arbitration is done in
 --                          round-robin fashion.
 --
--- Changes:                 0.1, 2024-08-19, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2024-08-19, NikLeberg
 --                              initial version
---                          0.2, 2024-10-05, leuen4
+--                          0.2, 2024-10-05, NikLeberg
 --                              assert `err` signal only for one cycle
 -- =============================================================================
 

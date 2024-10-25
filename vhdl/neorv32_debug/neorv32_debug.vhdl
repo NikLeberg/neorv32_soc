@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    neorv32_debug.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  neorv32_debug
 --
 -- Description:             On-Chip Debugger Complex of NEORV32 SoC. Simply
@@ -13,9 +9,15 @@
 --                          support multiple harts in a SMP configuration it
 --                          also uses the custom implementations of DM and DTM.
 --
--- Changes:                 0.1, 2023-08-27, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2023-08-27, NikLeberg
 --                              initial version
---                          0.2, 2024-09-14, leuen4
+--                          0.2, 2024-09-14, NikLeberg
 --                              update to pipelined wishbone variant
 -- =============================================================================
 

@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    top_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  top_tb
 --
 -- Description:             Testbench for the whole top entity.
 --
--- Changes:                 0.1, 2023-02-15, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2023-02-15, NikLeberg
 --                              initial version
---                          0.2, 2023-02-28, leuen4
+--                          0.2, 2023-02-28, NikLeberg
 --                              change implementation of top if simulating
 -- =============================================================================
 

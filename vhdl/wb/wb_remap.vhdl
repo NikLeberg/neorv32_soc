@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    wb_remap.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  wb_remap
 --
 -- Description:             Remap wishbone request from one address to the next.
 --
--- Changes:                 0.1, 2023-09-25, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2023-09-25, NikLeberg
 --                              initial version
---                          0.2, 2023-12-12, leuen4
+--                          0.2, 2023-12-12, NikLeberg
 --                              set generics to allow instantiation as toplevel
 -- =============================================================================
 

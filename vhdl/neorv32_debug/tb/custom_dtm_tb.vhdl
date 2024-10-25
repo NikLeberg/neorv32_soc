@@ -1,16 +1,18 @@
 -- =============================================================================
 -- File:                    neorv32_debug_dtm_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  neorv32_debug_dtm_tb
 --
 -- Description:             Testbench for the Intel specific architecture
 --                          implementation of the neorv32_debug_dtm entity.
 --
--- Changes:                 0.1, 2022-04-29, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2022-04-29, NikLeberg
 --                              initial version
 -- =============================================================================
 

@@ -1,15 +1,17 @@
 -- =============================================================================
 -- File:                    wbp_remap_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_remap_tb
 --
 -- Description:             Testbench for the address remapper.
 --
--- Changes:                 0.1, 2024-08-25, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-25, NikLeberg
 --                              initial version
 -- =============================================================================
 

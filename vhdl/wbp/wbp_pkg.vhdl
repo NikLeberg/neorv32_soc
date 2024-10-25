@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    wbp_pkg.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
--- Entity:                  wbp_pkg
+-- Package:                 wbp_pkg
 --
 -- Description:             Package with type and function definitions for
 --                          pipelined Wishbone interconnect. See:
 --                          https://cdn.opencores.org/downloads/wbspec_b4.pdf
 --
--- Changes:                 0.1, 2024-08-19, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-19, NikLeberg
 --                              initial version
 -- =============================================================================
 

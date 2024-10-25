@@ -1,27 +1,29 @@
 -- =============================================================================
 -- File:                    top.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.7
---
 -- Entity:                  top
 --
 -- Description:             Toplevel entity for SoC project based on NEORV32.
 --
--- Changes:                 0.1, 2023-01-16, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.7
+--
+-- Changes:                 0.1, 2023-01-16, NikLeberg
 --                              initial version
---                          0.2, 2023-02-25, leuen4
+--                          0.2, 2023-02-25, NikLeberg
 --                              implement IMEM with SDRAM
---                          0.3, 2023-02-28, leuen4
+--                          0.3, 2023-02-28, NikLeberg
 --                              disable SDRAM and JTAG if simulating
---                          0.4, 2023-04-16, leuen4
+--                          0.4, 2023-04-16, NikLeberg
 --                              replace simple bus mux with crossbar
---                          0.5, 2023-04-23, leuen4
+--                          0.5, 2023-04-23, NikLeberg
 --                              remove GCD parts and build SMP system
---                          0.6, 2023-09-30, leuen4
+--                          0.6, 2023-09-30, NikLeberg
 --                              rework of interconnect: round-robin priority
---                          0.7, 2024-10-06, leuen4
+--                          0.7, 2024-10-06, NikLeberg
 --                              rework of interconnect: update to pipelined
 -- =============================================================================
 

@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wb_sdram.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.5
---
 -- Entity:                  wb_sdram
 --
 -- Description:             Wishbone wrapper for SDRAM controller of nullobject
@@ -31,15 +27,21 @@
 --                                    - 16 bit r/w on 2 byte boundaries
 --                                    -  8 bit r/w on any byte address
 --
--- Changes:                 0.1, 2023-02-05, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.5
+--
+-- Changes:                 0.1, 2023-02-05, NikLeberg
 --                              initial version
---                          0.2, 2023-02-19, leuen4
+--                          0.2, 2023-02-19, NikLeberg
 --                              fix byte/word access
---                          0.3, 2023-02-22, leuen4
---                              rename entity from sdram_controller to ws_sdram
---                          0.4, 2023-02-25, leuen4
+--                          0.3, 2023-02-22, NikLeberg
+--                              rename entity from sdram_controller to wb_sdram
+--                          0.4, 2023-02-25, NikLeberg
 --                              allow for individual byte access with masking
---                          0.5, 2023-02-26, leuen4
+--                          0.5, 2023-02-26, NikLeberg
 --                              remove coarse address decoding to make Wishbone
 --                              interconnect compatible
 -- =============================================================================

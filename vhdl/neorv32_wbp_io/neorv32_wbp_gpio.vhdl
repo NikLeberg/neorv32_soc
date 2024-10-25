@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    neorv32_wbp_gpio.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  neorv32_wbp_gpio
 --
 -- Description:             Wishbone wrapper for neorv32_gpio. Instead of
@@ -13,7 +9,13 @@
 --                          allow routing to this gpio through an external
 --                          Wishbone interconnect (e.g. xbar).
 --
--- Changes:                 0.1, 2024-08-24, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-24, NikLeberg
 --                              initial version
 -- =============================================================================
 

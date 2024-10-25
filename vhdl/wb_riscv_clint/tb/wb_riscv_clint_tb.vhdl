@@ -1,17 +1,19 @@
 -- =============================================================================
 -- File:                    wb_riscv_clint_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.2
---
 -- Entity:                  wb_riscv_clint_tb
 --
 -- Description:             Testbench for the CLINT 'wb_riscv_clint'.
 --
--- Changes:                 0.1, 2023-08-22, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.2
+--
+-- Changes:                 0.1, 2023-08-22, NikLeberg
 --                              initial version
---                          0.2, 2023-08-24, leuen4
+--                          0.2, 2023-08-24, NikLeberg
 --                              test writing to MTIME register
 -- =============================================================================
 

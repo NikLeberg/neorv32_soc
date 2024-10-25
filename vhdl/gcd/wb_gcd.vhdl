@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wb_gcd.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wb_gcd
 --
 -- Description:             Wishbone wrapper for greatest common divisor as
@@ -20,7 +16,13 @@
 --                               > if read as all ones, then calculation is
 --                                 ongoing, any other value will be the result
 --
--- Changes:                 0.1, 2023-02-27, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-02-27, NikLeberg
 --                              initial version
 -- =============================================================================
 

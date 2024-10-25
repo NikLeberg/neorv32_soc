@@ -1,23 +1,25 @@
 -- =============================================================================
 -- File:                    neorv32_wb_gateway.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.4
---
 -- Entity:                  neorv32_wb_gateway
 --
 -- Description:             Converter / Gateway from the neorv32 specific cpu
 --                          internal data or instruction bus to the external
 --                          Wishbone bus.
 --
--- Changes:                 0.1, 2023-04-17, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.4
+--
+-- Changes:                 0.1, 2023-04-17, NikLeberg
 --                              initial version
---                          0.2, 2023-08-05, leuen4
+--                          0.2, 2023-08-05, NikLeberg
 --                              allow bus to be locked by lr/sc atomic ops
---                          0.3, 2023-09-30, leuen4
+--                          0.3, 2023-09-30, NikLeberg
 --                              reduce latency, immediately forward request
---                          0.4, 2024-01-01, leuen4
+--                          0.4, 2024-01-01, NikLeberg
 --                              update to new neorv32 stb and rw bus signals
 -- =============================================================================
 

@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wb_imem.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wb_imem
 --
 -- Description:             Wishbone accessible instruction memory (IMEM).
@@ -24,7 +20,13 @@
 --                          neorv32_imem.default.vhd Copyright (c) 2023, Stephan
 --                          Nolting. See respective file for more information.
 --
--- Changes:                 0.1, 2023-04-16, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-04-16, NikLeberg
 --                              initial version
 -- =============================================================================
 

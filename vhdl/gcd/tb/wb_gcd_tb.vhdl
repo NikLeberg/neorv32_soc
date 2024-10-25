@@ -1,16 +1,18 @@
 -- =============================================================================
 -- File:                    wb_gcd_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wb_gcd_tb
 --
 -- Description:             Testbench for the wishbone wrapper 'wb_gcd' around
 --                          the basic 'gcd' entity.
 --
--- Changes:                 0.1, 2023-02-28, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-02-28, NikLeberg
 --                              initial version
 -- =============================================================================
 

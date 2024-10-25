@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wb_crossbar_rr.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.4
---
 -- Entity:                  wb_crossbar_rr
 --
 -- Description:             Wishbone interconnect for multi master multi slave
@@ -28,15 +24,21 @@
 --                          state, note that that error slave is shared and
 --                          arbitrated over. This will delay error handling.
 --
--- Changes:                 0.1, 2023-04-13, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.4
+--
+-- Changes:                 0.1, 2023-04-13, NikLeberg
 --                              initial version
---                          0.2, 2023-04-19, leuen4
+--                          0.2, 2023-04-19, NikLeberg
 --                              add `other` slaves interfaces to forward
 --                              unmapped slaves to other interconnects or error
---                          0.3, 2023-08-02, leuen4
+--                          0.3, 2023-08-02, NikLeberg
 --                              fixed `other` slave interface: was not connected
 --                              at all and could not be simulated
---                          0.4, 2023-09-30, leuen4
+--                          0.4, 2023-09-30, NikLeberg
 --                              copy of wb_crossbar with round-robin arbiter
 -- =============================================================================
 

@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    neorv32_wb_gpio.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  neorv32_wb_gpio
 --
 -- Description:             Wishbone wrapper for neorv32_gpio. Instead of
@@ -16,7 +12,13 @@
 -- Note:                    This is possibly wrong (re / we) active for more
 --                          than one cycle. But physical testing had no error.
 --
--- Changes:                 0.1, 2023-04-16, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-04-16, NikLeberg
 --                              initial version
 -- =============================================================================
 

@@ -1,21 +1,23 @@
 -- =============================================================================
 -- File:                    wb_pkg.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.3
---
--- Entity:                  wb_pkg
+-- Package:                 wb_pkg
 --
 -- Description:             Package with type and function definitions for
 --                          Wishbone interconnect.
 --
--- Changes:                 0.1, 2023-02-26, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.3
+--
+-- Changes:                 0.1, 2023-02-26, NikLeberg
 --                              initial version
---                          0.2, 2023-08-03, leuen4
+--                          0.2, 2023-08-03, NikLeberg
 --                              extended wb_sim_read32 procedure with expect_err
 --                              parameter to allow testing a failing read
---                          0.3, 2023-08-22, leuen4
+--                          0.3, 2023-08-22, NikLeberg
 --                              change from master and slave types to simple
 --                              request and response types
 -- =============================================================================

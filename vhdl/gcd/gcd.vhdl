@@ -1,16 +1,18 @@
 -- =============================================================================
 -- File:                    gcd.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  gcd
 --
 -- Description:             Greatest common divisor calculation as NIOS II
 --                          hardware accelerator.
 --
--- Changes:                 0.1, 2023-01-09, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2023-01-09, NikLeberg
 --                              initial version
 -- =============================================================================
 

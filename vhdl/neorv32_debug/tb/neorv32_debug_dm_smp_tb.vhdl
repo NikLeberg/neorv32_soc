@@ -1,20 +1,22 @@
 -- =============================================================================
 -- File:                    neorv32_debug_dm_smp_tb.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.3
---
 -- Entity:                  neorv32_debug_dm_smp_tb
 --
 -- Description:             Testbench for the custom SMP variant of neorv32
 --                          debug module.
 --
--- Changes:                 0.1, 2023-09-05, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.3
+--
+-- Changes:                 0.1, 2023-09-05, NikLeberg
 --                              initial version
---                          0.2, 2024-08-25, leuen4
+--                          0.2, 2024-08-25, NikLeberg
 --                              update to pipelined wishbone variant
---                          0.3, 2024-10-23, leuen4
+--                          0.3, 2024-10-23, NikLeberg
 --                              use independent dummy_application as "firmware"
 -- =============================================================================
 

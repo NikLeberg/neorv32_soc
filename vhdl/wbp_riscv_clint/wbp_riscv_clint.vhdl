@@ -1,10 +1,6 @@
 -- =============================================================================
 -- File:                    wbp_riscv_clint.vhdl
 --
--- Authors:                 Niklaus Leuenberger <leuen4@bfh.ch>
---
--- Version:                 0.1
---
 -- Entity:                  wbp_riscv_clint
 --
 -- Description:             Core Local Interruptor (CLINT) for symmetric
@@ -32,7 +28,13 @@
 --                           BASE + 0xbff0: MTIMECMP, HART 4094, double word
 --                           BASE + 0xbff8: MTIME, double word
 --
--- Changes:                 0.1, 2024-08-24, leuen4
+-- Author:                  Niklaus Leuenberger <@NikLeberg>
+--
+-- SPDX-License-Identifier: MIT
+--
+-- Version:                 0.1
+--
+-- Changes:                 0.1, 2024-08-24, NikLeberg
 --                              initial version
 -- =============================================================================
 
