@@ -62,4 +62,4 @@ quartus top.qpf
 ```
 
 ## License
-[MIT](LICENSE) © [N. Leuenberger](mailto:leuen4@bfh.ch).
+[MIT](LICENSE) © [Niklaus Leuenberger](https://github.com/NikLeberg).
