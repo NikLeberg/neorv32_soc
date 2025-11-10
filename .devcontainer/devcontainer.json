@@ -2,7 +2,9 @@
     "name": "${localWorkspaceFolderBasename}",
     "image": "ghcr.io/nikleberg/dev-base",
     "runArgs": [
-        // set a human friendly machine name for the container
+        // set a human friendly container name
+        "--name=${localWorkspaceFolderBasename}_devcontainer",
+        // set a human friendly machine name
         "--hostname=${localWorkspaceFolderBasename}",
         // forward docker socket to allow Docker-outside-of-Docker (DooD)
         "--volume=/var/run/docker.sock:/var/run/docker.sock",
